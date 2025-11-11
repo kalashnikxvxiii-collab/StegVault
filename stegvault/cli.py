@@ -8,6 +8,7 @@ import click
 import sys
 import os
 from pathlib import Path
+from typing import Any
 
 from stegvault.crypto import (
     encrypt_data,
@@ -33,7 +34,7 @@ from stegvault.utils import (
 
 @click.group()
 @click.version_option(version="0.1.0")
-def main():
+def main() -> None:
     """
     StegVault - Password Manager with Steganography
 
@@ -70,7 +71,7 @@ def main():
 @click.option(
     "--check-strength/--no-check-strength", default=True, help="Verify passphrase strength"
 )
-def backup(password, passphrase, image, output, check_strength):
+def backup(password: str, passphrase: str, image: str, output: str, check_strength: bool) -> None:
     """
     Create a backup by embedding encrypted password in an image.
 
@@ -172,7 +173,7 @@ def backup(password, passphrase, image, output, check_strength):
     default="-",
     help="Output file for recovered password (default: stdout)",
 )
-def restore(image, passphrase, output):
+def restore(image: str, passphrase: str, output: Any) -> None:
     """
     Restore password from a stego image backup.
 
@@ -277,7 +278,7 @@ def restore(image, passphrase, output):
 @click.option(
     "--image", "-i", required=True, type=click.Path(exists=True), help="Image file to check"
 )
-def check(image):
+def check(image: str) -> None:
     """
     Check image capacity for password storage.
 

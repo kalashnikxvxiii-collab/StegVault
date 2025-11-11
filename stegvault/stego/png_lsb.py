@@ -6,7 +6,7 @@ modification with pseudo-random pixel ordering for detection resistance.
 """
 
 import random
-from typing import Tuple
+from typing import Tuple, Optional
 from PIL import Image
 import numpy as np
 
@@ -113,7 +113,7 @@ def _bits_to_bytes(bits: list) -> bytes:
 
 
 def embed_payload(
-    image_path: str, payload: bytes, seed: int, output_path: str = None
+    image_path: str, payload: bytes, seed: int, output_path: Optional[str] = None
 ) -> Image.Image:
     """
     Embed payload in PNG image using LSB steganography.
@@ -140,7 +140,7 @@ def embed_payload(
             # Convert RGBA to RGB by compositing on white background
             background = Image.new("RGB", image.size, (255, 255, 255))
             background.paste(image, mask=image.split()[3])  # Use alpha channel as mask
-            image = background
+            image = background  # type: ignore[assignment]
         elif image.mode != "RGB":
             raise StegoError(f"Unsupported image mode: {image.mode}")
 
@@ -215,7 +215,7 @@ def extract_payload(image_path: str, payload_size: int, seed: int) -> bytes:
         if image.mode == "RGBA":
             background = Image.new("RGB", image.size, (255, 255, 255))
             background.paste(image, mask=image.split()[3])
-            image = background
+            image = background  # type: ignore[assignment]
         elif image.mode != "RGB":
             raise StegoError(f"Unsupported image mode: {image.mode}")
 
@@ -234,7 +234,7 @@ def extract_payload(image_path: str, payload_size: int, seed: int) -> bytes:
         pixel_sequence = _generate_pixel_sequence(width, height, seed)
 
         # Extract bits from LSB of pixel channels
-        extracted_bits = []
+        extracted_bits: list[int] = []
         bits_needed = payload_size * 8
 
         for x, y in pixel_sequence:
