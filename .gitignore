@@ -49,3 +49,4 @@ htmlcov/
 *.key
 *.secret
 test_passwords.txt
+nul
