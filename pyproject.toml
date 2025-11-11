@@ -11,7 +11,7 @@ requires-python = ">=3.9"
 authors = [
     {name = "StegVault Contributors"}
 ]
-license = {text = "MIT"}
+license = "MIT"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -56,3 +56,7 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --cov=stegvault --cov-report=html --cov-report=term"
+
+[tool.setuptools.packages.find]
+include = ["stegvault*"]
+exclude = ["tests*", "docs*", "examples*", "wiki*"]
