@@ -220,7 +220,7 @@ class TestRoundtrip:
 
     def test_roundtrip_unicode(self):
         """Test with unicode characters."""
-        plaintext = "Hello 世界 🔐".encode('utf-8')
+        plaintext = "Hello 世界 🔐".encode("utf-8")
         passphrase = "strong-passphrase"
 
         ciphertext, salt, nonce = encrypt_data(plaintext, passphrase)

@@ -14,9 +14,9 @@ MAGIC_HEADER = b"SPW1"  # StegVault Password Wallet v1
 MAGIC_SIZE = 4
 
 # Component sizes (in bytes)
-SALT_SIZE = 16          # 128 bits
-NONCE_SIZE = 24         # 192 bits for XChaCha20
-LENGTH_SIZE = 4         # 32-bit unsigned int for ciphertext length
+SALT_SIZE = 16  # 128 bits
+NONCE_SIZE = 24  # 192 bits for XChaCha20
+LENGTH_SIZE = 4  # 32-bit unsigned int for ciphertext length
 
 
 @dataclass
@@ -29,6 +29,7 @@ class PayloadFormat:
 
     Note: AEAD tag (16B) is included at the end of ciphertext by PyNaCl
     """
+
     magic: bytes
     salt: bytes
     nonce: bytes
@@ -48,11 +49,13 @@ class PayloadFormat:
 
 class PayloadError(Exception):
     """Base exception for payload-related errors."""
+
     pass
 
 
 class PayloadFormatError(PayloadError):
     """Raised when payload format is invalid."""
+
     pass
 
 
@@ -106,13 +109,11 @@ def parse_payload(payload: bytes) -> Tuple[bytes, bytes, bytes]:
     min_size = MAGIC_SIZE + SALT_SIZE + NONCE_SIZE + LENGTH_SIZE + 16
 
     if len(payload) < min_size:
-        raise PayloadFormatError(
-            f"Payload too short: {len(payload)} bytes (minimum {min_size})"
-        )
+        raise PayloadFormatError(f"Payload too short: {len(payload)} bytes (minimum {min_size})")
 
     # Parse magic header
     offset = 0
-    magic = payload[offset:offset + MAGIC_SIZE]
+    magic = payload[offset : offset + MAGIC_SIZE]
     offset += MAGIC_SIZE
 
     if magic != MAGIC_HEADER:
@@ -121,24 +122,22 @@ def parse_payload(payload: bytes) -> Tuple[bytes, bytes, bytes]:
         )
 
     # Parse salt
-    salt = payload[offset:offset + SALT_SIZE]
+    salt = payload[offset : offset + SALT_SIZE]
     offset += SALT_SIZE
 
     # Parse nonce
-    nonce = payload[offset:offset + NONCE_SIZE]
+    nonce = payload[offset : offset + NONCE_SIZE]
     offset += NONCE_SIZE
 
     # Parse ciphertext length
-    ciphertext_length_bytes = payload[offset:offset + LENGTH_SIZE]
+    ciphertext_length_bytes = payload[offset : offset + LENGTH_SIZE]
     offset += LENGTH_SIZE
 
     ciphertext_length = struct.unpack(">I", ciphertext_length_bytes)[0]
 
     # Validate ciphertext length
     if ciphertext_length < 16:
-        raise PayloadFormatError(
-            f"Invalid ciphertext length: {ciphertext_length} (minimum 16)"
-        )
+        raise PayloadFormatError(f"Invalid ciphertext length: {ciphertext_length} (minimum 16)")
 
     # Check if enough data remains
     if len(payload) < offset + ciphertext_length:
@@ -148,7 +147,7 @@ def parse_payload(payload: bytes) -> Tuple[bytes, bytes, bytes]:
         )
 
     # Parse ciphertext (includes AEAD tag)
-    ciphertext = payload[offset:offset + ciphertext_length]
+    ciphertext = payload[offset : offset + ciphertext_length]
     offset += ciphertext_length
 
     # Warn if there's extra data (not an error, but unusual)

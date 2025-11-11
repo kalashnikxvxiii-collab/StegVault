@@ -13,16 +13,19 @@ import numpy as np
 
 class StegoError(Exception):
     """Base exception for steganography errors."""
+
     pass
 
 
 class CapacityError(StegoError):
     """Raised when image capacity is insufficient for payload."""
+
     pass
 
 
 class ExtractionError(StegoError):
     """Raised when payload extraction fails."""
+
     pass
 
 
@@ -110,10 +113,7 @@ def _bits_to_bytes(bits: list) -> bytes:
 
 
 def embed_payload(
-    image_path: str,
-    payload: bytes,
-    seed: int,
-    output_path: str = None
+    image_path: str, payload: bytes, seed: int, output_path: str = None
 ) -> Image.Image:
     """
     Embed payload in PNG image using LSB steganography.
@@ -191,11 +191,7 @@ def embed_payload(
         raise StegoError(f"Embedding failed: {e}")
 
 
-def extract_payload(
-    image_path: str,
-    payload_size: int,
-    seed: int
-) -> bytes:
+def extract_payload(image_path: str, payload_size: int, seed: int) -> bytes:
     """
     Extract payload from PNG image using LSB steganography.
 

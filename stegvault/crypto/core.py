@@ -15,23 +15,25 @@ import nacl.utils
 
 
 # Argon2id parameters (balanced security/performance)
-ARGON2_TIME_COST = 3      # Number of iterations
+ARGON2_TIME_COST = 3  # Number of iterations
 ARGON2_MEMORY_COST = 65536  # 64 MB
-ARGON2_PARALLELISM = 4    # Number of parallel threads
-ARGON2_HASH_LENGTH = 32   # 256-bit key for XChaCha20-Poly1305
+ARGON2_PARALLELISM = 4  # Number of parallel threads
+ARGON2_HASH_LENGTH = 32  # 256-bit key for XChaCha20-Poly1305
 
 # Standard sizes
-SALT_SIZE = 16            # 128 bits
-NONCE_SIZE = 24           # 192 bits for XChaCha20
+SALT_SIZE = 16  # 128 bits
+NONCE_SIZE = 24  # 192 bits for XChaCha20
 
 
 class CryptoError(Exception):
     """Base exception for cryptography errors."""
+
     pass
 
 
 class DecryptionError(CryptoError):
     """Raised when decryption or authentication fails."""
+
     pass
 
 
@@ -75,13 +77,13 @@ def derive_key(passphrase: str, salt: bytes) -> bytes:
     try:
         # Use Argon2id (hybrid mode: resistant to both side-channel and GPU attacks)
         key = hash_secret_raw(
-            secret=passphrase.encode('utf-8'),
+            secret=passphrase.encode("utf-8"),
             salt=salt,
             time_cost=ARGON2_TIME_COST,
             memory_cost=ARGON2_MEMORY_COST,
             parallelism=ARGON2_PARALLELISM,
             hash_len=ARGON2_HASH_LENGTH,
-            type=Type.ID  # Argon2id
+            type=Type.ID,  # Argon2id
         )
         return key
     except Exception as e:

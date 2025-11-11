@@ -9,9 +9,26 @@ import sys
 import os
 from pathlib import Path
 
-from stegvault.crypto import encrypt_data, decrypt_data, verify_passphrase_strength, CryptoError, DecryptionError
-from stegvault.stego import embed_payload, extract_payload, calculate_capacity, StegoError, CapacityError
-from stegvault.utils import serialize_payload, parse_payload, validate_payload_capacity, PayloadFormatError
+from stegvault.crypto import (
+    encrypt_data,
+    decrypt_data,
+    verify_passphrase_strength,
+    CryptoError,
+    DecryptionError,
+)
+from stegvault.stego import (
+    embed_payload,
+    extract_payload,
+    calculate_capacity,
+    StegoError,
+    CapacityError,
+)
+from stegvault.utils import (
+    serialize_payload,
+    parse_payload,
+    validate_payload_capacity,
+    PayloadFormatError,
+)
 
 
 @click.group()
@@ -31,33 +48,27 @@ def main():
     prompt=True,
     hide_input=True,
     confirmation_prompt=True,
-    help="Master password to encrypt and embed"
+    help="Master password to encrypt and embed",
 )
 @click.option(
     "--passphrase",
     prompt=True,
     hide_input=True,
     confirmation_prompt=True,
-    help="Encryption passphrase (keep this secret!)"
+    help="Encryption passphrase (keep this secret!)",
 )
 @click.option(
     "--image",
     "-i",
     required=True,
     type=click.Path(exists=True),
-    help="Cover image (PNG format recommended)"
+    help="Cover image (PNG format recommended)",
 )
 @click.option(
-    "--output",
-    "-o",
-    required=True,
-    type=click.Path(),
-    help="Output path for stego image"
+    "--output", "-o", required=True, type=click.Path(), help="Output path for stego image"
 )
 @click.option(
-    "--check-strength/--no-check-strength",
-    default=True,
-    help="Verify passphrase strength"
+    "--check-strength/--no-check-strength", default=True, help="Verify passphrase strength"
 )
 def backup(password, passphrase, image, output, check_strength):
     """
@@ -88,10 +99,11 @@ def backup(password, passphrase, image, output, check_strength):
             sys.exit(1)
 
         # Convert password to bytes
-        password_bytes = password.encode('utf-8')
+        password_bytes = password.encode("utf-8")
 
         # Check image capacity
         from PIL import Image
+
         img = Image.open(image)
         capacity = calculate_capacity(img)
         img.close()
@@ -102,7 +114,7 @@ def backup(password, passphrase, image, output, check_strength):
             click.echo(
                 f"Error: Image too small for password. Need at least "
                 f"{len(password_bytes) + 64} bytes, have {capacity} bytes",
-                err=True
+                err=True,
             )
             sys.exit(1)
 
@@ -115,7 +127,7 @@ def backup(password, passphrase, image, output, check_strength):
         click.echo(f"Payload size: {len(payload)} bytes")
 
         # Derive seed from salt for reproducible pixel ordering
-        seed = int.from_bytes(salt[:4], byteorder='big')
+        seed = int.from_bytes(salt[:4], byteorder="big")
 
         # Embed in image
         click.echo("Embedding payload in image...")
@@ -148,20 +160,17 @@ def backup(password, passphrase, image, output, check_strength):
     "-i",
     required=True,
     type=click.Path(exists=True),
-    help="Stego image containing encrypted backup"
+    help="Stego image containing encrypted backup",
 )
 @click.option(
-    "--passphrase",
-    prompt=True,
-    hide_input=True,
-    help="Encryption passphrase used during backup"
+    "--passphrase", prompt=True, hide_input=True, help="Encryption passphrase used during backup"
 )
 @click.option(
     "--output",
     "-o",
-    type=click.File('w'),
+    type=click.File("w"),
     default="-",
-    help="Output file for recovered password (default: stdout)"
+    help="Output file for recovered password (default: stdout)",
 )
 def restore(image, passphrase, output):
     """
@@ -185,6 +194,7 @@ def restore(image, passphrase, output):
         # First, we need to extract the payload header to determine size
         # We'll extract a generous amount first to get the header
         from PIL import Image
+
         img = Image.open(image)
         capacity = calculate_capacity(img)
         img.close()
@@ -201,6 +211,7 @@ def restore(image, passphrase, output):
         try:
             # We can't fully parse yet, but we can extract the length field
             import struct
+
             ct_length = struct.unpack(">I", header_bytes[44:48])[0]
         except:
             click.echo("Error: Invalid or corrupted payload", err=True)
@@ -222,7 +233,7 @@ def restore(image, passphrase, output):
         salt, nonce, ciphertext = parse_payload(payload)
 
         # Derive correct seed from salt
-        seed = int.from_bytes(salt[:4], byteorder='big')
+        seed = int.from_bytes(salt[:4], byteorder="big")
 
         # Re-extract with correct seed
         click.echo("Re-extracting with correct seed...", err=True)
@@ -234,18 +245,18 @@ def restore(image, passphrase, output):
         password_bytes = decrypt_data(ciphertext, salt, nonce, passphrase)
 
         # Convert to string
-        password = password_bytes.decode('utf-8')
+        password = password_bytes.decode("utf-8")
 
         # Output
-        if output.name == '<stdout>':
-            click.echo("\n" + "="*50, err=True)
+        if output.name == "<stdout>":
+            click.echo("\n" + "=" * 50, err=True)
             click.echo("✓ Password recovered successfully!", err=True)
-            click.echo("="*50 + "\n", err=True)
+            click.echo("=" * 50 + "\n", err=True)
 
         output.write(password)
 
-        if output.name != '<stdout>':
-            output.write('\n')
+        if output.name != "<stdout>":
+            output.write("\n")
             click.echo(f"\n✓ Password saved to: {output.name}", err=True)
 
     except DecryptionError:
@@ -264,11 +275,7 @@ def restore(image, passphrase, output):
 
 @main.command()
 @click.option(
-    "--image",
-    "-i",
-    required=True,
-    type=click.Path(exists=True),
-    help="Image file to check"
+    "--image", "-i", required=True, type=click.Path(exists=True), help="Image file to check"
 )
 def check(image):
     """

@@ -153,10 +153,10 @@ class TestPayloadRoundtrip:
     def test_roundtrip_various_sizes(self):
         """Should maintain data integrity for various payload sizes."""
         test_cases = [
-            (b"s" * 16, b"n" * 24, b"c" * 16),    # Minimum
-            (b"s" * 16, b"n" * 24, b"c" * 100),   # Medium
+            (b"s" * 16, b"n" * 24, b"c" * 16),  # Minimum
+            (b"s" * 16, b"n" * 24, b"c" * 100),  # Medium
             (b"s" * 16, b"n" * 24, b"c" * 1000),  # Large
-            (b"s" * 16, b"n" * 24, b"c" * 10000), # Very large
+            (b"s" * 16, b"n" * 24, b"c" * 10000),  # Very large
         ]
 
         for salt, nonce, ciphertext in test_cases:
@@ -189,10 +189,7 @@ class TestPayloadDataclass:
     def test_valid_payload_format(self):
         """Should create valid PayloadFormat instance."""
         pf = PayloadFormat(
-            magic=MAGIC_HEADER,
-            salt=b"s" * 16,
-            nonce=b"n" * 24,
-            ciphertext=b"c" * 32
+            magic=MAGIC_HEADER, salt=b"s" * 16, nonce=b"n" * 24, ciphertext=b"c" * 32
         )
 
         assert pf.magic == MAGIC_HEADER
@@ -204,41 +201,23 @@ class TestPayloadDataclass:
         """Should raise error for invalid magic size."""
         with pytest.raises(ValueError, match="Magic must be"):
             PayloadFormat(
-                magic=b"XX",  # Too short
-                salt=b"s" * 16,
-                nonce=b"n" * 24,
-                ciphertext=b"c" * 32
+                magic=b"XX", salt=b"s" * 16, nonce=b"n" * 24, ciphertext=b"c" * 32  # Too short
             )
 
     def test_invalid_salt_size(self):
         """Should raise error for invalid salt size."""
         with pytest.raises(ValueError, match="Salt must be"):
-            PayloadFormat(
-                magic=MAGIC_HEADER,
-                salt=b"short",
-                nonce=b"n" * 24,
-                ciphertext=b"c" * 32
-            )
+            PayloadFormat(magic=MAGIC_HEADER, salt=b"short", nonce=b"n" * 24, ciphertext=b"c" * 32)
 
     def test_invalid_nonce_size(self):
         """Should raise error for invalid nonce size."""
         with pytest.raises(ValueError, match="Nonce must be"):
-            PayloadFormat(
-                magic=MAGIC_HEADER,
-                salt=b"s" * 16,
-                nonce=b"short",
-                ciphertext=b"c" * 32
-            )
+            PayloadFormat(magic=MAGIC_HEADER, salt=b"s" * 16, nonce=b"short", ciphertext=b"c" * 32)
 
     def test_ciphertext_too_short(self):
         """Should raise error for ciphertext without AEAD tag."""
         with pytest.raises(ValueError, match="too short"):
-            PayloadFormat(
-                magic=MAGIC_HEADER,
-                salt=b"s" * 16,
-                nonce=b"n" * 24,
-                ciphertext=b"short"
-            )
+            PayloadFormat(magic=MAGIC_HEADER, salt=b"s" * 16, nonce=b"n" * 24, ciphertext=b"short")
 
 
 class TestUtilityFunctions:
