@@ -28,8 +28,8 @@ This project adheres to a code of conduct that all contributors are expected to 
 Before contributing, please:
 
 1. Read the [README.md](README.md) to understand the project
-2. Review the [CLAUDE.md](CLAUDE.md) for technical architecture details
-3. Check existing [issues](https://github.com/yourusername/stegvault/issues) and [pull requests](https://github.com/yourusername/stegvault/pulls)
+2. Review the [WIKI](https://github.com/kalashnikxvxiii-collab/StegVault/wiki) for technical architecture details
+3. Check existing [issues](https://github.com/kalashnikxvxiii-collab/stegvault/issues) and [pull requests](https://github.com/kalashnikxvxiii-collab/stegvault/pulls)
 4. Join discussions to understand ongoing work
 
 ## Development Setup
@@ -44,7 +44,7 @@ Before contributing, please:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/stegvault.git
+git clone https://github.com/kalashnikxvxiii-collab/stegvault.git
 cd stegvault
 
 # Create virtual environment
@@ -121,7 +121,7 @@ mypy stegvault
 - Use Google-style docstrings
 - Include parameter types and return types
 - Provide usage examples for complex functions
-- Keep CLAUDE.md updated with architectural changes
+- Keep the WIKI folder updated with architectural changes
 
 ### Example Function
 
@@ -239,7 +239,7 @@ Security-critical changes require:
 2. **Write tests**: Ensure new code is tested
 3. **Run test suite**: `pytest` should pass
 4. **Format code**: Run `black stegvault tests`
-5. **Update documentation**: Update README, CLAUDE.md if needed
+5. **Update documentation**: Update README, WIKI if needed
 6. **Update CHANGELOG**: Add entry under "Unreleased" section
 
 ### Pull Request Template
@@ -328,8 +328,8 @@ Releases are managed by maintainers:
 
 If you have questions about contributing:
 
-- Open a [discussion](https://github.com/yourusername/stegvault/discussions)
-- Check existing [issues](https://github.com/yourusername/stegvault/issues)
-- Review [CLAUDE.md](CLAUDE.md) for technical details
+- Open a [discussion](https://github.com/kalashnikxvxiii-collab/stegvault/discussions)
+- Check existing [issues](https://github.com/kalashnikxvxiii-collab/stegvault/issues)
+- Review [WIKI](https://github.com/kalashnikxvxiii-collab/StegVault/wiki) for technical details
 
 Thank you for contributing to StegVault!

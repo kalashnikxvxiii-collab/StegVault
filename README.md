@@ -24,7 +24,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/stegvault.git
+git clone https://github.com/kalashnikxvxiii-collab/stegvault.git
 cd stegvault
 
 # Create virtual environment
