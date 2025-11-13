@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] - 2025-11-13
+
+### Added
+- **Expanded test suite**: 61 additional CLI tests
+  - Total test count increased from 84 to 145 tests
+  - CLI module now has 113 comprehensive tests covering all commands
+  - New tests for config, batch, and end-to-end workflows
+  - Improved edge case coverage and error handling scenarios
+
+### Changed
+- **Improved test coverage**: Overall coverage increased from 75% to 87%
+  - CLI module: 78% → 81% coverage
+  - Batch operations: 93% → 95% coverage
+  - All core modules maintain high coverage (85%+)
+- Code formatting: Applied Black formatter to test_cli.py for consistency
+
+### Quality
+- All 145 tests pass reliably across Python 3.9-3.14
+- Better test organization and readability
+- Enhanced CI/CD reliability with comprehensive test coverage
+
 ## [0.3.1] - 2025-11-13
 
 ### Added
@@ -167,6 +188,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Windows console Unicode character display issues (does not affect functionality)
 - Temporary file cleanup warnings in Windows during tests (Pillow file locking)
 
+[0.3.2]: https://github.com/kalashnikxvxiii-collab/stegvault/releases/tag/v0.3.2
+[0.3.1]: https://github.com/kalashnikxvxiii-collab/stegvault/releases/tag/v0.3.1
 [0.3.0]: https://github.com/kalashnikxvxiii-collab/stegvault/releases/tag/v0.3.0
 [0.2.1]: https://github.com/kalashnikxvxiii-collab/stegvault/releases/tag/v0.2.1
 [0.2.0]: https://github.com/kalashnikxvxiii-collab/stegvault/releases/tag/v0.2.0
