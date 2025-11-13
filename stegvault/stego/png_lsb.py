@@ -6,7 +6,7 @@ modification with pseudo-random pixel ordering for detection resistance.
 """
 
 import random
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
 from PIL import Image
 import numpy as np
 
@@ -323,7 +323,7 @@ def extract_payload(image_path: str, payload_size: int, seed: int) -> bytes:
         # Extract bits from LSB of pixel channels
         # IMPORTANT: For the first 20 bytes (magic + salt), extract sequentially
         # The remaining payload uses pseudo-random ordering with the provided seed
-        extracted_bits: list[int] = []
+        extracted_bits: List[int] = []
         bits_needed = payload_size * 8
 
         HEADER_SIZE = 20  # Magic (4) + Salt (16) bytes
