@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2025-11-13
+
+### Added
+- Comprehensive test coverage improvements:
+  - Added 48 new tests for batch operations (20 tests) and configuration management (28 tests)
+  - Overall test coverage increased from 57% to 75%
+  - Batch operations module coverage: 0% → 93%
+  - Configuration module coverage: 55% → 87%
+
+### Fixed
+- Security: Masked password logging in demo.py (GitHub CodeQL alert #41)
+- Security: Added documentation for intentional password file writes in batch operations (GitHub CodeQL alert #32)
+- Code quality: Removed 11 unused imports across multiple modules
+- CI: Fixed cross-platform path comparison issues in configuration tests
+  - Tests now properly handle Windows paths on Linux CI runners
+  - Added platform-specific test skipping where appropriate
+
 ## [0.3.0] - 2025-11-13
 
 ### Added
