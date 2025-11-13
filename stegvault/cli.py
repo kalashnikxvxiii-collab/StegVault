@@ -10,7 +10,7 @@ import os
 import threading
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional, List
 
 from stegvault.crypto import (
     encrypt_data,
@@ -97,6 +97,7 @@ def backup(password: str, passphrase: str, image: str, output: str, check_streng
             click.echo(f"Warning: Failed to load config: {e}", err=True)
             click.echo("Using default settings...", err=True)
             from stegvault.config import get_default_config
+
             config = get_default_config()
 
         click.echo("Creating encrypted backup...")
@@ -140,10 +141,10 @@ def backup(password: str, passphrase: str, image: str, output: str, check_streng
         click.echo(" (this may take a few seconds)", err=True)
 
         # Show progress for key derivation (Argon2id is intentionally slow)
-        result = [None]
-        exception = [None]
+        result: List[Any] = [None]
+        exception: List[Any] = [None]
 
-        def encrypt_worker():
+        def encrypt_worker() -> None:
             try:
                 result[0] = encrypt_data(
                     password_bytes,
@@ -255,6 +256,7 @@ def restore(image: str, passphrase: str, output: Any) -> None:
             click.echo(f"Warning: Failed to load config: {e}", err=True)
             click.echo("Using default settings...", err=True)
             from stegvault.config import get_default_config
+
             config = get_default_config()
 
         click.echo("Restoring password from backup...", err=True)
@@ -283,7 +285,7 @@ def restore(image: str, passphrase: str, output: Any) -> None:
         header_bytes = extract_payload(image, initial_extract_size, seed_placeholder)
 
         # Validate magic header
-        if header_bytes[:4] != b'SPW1':
+        if header_bytes[:4] != b"SPW1":
             click.echo("Error: Invalid or corrupted payload (bad magic header)", err=True)
             sys.exit(1)
 
@@ -300,6 +302,7 @@ def restore(image: str, passphrase: str, output: Any) -> None:
         # Parse header to get ciphertext length
         try:
             import struct
+
             ct_length = struct.unpack(">I", header_bytes[44:48])[0]
         except:
             click.echo("Error: Invalid or corrupted payload", err=True)
@@ -325,10 +328,10 @@ def restore(image: str, passphrase: str, output: Any) -> None:
         click.echo(" (deriving key, this may take a few seconds)", err=True)
 
         # Show progress for key derivation (Argon2id is intentionally slow)
-        result = [None]
-        exception = [None]
+        result: List[Any] = [None]
+        exception: List[Any] = [None]
 
-        def decrypt_worker():
+        def decrypt_worker() -> None:
             try:
                 result[0] = decrypt_data(
                     ciphertext,
@@ -485,7 +488,9 @@ def show() -> None:
 
             click.echo("[crypto]")
             click.echo(f"  argon2_time_cost    = {cfg.crypto.argon2_time_cost}")
-            click.echo(f"  argon2_memory_cost  = {cfg.crypto.argon2_memory_cost} KB ({cfg.crypto.argon2_memory_cost / 1024:.0f} MB)")
+            click.echo(
+                f"  argon2_memory_cost  = {cfg.crypto.argon2_memory_cost} KB ({cfg.crypto.argon2_memory_cost / 1024:.0f} MB)"
+            )
             click.echo(f"  argon2_parallelism  = {cfg.crypto.argon2_parallelism}")
             click.echo()
             click.echo("[cli]")
@@ -596,13 +601,11 @@ def batch_backup(config: str, stop_on_error: bool) -> None:
 
         click.echo(f"Processing {total_jobs} backup job(s)...\n")
 
-        def progress_callback(current, total, label):
+        def progress_callback(current: int, total: int, label: Optional[str]) -> None:
             click.echo(f"[{current}/{total}] Processing: {label}...", err=True)
 
         successful, failed, errors = process_batch_backup(
-            batch_config,
-            progress_callback=progress_callback,
-            stop_on_error=stop_on_error
+            batch_config, progress_callback=progress_callback, stop_on_error=stop_on_error
         )
 
         # Summary
@@ -679,13 +682,11 @@ def batch_restore(config: str, stop_on_error: bool, show_passwords: bool) -> Non
 
         click.echo(f"Processing {total_jobs} restore job(s)...\n")
 
-        def progress_callback(current, total, label):
+        def progress_callback(current: int, total: int, label: Optional[str]) -> None:
             click.echo(f"[{current}/{total}] Processing: {label}...", err=True)
 
         successful, failed, errors, recovered = process_batch_restore(
-            batch_config,
-            progress_callback=progress_callback,
-            stop_on_error=stop_on_error
+            batch_config, progress_callback=progress_callback, stop_on_error=stop_on_error
         )
 
         # Summary

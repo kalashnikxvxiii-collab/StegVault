@@ -49,7 +49,9 @@ def calculate_capacity(image: Image.Image) -> int:
     return (width * height * 3) // 8
 
 
-def _generate_pixel_sequence(width: int, height: int, seed: int, count: Optional[int] = None) -> list:
+def _generate_pixel_sequence(
+    width: int, height: int, seed: int, count: Optional[int] = None
+) -> list:
     """
     Generate pseudo-random sequence of pixel coordinates.
 
@@ -73,10 +75,7 @@ def _generate_pixel_sequence(width: int, height: int, seed: int, count: Optional
     # 2. count >= total pixels
     # 3. count > 10% of total pixels (threshold for optimization benefit)
     # 4. total pixels < 50,000 (small images, shuffling is cheap)
-    if (count is None or
-        count >= total_pixels or
-        count > total_pixels * 0.1 or
-        total_pixels < 50000):
+    if count is None or count >= total_pixels or count > total_pixels * 0.1 or total_pixels < 50000:
 
         # Create all pixel coordinates
         pixels = [(x, y) for y in range(height) for x in range(width)]

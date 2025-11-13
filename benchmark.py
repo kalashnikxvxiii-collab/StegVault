@@ -26,8 +26,7 @@ from stegvault.utils import serialize_payload, parse_payload
 class BenchmarkResult:
     """Store benchmark results."""
 
-    def __init__(self, name: str, image_size: Tuple[int, int],
-                 password_length: int):
+    def __init__(self, name: str, image_size: Tuple[int, int], password_length: int):
         self.name = name
         self.image_size = image_size
         self.password_length = password_length
@@ -69,10 +68,9 @@ class BenchmarkResult:
         )
 
 
-def create_test_image(width: int, height: int,
-                     output_path: str) -> None:
+def create_test_image(width: int, height: int, output_path: str) -> None:
     """Create a gradient test image."""
-    img = Image.new('RGB', (width, height))
+    img = Image.new("RGB", (width, height))
     pixels = img.load()
 
     for y in range(height):
@@ -82,11 +80,12 @@ def create_test_image(width: int, height: int,
             b = int(255 * (x + y) / (width + height))
             pixels[x, y] = (r, g, b)
 
-    img.save(output_path, 'PNG')
+    img.save(output_path, "PNG")
 
 
-def benchmark_operation(name: str, image_path: str,
-                       password: str, passphrase: str) -> BenchmarkResult:
+def benchmark_operation(
+    name: str, image_path: str, password: str, passphrase: str
+) -> BenchmarkResult:
     """Benchmark a complete backup and restore operation."""
     import tempfile
 
@@ -96,7 +95,7 @@ def benchmark_operation(name: str, image_path: str,
         result = BenchmarkResult(name, (width, height), len(password))
         result.capacity_bytes = calculate_capacity(img)
 
-    password_bytes = password.encode('utf-8')
+    password_bytes = password.encode("utf-8")
 
     # Start memory tracking
     tracemalloc.start()
@@ -159,7 +158,7 @@ def benchmark_operation(name: str, image_path: str,
     os.unlink(temp_stego_path)
 
     # Verify correctness
-    assert recovered_password_bytes.decode('utf-8') == password, "Password mismatch!"
+    assert recovered_password_bytes.decode("utf-8") == password, "Password mismatch!"
 
     return result
 
@@ -197,8 +196,7 @@ def run_benchmarks() -> List[BenchmarkResult]:
 
         try:
             # Run benchmark
-            result = benchmark_operation(name, image_path,
-                                        test_password, test_passphrase)
+            result = benchmark_operation(name, image_path, test_password, test_passphrase)
             results.append(result)
             print("[OK]")
         except Exception as e:
@@ -229,14 +227,18 @@ def print_summary(results: List[BenchmarkResult]) -> None:
     print("COMPARATIVE TABLE")
     print("=" * 70)
     print()
-    print(f"{'Image Size':<20} {'Pixels':<12} {'Backup (ms)':<15} {'Restore (ms)':<15} {'Memory (MB)':<12}")
+    print(
+        f"{'Image Size':<20} {'Pixels':<12} {'Backup (ms)':<15} {'Restore (ms)':<15} {'Memory (MB)':<12}"
+    )
     print("-" * 70)
 
     for result in results:
         size_str = f"{result.image_size[0]}x{result.image_size[1]}"
         pixels = result.image_size[0] * result.image_size[1]
-        print(f"{size_str:<20} {pixels:<12,} {result.total_backup_time*1000:<15.2f} "
-              f"{result.total_restore_time*1000:<15.2f} {result.peak_memory_mb:<12.2f}")
+        print(
+            f"{size_str:<20} {pixels:<12,} {result.total_backup_time*1000:<15.2f} "
+            f"{result.total_restore_time*1000:<15.2f} {result.peak_memory_mb:<12.2f}"
+        )
 
     # Performance metrics
     if results:

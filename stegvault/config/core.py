@@ -28,12 +28,14 @@ except ImportError:
 
 class ConfigError(Exception):
     """Configuration-related errors."""
+
     pass
 
 
 @dataclass
 class CryptoConfig:
     """Cryptography configuration parameters."""
+
     argon2_time_cost: int = 3  # Iterations
     argon2_memory_cost: int = 65536  # 64MB in KB
     argon2_parallelism: int = 4  # Thread count
@@ -42,6 +44,7 @@ class CryptoConfig:
 @dataclass
 class CLIConfig:
     """CLI behavior configuration."""
+
     check_strength: bool = True  # Check passphrase strength by default
     default_image_dir: str = ""  # Default directory for images
     verbose: bool = False  # Verbose output
@@ -50,6 +53,7 @@ class CLIConfig:
 @dataclass
 class Config:
     """Complete StegVault configuration."""
+
     crypto: CryptoConfig
     cli: CLIConfig
 
@@ -114,9 +118,7 @@ def load_config() -> Config:
         return get_default_config()
 
     if tomllib is None:
-        raise ConfigError(
-            "TOML support not available. Install tomli: pip install tomli"
-        )
+        raise ConfigError("TOML support not available. Install tomli: pip install tomli")
 
     try:
         with open(config_path, "rb") as f:
@@ -149,9 +151,7 @@ def save_config(config: Config) -> None:
     Raises ConfigError on failure.
     """
     if tomli_w is None:
-        raise ConfigError(
-            "TOML write support not available. Install tomli_w: pip install tomli_w"
-        )
+        raise ConfigError("TOML write support not available. Install tomli_w: pip install tomli_w")
 
     config_dir = get_config_dir()
     config_path = get_config_path()

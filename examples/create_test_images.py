@@ -8,7 +8,7 @@ import numpy as np
 
 def create_gradient_image(filename, size=(500, 500)):
     """Create a gradient image for testing."""
-    img = Image.new('RGB', size)
+    img = Image.new("RGB", size)
     draw = ImageDraw.Draw(img)
 
     for y in range(size[1]):
@@ -33,13 +33,13 @@ def create_gradient_image(filename, size=(500, 500)):
     position = ((size[0] - text_width) // 2, (size[1] - text_height) // 2)
     draw.text(position, text, fill=(255, 255, 255), font=font)
 
-    img.save(filename, 'PNG')
+    img.save(filename, "PNG")
     print(f"Created: {filename}")
 
 
 def create_pattern_image(filename, size=(500, 500)):
     """Create a geometric pattern image."""
-    img = Image.new('RGB', size, color=(50, 50, 50))
+    img = Image.new("RGB", size, color=(50, 50, 50))
     draw = ImageDraw.Draw(img)
 
     # Draw squares
@@ -47,12 +47,9 @@ def create_pattern_image(filename, size=(500, 500)):
     for i in range(0, size[0], square_size):
         for j in range(0, size[1], square_size):
             if (i // square_size + j // square_size) % 2 == 0:
-                draw.rectangle(
-                    [i, j, i + square_size, j + square_size],
-                    fill=(100, 150, 200)
-                )
+                draw.rectangle([i, j, i + square_size, j + square_size], fill=(100, 150, 200))
 
-    img.save(filename, 'PNG')
+    img.save(filename, "PNG")
     print(f"Created: {filename}")
 
 
@@ -67,7 +64,7 @@ def create_nature_image(filename, size=(500, 500)):
         img_array[y, :] = [
             int(135 + progress * 50),  # R
             int(206 - progress * 50),  # G
-            int(235 - progress * 20)   # B
+            int(235 - progress * 20),  # B
         ]
 
     # Ground (bottom half)
@@ -79,17 +76,17 @@ def create_nature_image(filename, size=(500, 500)):
     img_array = np.clip(img_array.astype(np.int16) + noise, 0, 255).astype(np.uint8)
 
     img = Image.fromarray(img_array)
-    img.save(filename, 'PNG')
+    img.save(filename, "PNG")
     print(f"Created: {filename}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("Creating test images for StegVault examples...")
     print("-" * 50)
 
-    create_gradient_image('cover_gradient.png')
-    create_pattern_image('cover_pattern.png')
-    create_nature_image('cover_nature.png')
+    create_gradient_image("cover_gradient.png")
+    create_pattern_image("cover_pattern.png")
+    create_nature_image("cover_nature.png")
 
     print("-" * 50)
     print("Done! Test images created successfully.")

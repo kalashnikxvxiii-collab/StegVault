@@ -6,25 +6,32 @@ Handles multiple backup/restore operations from configuration files.
 
 import json
 import os
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional, Tuple, Callable
 from dataclasses import dataclass
 from pathlib import Path
 
 from stegvault.crypto import encrypt_data, decrypt_data, CryptoError, DecryptionError
 from stegvault.stego import embed_payload, extract_payload, calculate_capacity, StegoError
-from stegvault.utils import serialize_payload, parse_payload, validate_payload_capacity, PayloadFormatError
+from stegvault.utils import (
+    serialize_payload,
+    parse_payload,
+    validate_payload_capacity,
+    PayloadFormatError,
+)
 from stegvault.config import load_config, ConfigError, get_default_config
 from PIL import Image
 
 
 class BatchError(Exception):
     """Batch operation errors."""
+
     pass
 
 
 @dataclass
 class BackupJob:
     """Single backup job configuration."""
+
     password: str
     image: str
     output: str
@@ -34,6 +41,7 @@ class BackupJob:
 @dataclass
 class RestoreJob:
     """Single restore job configuration."""
+
     image: str
     output: Optional[str] = None  # If None, output to stdout
     label: Optional[str] = None
@@ -42,6 +50,7 @@ class RestoreJob:
 @dataclass
 class BatchConfig:
     """Batch operation configuration."""
+
     passphrase: str
     backup_jobs: List[BackupJob]
     restore_jobs: List[RestoreJob]
@@ -84,38 +93,34 @@ def load_batch_config(config_file: str) -> BatchConfig:
         raise BatchError(f"Config file not found: {config_file}")
 
     try:
-        with open(config_file, 'r', encoding='utf-8') as f:
+        with open(config_file, "r", encoding="utf-8") as f:
             data = json.load(f)
 
-        passphrase = data.get('passphrase')
+        passphrase = data.get("passphrase")
         if not passphrase:
             raise BatchError("Missing required field: passphrase")
 
         # Parse backup jobs
-        backup_jobs = []
-        for job_data in data.get('backups', []):
+        backup_jobs: List[BackupJob] = []
+        for job_data in data.get("backups", []):
             job = BackupJob(
-                password=job_data['password'],
-                image=job_data['image'],
-                output=job_data['output'],
-                label=job_data.get('label')
+                password=job_data["password"],
+                image=job_data["image"],
+                output=job_data["output"],
+                label=job_data.get("label"),
             )
             backup_jobs.append(job)
 
         # Parse restore jobs
-        restore_jobs = []
-        for job_data in data.get('restores', []):
-            job = RestoreJob(
-                image=job_data['image'],
-                output=job_data.get('output'),
-                label=job_data.get('label')
+        restore_jobs: List[RestoreJob] = []
+        for job_data in data.get("restores", []):
+            restore_job = RestoreJob(
+                image=job_data["image"], output=job_data.get("output"), label=job_data.get("label")
             )
-            restore_jobs.append(job)
+            restore_jobs.append(restore_job)
 
         return BatchConfig(
-            passphrase=passphrase,
-            backup_jobs=backup_jobs,
-            restore_jobs=restore_jobs
+            passphrase=passphrase, backup_jobs=backup_jobs, restore_jobs=restore_jobs
         )
 
     except json.JSONDecodeError as e:
@@ -128,8 +133,8 @@ def load_batch_config(config_file: str) -> BatchConfig:
 
 def process_batch_backup(
     config: BatchConfig,
-    progress_callback: Optional[callable] = None,
-    stop_on_error: bool = False
+    progress_callback: Optional[Callable[[int, int, Optional[str]], None]] = None,
+    stop_on_error: bool = False,
 ) -> Tuple[int, int, List[str]]:
     """
     Process multiple backup operations.
@@ -170,9 +175,11 @@ def process_batch_backup(
             capacity = calculate_capacity(img)
             img.close()
 
-            password_bytes = job.password.encode('utf-8')
+            password_bytes = job.password.encode("utf-8")
             if not validate_payload_capacity(capacity, len(password_bytes)):
-                raise BatchError(f"Image too small for password (need {len(password_bytes) + 64} bytes, have {capacity})")
+                raise BatchError(
+                    f"Image too small for password (need {len(password_bytes) + 64} bytes, have {capacity})"
+                )
 
             # Encrypt
             ciphertext, salt, nonce = encrypt_data(
@@ -203,8 +210,8 @@ def process_batch_backup(
 
 def process_batch_restore(
     config: BatchConfig,
-    progress_callback: Optional[callable] = None,
-    stop_on_error: bool = False
+    progress_callback: Optional[Callable[[int, int, Optional[str]], None]] = None,
+    stop_on_error: bool = False,
 ) -> Tuple[int, int, List[str], Dict[str, str]]:
     """
     Process multiple restore operations.
@@ -253,7 +260,7 @@ def process_batch_restore(
             seed_placeholder = 0
             header_bytes = extract_payload(job.image, initial_extract_size, seed_placeholder)
 
-            if header_bytes[:4] != b'SPW1':
+            if header_bytes[:4] != b"SPW1":
                 raise BatchError("Invalid or corrupted payload")
 
             salt = header_bytes[4:20]
@@ -264,6 +271,7 @@ def process_batch_restore(
             header_bytes = extract_payload(job.image, header_size, seed)
 
             import struct
+
             ct_length = struct.unpack(">I", header_bytes[44:48])[0]
 
             total_payload_size = header_size + ct_length
@@ -285,12 +293,12 @@ def process_batch_restore(
                 parallelism=user_config.crypto.argon2_parallelism,
             )
 
-            password = password_bytes.decode('utf-8')
+            password = password_bytes.decode("utf-8")
             recovered[job_label] = password
 
             # Save to file if specified
             if job.output:
-                with open(job.output, 'w', encoding='utf-8') as f:
+                with open(job.output, "w", encoding="utf-8") as f:
                     f.write(password)
 
             successful += 1

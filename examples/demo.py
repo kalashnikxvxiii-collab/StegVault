@@ -12,7 +12,7 @@ import sys
 import os
 
 # Add parent directory to path to import stegvault
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from stegvault.crypto import encrypt_data, decrypt_data
 from stegvault.stego import embed_payload, extract_payload, calculate_capacity
@@ -62,7 +62,7 @@ def demo_backup_restore():
     print(f"Encryption passphrase: {passphrase}")
     print()
 
-    password_bytes = master_password.encode('utf-8')
+    password_bytes = master_password.encode("utf-8")
     print(f"Encrypting {len(password_bytes)} bytes...")
 
     ciphertext, salt, nonce = encrypt_data(password_bytes, passphrase)
@@ -104,7 +104,7 @@ def demo_backup_restore():
 
     # Validate magic header
     magic = header_bytes[:4]
-    if magic != b'SPW1':
+    if magic != b"SPW1":
         print(f"[ERROR] Invalid magic header: {magic}")
         return
 
@@ -137,7 +137,7 @@ def demo_backup_restore():
     # Decrypt
     print("Decrypting password...")
     recovered_bytes = decrypt_data(parsed_ciphertext, parsed_salt, parsed_nonce, passphrase)
-    recovered_password = recovered_bytes.decode('utf-8')
+    recovered_password = recovered_bytes.decode("utf-8")
     print(f"[OK] Decryption successful!")
     print()
 
@@ -167,10 +167,11 @@ def demo_backup_restore():
     print()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         demo_backup_restore()
     except Exception as e:
         print(f"\n[ERROR] {e}")
         import traceback
+
         traceback.print_exc()

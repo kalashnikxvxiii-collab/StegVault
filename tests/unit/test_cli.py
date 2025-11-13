@@ -53,12 +53,16 @@ class TestBackupCommand:
         result = runner.invoke(
             backup,
             [
-                "--image", test_image,
-                "--output", temp_output,
-                "--password", "MySecretPassword123",
-                "--passphrase", "StrongPassphrase!@#456",
-                "--no-check-strength"
-            ]
+                "--image",
+                test_image,
+                "--output",
+                temp_output,
+                "--password",
+                "MySecretPassword123",
+                "--passphrase",
+                "StrongPassphrase!@#456",
+                "--no-check-strength",
+            ],
         )
 
         assert result.exit_code == 0
@@ -70,10 +74,12 @@ class TestBackupCommand:
         result = runner.invoke(
             backup,
             [
-                "--image", test_image,
-                "--output", temp_output,
+                "--image",
+                test_image,
+                "--output",
+                temp_output,
             ],
-            input="MyPassword123\nMyPassword123\nweak\nweak\nn\n"  # Reject weak passphrase
+            input="MyPassword123\nMyPassword123\nweak\nweak\nn\n",  # Reject weak passphrase
         )
 
         assert result.exit_code == 0
@@ -85,10 +91,12 @@ class TestBackupCommand:
         result = runner.invoke(
             backup,
             [
-                "--image", test_image,
-                "--output", temp_output,
+                "--image",
+                test_image,
+                "--output",
+                temp_output,
             ],
-            input="MyPassword123\nMyPassword123\nshort\nshort\ny\n"  # Accept weak passphrase
+            input="MyPassword123\nMyPassword123\nshort\nshort\ny\n",  # Accept weak passphrase
         )
 
         assert result.exit_code == 0
@@ -100,17 +108,20 @@ class TestBackupCommand:
         result = runner.invoke(
             backup,
             [
-                "--image", "/nonexistent/image.png",
-                "--output", temp_output,
-                "--password", "MyPassword123",
-                "--passphrase", "StrongPassphrase!@#456",
-            ]
+                "--image",
+                "/nonexistent/image.png",
+                "--output",
+                temp_output,
+                "--password",
+                "MyPassword123",
+                "--passphrase",
+                "StrongPassphrase!@#456",
+            ],
         )
 
         # Click uses exit code 2 for invalid input/file not found
         assert result.exit_code in (1, 2)
-        assert ("Error: Image file not found" in result.output or
-                "does not exist" in result.output)
+        assert "Error: Image file not found" in result.output or "does not exist" in result.output
 
     def test_backup_image_too_small(self, runner, temp_output):
         """Should fail if image capacity is insufficient."""
@@ -128,12 +139,16 @@ class TestBackupCommand:
             result = runner.invoke(
                 backup,
                 [
-                    "--image", tiny_image,
-                    "--output", temp_output,
-                    "--password", long_password,
-                    "--passphrase", "StrongPassphrase!@#456",
-                    "--no-check-strength"
-                ]
+                    "--image",
+                    tiny_image,
+                    "--output",
+                    temp_output,
+                    "--password",
+                    long_password,
+                    "--passphrase",
+                    "StrongPassphrase!@#456",
+                    "--no-check-strength",
+                ],
             )
 
             assert result.exit_code == 1
@@ -150,12 +165,16 @@ class TestBackupCommand:
         result = runner.invoke(
             backup,
             [
-                "--image", test_image,
-                "--output", temp_output,
-                "--password", "test",
-                "--passphrase", "StrongPassphrase!@#456",
-                "--no-check-strength"
-            ]
+                "--image",
+                test_image,
+                "--output",
+                temp_output,
+                "--password",
+                "test",
+                "--passphrase",
+                "StrongPassphrase!@#456",
+                "--no-check-strength",
+            ],
         )
 
         assert result.exit_code == 0
@@ -176,12 +195,16 @@ class TestRestoreCommand:
         backup_result = runner.invoke(
             backup,
             [
-                "--image", test_image,
-                "--output", temp_output,
-                "--password", password,
-                "--passphrase", passphrase,
-                "--no-check-strength"
-            ]
+                "--image",
+                test_image,
+                "--output",
+                temp_output,
+                "--password",
+                password,
+                "--passphrase",
+                passphrase,
+                "--no-check-strength",
+            ],
         )
         assert backup_result.exit_code == 0
 
@@ -189,9 +212,11 @@ class TestRestoreCommand:
         restore_result = runner.invoke(
             restore,
             [
-                "--image", temp_output,
-                "--passphrase", passphrase,
-            ]
+                "--image",
+                temp_output,
+                "--passphrase",
+                passphrase,
+            ],
         )
 
         assert restore_result.exit_code == 0
@@ -204,21 +229,27 @@ class TestRestoreCommand:
         runner.invoke(
             backup,
             [
-                "--image", test_image,
-                "--output", temp_output,
-                "--password", "MyPassword",
-                "--passphrase", "CorrectPassphrase123!",
-                "--no-check-strength"
-            ]
+                "--image",
+                test_image,
+                "--output",
+                temp_output,
+                "--password",
+                "MyPassword",
+                "--passphrase",
+                "CorrectPassphrase123!",
+                "--no-check-strength",
+            ],
         )
 
         # Try to restore with wrong passphrase
         result = runner.invoke(
             restore,
             [
-                "--image", temp_output,
-                "--passphrase", "WrongPassphrase456!",
-            ]
+                "--image",
+                temp_output,
+                "--passphrase",
+                "WrongPassphrase456!",
+            ],
         )
 
         assert result.exit_code == 1
@@ -230,15 +261,16 @@ class TestRestoreCommand:
         result = runner.invoke(
             restore,
             [
-                "--image", "/nonexistent/backup.png",
-                "--passphrase", "SomePassphrase123",
-            ]
+                "--image",
+                "/nonexistent/backup.png",
+                "--passphrase",
+                "SomePassphrase123",
+            ],
         )
 
         # Click uses exit code 2 for invalid input/file not found
         assert result.exit_code in (1, 2)
-        assert ("Error: Image file not found" in result.output or
-                "does not exist" in result.output)
+        assert "Error: Image file not found" in result.output or "does not exist" in result.output
 
     def test_restore_to_file(self, runner, test_image, temp_output):
         """Should save restored password to file."""
@@ -249,32 +281,39 @@ class TestRestoreCommand:
         runner.invoke(
             backup,
             [
-                "--image", test_image,
-                "--output", temp_output,
-                "--password", password,
-                "--passphrase", passphrase,
-                "--no-check-strength"
-            ]
+                "--image",
+                test_image,
+                "--output",
+                temp_output,
+                "--password",
+                password,
+                "--passphrase",
+                passphrase,
+                "--no-check-strength",
+            ],
         )
 
         # Restore to file
-        with tempfile.NamedTemporaryFile(mode='w', suffix=".txt", delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as tmp:
             output_file = tmp.name
 
         try:
             result = runner.invoke(
                 restore,
                 [
-                    "--image", temp_output,
-                    "--passphrase", passphrase,
-                    "--output", output_file,
-                ]
+                    "--image",
+                    temp_output,
+                    "--passphrase",
+                    passphrase,
+                    "--output",
+                    output_file,
+                ],
             )
 
             assert result.exit_code == 0
             assert os.path.exists(output_file)
 
-            with open(output_file, 'r') as f:
+            with open(output_file, "r") as f:
                 saved_password = f.read().strip()
 
             assert saved_password == password
@@ -294,12 +333,16 @@ class TestRestoreCommand:
         backup_result = runner.invoke(
             backup,
             [
-                "--image", test_image,
-                "--output", temp_output,
-                "--password", password,
-                "--passphrase", passphrase,
-                "--no-check-strength"
-            ]
+                "--image",
+                test_image,
+                "--output",
+                temp_output,
+                "--password",
+                password,
+                "--passphrase",
+                passphrase,
+                "--no-check-strength",
+            ],
         )
         assert backup_result.exit_code == 0
 
@@ -307,9 +350,11 @@ class TestRestoreCommand:
         restore_result = runner.invoke(
             restore,
             [
-                "--image", temp_output,
-                "--passphrase", passphrase,
-            ]
+                "--image",
+                temp_output,
+                "--passphrase",
+                passphrase,
+            ],
         )
 
         assert restore_result.exit_code == 0
@@ -338,8 +383,7 @@ class TestCheckCommand:
 
         # Click uses exit code 2 for invalid input/file not found
         assert result.exit_code in (1, 2)
-        assert ("Error: Image file not found" in result.output or
-                "does not exist" in result.output)
+        assert "Error: Image file not found" in result.output or "does not exist" in result.output
 
     def test_check_small_image_warning(self, runner):
         """Should warn for very small images."""
@@ -355,8 +399,11 @@ class TestCheckCommand:
 
             assert result.exit_code == 0
             # Should show small capacity warning
-            assert ("Warning:" in result.output or "Note:" in result.output or
-                    "limited" in result.output.lower())
+            assert (
+                "Warning:" in result.output
+                or "Note:" in result.output
+                or "limited" in result.output.lower()
+            )
 
         finally:
             try:
@@ -425,12 +472,16 @@ class TestEndToEndWorkflow:
         backup_result = runner.invoke(
             backup,
             [
-                "--image", test_image,
-                "--output", temp_output,
-                "--password", password,
-                "--passphrase", passphrase,
-                "--no-check-strength"
-            ]
+                "--image",
+                test_image,
+                "--output",
+                temp_output,
+                "--password",
+                password,
+                "--passphrase",
+                passphrase,
+                "--no-check-strength",
+            ],
         )
         assert backup_result.exit_code == 0
         assert os.path.exists(temp_output)
@@ -439,9 +490,11 @@ class TestEndToEndWorkflow:
         restore_result = runner.invoke(
             restore,
             [
-                "--image", temp_output,
-                "--passphrase", passphrase,
-            ]
+                "--image",
+                temp_output,
+                "--passphrase",
+                passphrase,
+            ],
         )
         assert restore_result.exit_code == 0
         assert password in restore_result.output
@@ -474,12 +527,16 @@ class TestEndToEndWorkflow:
                 result = runner.invoke(
                     backup,
                     [
-                        "--image", test_img,
-                        "--output", backup_path,
-                        "--password", pwd,
-                        "--passphrase", passphrase,
-                        "--no-check-strength"
-                    ]
+                        "--image",
+                        test_img,
+                        "--output",
+                        backup_path,
+                        "--password",
+                        pwd,
+                        "--passphrase",
+                        passphrase,
+                        "--no-check-strength",
+                    ],
                 )
                 assert result.exit_code == 0
 
@@ -490,9 +547,11 @@ class TestEndToEndWorkflow:
                 restore_result = runner.invoke(
                     restore,
                     [
-                        "--image", backup_path,
-                        "--passphrase", passphrase,
-                    ]
+                        "--image",
+                        backup_path,
+                        "--passphrase",
+                        passphrase,
+                    ],
                 )
                 assert restore_result.exit_code == 0
                 assert original_pwd in restore_result.output
@@ -522,12 +581,16 @@ class TestEndToEndWorkflow:
             backup_result = runner.invoke(
                 backup,
                 [
-                    "--image", test_image,
-                    "--output", temp_output,
-                    "--password", password,
-                    "--passphrase", passphrase,
-                    "--no-check-strength"
-                ]
+                    "--image",
+                    test_image,
+                    "--output",
+                    temp_output,
+                    "--password",
+                    password,
+                    "--passphrase",
+                    passphrase,
+                    "--no-check-strength",
+                ],
             )
 
             if backup_result.exit_code == 0:
@@ -535,9 +598,11 @@ class TestEndToEndWorkflow:
                 restore_result = runner.invoke(
                     restore,
                     [
-                        "--image", temp_output,
-                        "--passphrase", passphrase,
-                    ]
+                        "--image",
+                        temp_output,
+                        "--passphrase",
+                        passphrase,
+                    ],
                 )
                 assert restore_result.exit_code == 0
                 assert password in restore_result.output
