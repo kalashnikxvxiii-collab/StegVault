@@ -224,9 +224,8 @@ class TestExtraction:
                     pass
 
     def test_extract_with_wrong_seed(self, test_image_medium):
-        """Should extract garbage with wrong seed."""
-        # Use payload larger than 20 bytes (magic + salt are stored sequentially)
-        # so the random-ordered part will be different with wrong seed
+        """Should extract same data regardless of seed (sequential ordering)."""
+        # With sequential ordering, seed is ignored - extraction should always succeed
         original_payload = b"Secret data that is longer than 20 bytes for testing"
         correct_seed = 11111
         wrong_seed = 99999
@@ -238,11 +237,11 @@ class TestExtraction:
             # Embed with correct seed
             embed_payload(test_image_medium, original_payload, correct_seed, stego_path)
 
-            # Extract with wrong seed
+            # Extract with different seed (should work anyway with sequential ordering)
             extracted = extract_payload(stego_path, len(original_payload), wrong_seed)
 
-            # Should get different data (at least the part beyond first 20 bytes)
-            assert extracted != original_payload
+            # Should get same data since seed is ignored in sequential mode
+            assert extracted == original_payload
 
         finally:
             if os.path.exists(stego_path):

@@ -2,10 +2,13 @@
 PNG LSB Steganography for StegVault.
 
 Embeds and extracts encrypted payloads in PNG images using Least Significant Bit
-modification with pseudo-random pixel ordering for detection resistance.
+modification with sequential pixel ordering for reliability and simplicity.
+
+The payload begins with a "SPW1" magic header for validation.
+Security is provided by strong cryptography (XChaCha20-Poly1305 + Argon2id),
+not by pixel ordering.
 """
 
-import random
 from typing import Tuple, Optional, List
 from PIL import Image
 import numpy as np
@@ -49,71 +52,6 @@ def calculate_capacity(image: Image.Image) -> int:
     return (width * height * 3) // 8
 
 
-def _generate_pixel_sequence(
-    width: int, height: int, seed: int, count: Optional[int] = None
-) -> list:
-    """
-    Generate pseudo-random sequence of pixel coordinates.
-
-    Optimized to generate only the number of pixels needed rather than
-    shuffling all pixels in the image. For small images or when many pixels
-    are needed, falls back to the shuffle-all approach for reliability.
-
-    Args:
-        width: Image width
-        height: Image height
-        seed: Random seed (derived from salt for reproducibility)
-        count: Number of pixels to generate (if None, generates all pixels)
-
-    Returns:
-        List of (x, y) tuples in pseudo-random order
-    """
-    total_pixels = width * height
-
-    # Use shuffle-all approach if:
-    # 1. count is not specified
-    # 2. count >= total pixels
-    # 3. count > 10% of total pixels (threshold for optimization benefit)
-    # 4. total pixels < 50,000 (small images, shuffling is cheap)
-    if count is None or count >= total_pixels or count > total_pixels * 0.1 or total_pixels < 50000:
-
-        # Create all pixel coordinates
-        pixels = [(x, y) for y in range(height) for x in range(width)]
-
-        # Shuffle deterministically based on seed (using seed derived from cryptographic salt)
-        # nosec B311: random.Random() is used here for deterministic pixel ordering,
-        # not for cryptographic purposes. The seed itself is derived from crypto-grade randomness.
-        rng = random.Random(seed)  # nosec B311
-        rng.shuffle(pixels)
-
-        # Return only the number of pixels needed
-        return pixels[:count] if count is not None else pixels
-
-    # Optimized approach: generate only the pixels we need
-    # (only used for large images where we need very few pixels)
-    # nosec B311: random.Random() is used here for deterministic pixel ordering,
-    # not for cryptographic purposes. The seed itself is derived from crypto-grade randomness.
-    rng = random.Random(seed)  # nosec B311
-
-    pixels = []
-    used_positions = set()
-
-    while len(pixels) < count:
-        # Generate random position
-        pos = rng.randint(0, total_pixels - 1)
-
-        # Skip if already used
-        if pos in used_positions:
-            continue
-
-        used_positions.add(pos)
-
-        # Convert linear position to (x, y) coordinates
-        y = pos // width
-        x = pos % width
-        pixels.append((x, y))
-
-    return pixels
 
 
 def _bytes_to_bits(data: bytes) -> list:
@@ -158,15 +96,19 @@ def _bits_to_bytes(bits: list) -> bytes:
 
 
 def embed_payload(
-    image_path: str, payload: bytes, seed: int, output_path: Optional[str] = None
+    image_path: str, payload: bytes, seed: int = 0, output_path: Optional[str] = None
 ) -> Image.Image:
     """
-    Embed payload in PNG image using LSB steganography.
+    Embed payload in PNG image using LSB steganography with sequential ordering.
+
+    The payload is embedded left-to-right, top-to-bottom in the RGB channels.
+    Security is provided by strong cryptography (XChaCha20-Poly1305 + Argon2id),
+    not by pixel ordering.
 
     Args:
         image_path: Path to cover image (PNG)
-        payload: Binary payload to embed
-        seed: Random seed for pixel ordering (derive from salt)
+        payload: Binary payload to embed (should start with "SPW1" magic header)
+        seed: Deprecated parameter kept for backward compatibility (ignored)
         output_path: Optional path to save stego image
 
     Returns:
@@ -211,45 +153,14 @@ def embed_payload(
         # Convert payload to bits
         payload_bits = _bytes_to_bits(payload)
 
-        # Embed bits in LSB of pixel channels
-        # IMPORTANT: For the first 20 bytes (magic + salt), use sequential order
-        # This allows extraction without knowing the seed (which is derived from salt)
-        # The remaining payload uses pseudo-random ordering
-
-        HEADER_SIZE = 20  # Magic (4) + Salt (16) bytes
-        header_bits = min(HEADER_SIZE * 8, len(payload_bits))
-
-        # Embed header sequentially (left-to-right, top-to-bottom)
+        # Embed all bits sequentially (left-to-right, top-to-bottom)
+        # This is simple, reliable, and avoids any pixel overlap issues
         bit_index = 0
         for y in range(height):
             for x in range(width):
-                if bit_index >= header_bits:
-                    break
-
-                for channel in range(3):  # R=0, G=1, B=2
-                    if bit_index >= header_bits:
-                        break
-
-                    # Clear LSB and set to payload bit
-                    pixels[y, x, channel] = (pixels[y, x, channel] & 0xFE) | payload_bits[bit_index]
-                    bit_index += 1
-
-            if bit_index >= header_bits:
-                break
-
-        # Embed remaining payload with pseudo-random ordering
-        if bit_index < len(payload_bits):
-            # Calculate how many pixels we need (3 bits per pixel for RGB)
-            remaining_bits = len(payload_bits) - bit_index
-            pixels_needed = (remaining_bits + 2) // 3  # Round up
-
-            pixel_sequence = _generate_pixel_sequence(width, height, seed, pixels_needed)
-
-            for x, y in pixel_sequence:
                 if bit_index >= len(payload_bits):
                     break
 
-                # Modify LSB of R, G, B channels
                 for channel in range(3):  # R=0, G=1, B=2
                     if bit_index >= len(payload_bits):
                         break
@@ -257,6 +168,9 @@ def embed_payload(
                     # Clear LSB and set to payload bit
                     pixels[y, x, channel] = (pixels[y, x, channel] & 0xFE) | payload_bits[bit_index]
                     bit_index += 1
+
+            if bit_index >= len(payload_bits):
+                break
 
         # Convert back to PIL Image
         stego_image = Image.fromarray(pixels, mode="RGB")
@@ -273,14 +187,14 @@ def embed_payload(
         raise StegoError(f"Embedding failed: {e}")
 
 
-def extract_payload(image_path: str, payload_size: int, seed: int) -> bytes:
+def extract_payload(image_path: str, payload_size: int, seed: int = 0) -> bytes:
     """
-    Extract payload from PNG image using LSB steganography.
+    Extract payload from PNG image using LSB steganography with sequential ordering.
 
     Args:
         image_path: Path to stego image
         payload_size: Size of payload in bytes
-        seed: Random seed used during embedding (same as embed)
+        seed: Deprecated parameter kept for backward compatibility (ignored)
 
     Returns:
         Extracted binary payload
@@ -320,50 +234,24 @@ def extract_payload(image_path: str, payload_size: int, seed: int) -> bytes:
         # Close the original image now that we have the pixel data
         image.close()
 
-        # Extract bits from LSB of pixel channels
-        # IMPORTANT: For the first 20 bytes (magic + salt), extract sequentially
-        # The remaining payload uses pseudo-random ordering with the provided seed
+        # Extract all bits sequentially (left-to-right, top-to-bottom)
         extracted_bits: List[int] = []
         bits_needed = payload_size * 8
 
-        HEADER_SIZE = 20  # Magic (4) + Salt (16) bytes
-        header_bits = min(HEADER_SIZE * 8, bits_needed)
-
-        # Extract header sequentially (left-to-right, top-to-bottom)
         for y in range(height):
             for x in range(width):
-                if len(extracted_bits) >= header_bits:
-                    break
-
-                for channel in range(3):  # R=0, G=1, B=2
-                    if len(extracted_bits) >= header_bits:
-                        break
-
-                    bit = pixels[y, x, channel] & 1
-                    extracted_bits.append(bit)
-
-            if len(extracted_bits) >= header_bits:
-                break
-
-        # Extract remaining payload with pseudo-random ordering
-        if len(extracted_bits) < bits_needed:
-            # Calculate how many pixels we need (3 bits per pixel for RGB)
-            remaining_bits = bits_needed - len(extracted_bits)
-            pixels_needed = (remaining_bits + 2) // 3  # Round up
-
-            pixel_sequence = _generate_pixel_sequence(width, height, seed, pixels_needed)
-
-            for x, y in pixel_sequence:
                 if len(extracted_bits) >= bits_needed:
                     break
 
-                # Extract LSB from R, G, B channels
                 for channel in range(3):  # R=0, G=1, B=2
                     if len(extracted_bits) >= bits_needed:
                         break
 
                     bit = pixels[y, x, channel] & 1
                     extracted_bits.append(bit)
+
+            if len(extracted_bits) >= bits_needed:
+                break
 
         # Convert bits to bytes
         payload = _bits_to_bytes(extracted_bits[:bits_needed])
