@@ -115,49 +115,64 @@ class TestConfigPaths:
 
     def test_get_config_dir_windows(self, monkeypatch):
         """Should return correct config dir on Windows."""
+        import os
+
         monkeypatch.setattr(sys, "platform", "win32")
         monkeypatch.setenv("APPDATA", "C:\\Users\\Test\\AppData\\Roaming")
 
         config_dir = get_config_dir()
-        # Use string comparison for cross-platform compatibility
-        assert str(config_dir) == str(Path("C:\\Users\\Test\\AppData\\Roaming\\StegVault"))
+        # Normalize paths for cross-platform compatibility
+        expected = Path("C:\\Users\\Test\\AppData\\Roaming\\StegVault")
+        assert os.path.normpath(str(config_dir)) == os.path.normpath(str(expected))
 
     def test_get_config_dir_windows_no_appdata(self, monkeypatch):
         """Should fallback to home dir on Windows without APPDATA."""
+        import os
+
         monkeypatch.setattr(sys, "platform", "win32")
         monkeypatch.delenv("APPDATA", raising=False)
         monkeypatch.setattr(Path, "home", lambda: Path("/home/test"))
 
         config_dir = get_config_dir()
-        # Use string comparison for cross-platform compatibility
-        assert str(config_dir) == str(Path("/home/test/.stegvault"))
+        # Normalize paths for cross-platform compatibility
+        expected = Path("/home/test/.stegvault")
+        assert os.path.normpath(str(config_dir)) == os.path.normpath(str(expected))
 
     def test_get_config_dir_unix_with_xdg(self, monkeypatch):
         """Should use XDG_CONFIG_HOME on Unix when set."""
+        import os
+
         monkeypatch.setattr(sys, "platform", "linux")
         monkeypatch.setenv("XDG_CONFIG_HOME", "/home/test/.config")
 
         config_dir = get_config_dir()
-        # Use string comparison for cross-platform compatibility
-        assert str(config_dir) == str(Path("/home/test/.config/stegvault"))
+        # Normalize paths for cross-platform compatibility
+        expected = Path("/home/test/.config/stegvault")
+        assert os.path.normpath(str(config_dir)) == os.path.normpath(str(expected))
 
     def test_get_config_dir_unix_without_xdg(self, monkeypatch):
         """Should fallback to ~/.config on Unix without XDG."""
+        import os
+
         monkeypatch.setattr(sys, "platform", "linux")
         monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
         monkeypatch.setattr(Path, "home", lambda: Path("/home/test"))
 
         config_dir = get_config_dir()
-        # Use string comparison for cross-platform compatibility
-        assert str(config_dir) == str(Path("/home/test/.config/stegvault"))
+        # Normalize paths for cross-platform compatibility
+        expected = Path("/home/test/.config/stegvault")
+        assert os.path.normpath(str(config_dir)) == os.path.normpath(str(expected))
 
     def test_get_config_path(self, monkeypatch):
         """Should return config.toml in config directory."""
+        import os
+
         monkeypatch.setattr("stegvault.config.core.get_config_dir", lambda: Path("/tmp/stegvault"))
 
         config_path = get_config_path()
-        # Use string comparison for cross-platform compatibility
-        assert str(config_path) == str(Path("/tmp/stegvault/config.toml"))
+        # Normalize paths for cross-platform compatibility
+        expected = Path("/tmp/stegvault/config.toml")
+        assert os.path.normpath(str(config_path)) == os.path.normpath(str(expected))
 
 
 class TestDefaultConfig:
