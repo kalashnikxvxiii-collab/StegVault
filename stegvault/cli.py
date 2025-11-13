@@ -11,6 +11,7 @@ import threading
 import time
 from typing import Any, Optional, List
 
+from stegvault import __version__
 from stegvault.crypto import (
     encrypt_data,
     decrypt_data,
@@ -38,7 +39,7 @@ from stegvault.config import (
 
 
 @click.group()
-@click.version_option(version="0.2.0")
+@click.version_option(version=__version__)
 def main() -> None:
     """
     StegVault - Password Manager with Steganography

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.3] - 2025-11-13
+
+### Fixed
+- CLI `--version` command now correctly displays the current version from `__version__`
+- Previously showed hardcoded "0.2.0" instead of actual package version
+
+### Changed
+- Version test now dynamically checks against `__version__` instead of hardcoded value
+
 ## [0.3.2] - 2025-11-13
 
 ### Added
@@ -188,6 +197,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Windows console Unicode character display issues (does not affect functionality)
 - Temporary file cleanup warnings in Windows during tests (Pillow file locking)
 
+[0.3.3]: https://github.com/kalashnikxvxiii-collab/stegvault/releases/tag/v0.3.3
 [0.3.2]: https://github.com/kalashnikxvxiii-collab/stegvault/releases/tag/v0.3.2
 [0.3.1]: https://github.com/kalashnikxvxiii-collab/stegvault/releases/tag/v0.3.1
 [0.3.0]: https://github.com/kalashnikxvxiii-collab/stegvault/releases/tag/v0.3.0
