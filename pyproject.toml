@@ -39,11 +39,6 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
 ]
 
-[project.urls]
-Homepage = "https://github.com/kalashnikxvxiii-collab/stegvault"
-Repository = "https://github.com/kalashnikxvxiii-collab/stegvault"
-Issues = "https://github.com/kalashnikxvxiii-collab/stegvault/issues"
-Changelog = "https://github.com/kalashnikxvxiii-collab/stegvault/blob/main/CHANGELOG.md"
 dependencies = [
     "PyNaCl>=1.5.0",
     "argon2-cffi>=23.1.0",
@@ -53,6 +48,12 @@ dependencies = [
     "tomli>=2.0.0; python_version < '3.11'",
     "tomli-w>=1.0.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/kalashnikxvxiii-collab/stegvault"
+Repository = "https://github.com/kalashnikxvxiii-collab/stegvault"
+Issues = "https://github.com/kalashnikxvxiii-collab/stegvault/issues"
+Changelog = "https://github.com/kalashnikxvxiii-collab/stegvault/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [
