@@ -220,9 +220,7 @@ class TestBatchBackup:
         )
 
         try:
-            successful, failed, errors = process_batch_backup(
-                config, stop_on_error=False
-            )
+            successful, failed, errors = process_batch_backup(config, stop_on_error=False)
 
             assert successful == 2
             assert failed == 0
@@ -253,9 +251,7 @@ class TestBatchBackup:
         )
 
         try:
-            process_batch_backup(
-                config, progress_callback=progress_callback, stop_on_error=False
-            )
+            process_batch_backup(config, progress_callback=progress_callback, stop_on_error=False)
 
             assert len(progress_calls) == 1
             assert progress_calls[0] == (1, 1, "Test Job")
@@ -283,9 +279,7 @@ class TestBatchBackup:
         )
 
         try:
-            successful, failed, errors = process_batch_backup(
-                config, stop_on_error=False
-            )
+            successful, failed, errors = process_batch_backup(config, stop_on_error=False)
 
             # Job 1 succeeds, Job 2 fails (missing image), Job 3 succeeds
             assert successful == 2
@@ -317,9 +311,7 @@ class TestBatchBackup:
         )
 
         try:
-            successful, failed, errors = process_batch_backup(
-                config, stop_on_error=True
-            )
+            successful, failed, errors = process_batch_backup(config, stop_on_error=True)
 
             # Job 1 succeeds, Job 2 fails and stops, Job 3 never runs
             assert successful == 1
@@ -353,9 +345,7 @@ class TestBatchBackup:
         )
 
         try:
-            successful, failed, errors = process_batch_backup(
-                config, stop_on_error=False
-            )
+            successful, failed, errors = process_batch_backup(config, stop_on_error=False)
 
             assert successful == 0
             assert failed == 1

@@ -28,9 +28,7 @@ def temp_config_dir(monkeypatch):
     """Create temporary config directory for testing."""
     with tempfile.TemporaryDirectory() as tmpdir:
         # Mock the config directory to use temp directory
-        monkeypatch.setattr(
-            "stegvault.config.core.get_config_dir", lambda: Path(tmpdir)
-        )
+        monkeypatch.setattr("stegvault.config.core.get_config_dir", lambda: Path(tmpdir))
         yield Path(tmpdir)
 
 
@@ -46,9 +44,7 @@ class TestDataclasses:
 
     def test_crypto_config_custom_values(self):
         """Should create CryptoConfig with custom values."""
-        config = CryptoConfig(
-            argon2_time_cost=5, argon2_memory_cost=131072, argon2_parallelism=8
-        )
+        config = CryptoConfig(argon2_time_cost=5, argon2_memory_cost=131072, argon2_parallelism=8)
         assert config.argon2_time_cost == 5
         assert config.argon2_memory_cost == 131072
         assert config.argon2_parallelism == 8
@@ -62,9 +58,7 @@ class TestDataclasses:
 
     def test_cli_config_custom_values(self):
         """Should create CLIConfig with custom values."""
-        config = CLIConfig(
-            check_strength=False, default_image_dir="/tmp/images", verbose=True
-        )
+        config = CLIConfig(check_strength=False, default_image_dir="/tmp/images", verbose=True)
         assert config.check_strength is False
         assert config.default_image_dir == "/tmp/images"
         assert config.verbose is True
@@ -125,7 +119,8 @@ class TestConfigPaths:
         monkeypatch.setenv("APPDATA", "C:\\Users\\Test\\AppData\\Roaming")
 
         config_dir = get_config_dir()
-        assert config_dir == Path("C:\\Users\\Test\\AppData\\Roaming\\StegVault")
+        # Use string comparison for cross-platform compatibility
+        assert str(config_dir) == str(Path("C:\\Users\\Test\\AppData\\Roaming\\StegVault"))
 
     def test_get_config_dir_windows_no_appdata(self, monkeypatch):
         """Should fallback to home dir on Windows without APPDATA."""
@@ -134,7 +129,8 @@ class TestConfigPaths:
         monkeypatch.setattr(Path, "home", lambda: Path("/home/test"))
 
         config_dir = get_config_dir()
-        assert config_dir == Path("/home/test/.stegvault")
+        # Use string comparison for cross-platform compatibility
+        assert str(config_dir) == str(Path("/home/test/.stegvault"))
 
     def test_get_config_dir_unix_with_xdg(self, monkeypatch):
         """Should use XDG_CONFIG_HOME on Unix when set."""
@@ -142,7 +138,8 @@ class TestConfigPaths:
         monkeypatch.setenv("XDG_CONFIG_HOME", "/home/test/.config")
 
         config_dir = get_config_dir()
-        assert config_dir == Path("/home/test/.config/stegvault")
+        # Use string comparison for cross-platform compatibility
+        assert str(config_dir) == str(Path("/home/test/.config/stegvault"))
 
     def test_get_config_dir_unix_without_xdg(self, monkeypatch):
         """Should fallback to ~/.config on Unix without XDG."""
@@ -151,16 +148,16 @@ class TestConfigPaths:
         monkeypatch.setattr(Path, "home", lambda: Path("/home/test"))
 
         config_dir = get_config_dir()
-        assert config_dir == Path("/home/test/.config/stegvault")
+        # Use string comparison for cross-platform compatibility
+        assert str(config_dir) == str(Path("/home/test/.config/stegvault"))
 
     def test_get_config_path(self, monkeypatch):
         """Should return config.toml in config directory."""
-        monkeypatch.setattr(
-            "stegvault.config.core.get_config_dir", lambda: Path("/tmp/stegvault")
-        )
+        monkeypatch.setattr("stegvault.config.core.get_config_dir", lambda: Path("/tmp/stegvault"))
 
         config_path = get_config_path()
-        assert config_path == Path("/tmp/stegvault/config.toml")
+        # Use string comparison for cross-platform compatibility
+        assert str(config_path) == str(Path("/tmp/stegvault/config.toml"))
 
 
 class TestDefaultConfig:
@@ -318,15 +315,11 @@ class TestSaveConfig:
     def test_save_config_overwrite_existing(self, temp_config_dir):
         """Should overwrite existing configuration."""
         # Save initial config
-        config1 = Config(
-            crypto=CryptoConfig(argon2_time_cost=3), cli=CLIConfig(verbose=False)
-        )
+        config1 = Config(crypto=CryptoConfig(argon2_time_cost=3), cli=CLIConfig(verbose=False))
         save_config(config1)
 
         # Save new config
-        config2 = Config(
-            crypto=CryptoConfig(argon2_time_cost=7), cli=CLIConfig(verbose=True)
-        )
+        config2 = Config(crypto=CryptoConfig(argon2_time_cost=7), cli=CLIConfig(verbose=True))
         save_config(config2)
 
         # Verify new config was saved
@@ -348,9 +341,7 @@ class TestEnsureConfigExists:
     def test_ensure_config_exists_loads_existing(self, temp_config_dir):
         """Should load existing config file."""
         # Create custom config
-        custom_config = Config(
-            crypto=CryptoConfig(argon2_time_cost=9), cli=CLIConfig(verbose=True)
-        )
+        custom_config = Config(crypto=CryptoConfig(argon2_time_cost=9), cli=CLIConfig(verbose=True))
         save_config(custom_config)
 
         # Ensure config exists should load it
@@ -359,10 +350,9 @@ class TestEnsureConfigExists:
         assert config.crypto.argon2_time_cost == 9
         assert config.cli.verbose is True
 
-    def test_ensure_config_exists_graceful_save_failure(
-        self, temp_config_dir, monkeypatch
-    ):
+    def test_ensure_config_exists_graceful_save_failure(self, temp_config_dir, monkeypatch):
         """Should return default config if save fails."""
+
         # Mock save_config to raise error
         def mock_save_config(config):
             raise ConfigError("Cannot save")
@@ -385,9 +375,7 @@ class TestConfigRoundtrip:
             crypto=CryptoConfig(
                 argon2_time_cost=10, argon2_memory_cost=262144, argon2_parallelism=16
             ),
-            cli=CLIConfig(
-                check_strength=False, default_image_dir="/custom/path", verbose=True
-            ),
+            cli=CLIConfig(check_strength=False, default_image_dir="/custom/path", verbose=True),
         )
 
         # Save
