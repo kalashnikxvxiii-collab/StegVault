@@ -639,12 +639,12 @@ class TestConfigCommand:
 
         monkeypatch.setattr("stegvault.config.core.get_config_path", lambda: config_path)
         monkeypatch.setattr("stegvault.config.core.get_config_dir", lambda: config_dir)
-        
+
         cfg = get_default_config()
         save_config(cfg)
-        
+
         result = runner.invoke(config, ["show"])
-        
+
         assert result.exit_code == 0
         assert str(config_path) in result.output
         assert "[crypto]" in result.output
@@ -657,9 +657,9 @@ class TestConfigCommand:
 
         monkeypatch.setattr("stegvault.config.core.get_config_path", lambda: config_path)
         monkeypatch.setattr("stegvault.config.core.get_config_dir", lambda: config_dir)
-        
+
         result = runner.invoke(config, ["init"])
-        
+
         assert result.exit_code == 0
         assert "Created configuration file" in result.output
         assert config_path.exists()
@@ -674,16 +674,16 @@ class TestConfigCommand:
 
         monkeypatch.setattr("stegvault.config.core.get_config_path", lambda: config_path)
         monkeypatch.setattr("stegvault.config.core.get_config_dir", lambda: config_dir)
-        
+
         # Create existing config
         cfg = get_default_config()
         save_config(cfg)
-        
+
         # Cancel overwrite
         result = runner.invoke(config, ["init"], input="n\n")
         assert result.exit_code == 0
         assert "Cancelled" in result.output
-        
+
         # Confirm overwrite
         result = runner.invoke(config, ["init"], input="y\n")
         assert result.exit_code == 0
@@ -699,12 +699,12 @@ class TestConfigCommand:
 
         monkeypatch.setattr("stegvault.config.core.get_config_path", lambda: config_path)
         monkeypatch.setattr("stegvault.config.core.get_config_dir", lambda: config_dir)
-        
+
         cfg = get_default_config()
         save_config(cfg)
-        
+
         result = runner.invoke(config, ["path"])
-        
+
         assert result.exit_code == 0
         assert str(config_dir) in result.output
         assert str(config_path) in result.output
@@ -745,15 +745,15 @@ class TestBatchCommands:
                     "password": "Password1",
                     "image": test_image,
                     "output": str(output1),
-                    "label": "Backup 1"
+                    "label": "Backup 1",
                 },
                 {
                     "password": "Password2",
                     "image": test_image,
                     "output": str(output2),
-                    "label": "Backup 2"
-                }
-            ]
+                    "label": "Backup 2",
+                },
+            ],
         }
 
         config_file = tmp_path / "batch_config.json"
@@ -772,10 +772,7 @@ class TestBatchCommands:
         """Should error when no backup jobs in config."""
         import json
 
-        config_data = {
-            "passphrase": "TestPassphrase123!",
-            "backups": []
-        }
+        config_data = {"passphrase": "TestPassphrase123!", "backups": []}
 
         config_file = tmp_path / "batch_config.json"
         with open(config_file, "w") as f:
@@ -800,15 +797,15 @@ class TestBatchCommands:
                     "password": "Password1",
                     "image": test_image,
                     "output": str(output1),
-                    "label": "Backup 1"
+                    "label": "Backup 1",
                 },
                 {
                     "password": "Password2",
                     "image": "nonexistent.png",
                     "output": str(output2),
-                    "label": "Backup 2"
-                }
-            ]
+                    "label": "Backup 2",
+                },
+            ],
         }
 
         config_file = tmp_path / "batch_config.json"
@@ -836,15 +833,15 @@ class TestBatchCommands:
                     "password": "Password1",
                     "image": "nonexistent.png",
                     "output": str(output1),
-                    "label": "Backup 1"
+                    "label": "Backup 1",
                 },
                 {
                     "password": "Password2",
                     "image": test_image,
                     "output": str(output2),
-                    "label": "Backup 2"
-                }
-            ]
+                    "label": "Backup 2",
+                },
+            ],
         }
 
         config_file = tmp_path / "batch_config.json"
@@ -888,15 +885,9 @@ class TestBatchCommands:
         config_data = {
             "passphrase": passphrase,
             "restores": [
-                {
-                    "image": str(backup1),
-                    "label": "Restore 1"
-                },
-                {
-                    "image": str(backup2),
-                    "label": "Restore 2"
-                }
-            ]
+                {"image": str(backup1), "label": "Restore 1"},
+                {"image": str(backup2), "label": "Restore 2"},
+            ],
         }
 
         config_file = tmp_path / "restore_config.json"
@@ -915,10 +906,7 @@ class TestBatchCommands:
         """Should error when no restore jobs in config."""
         import json
 
-        config_data = {
-            "passphrase": "TestPassphrase123!",
-            "restores": []
-        }
+        config_data = {"passphrase": "TestPassphrase123!", "restores": []}
 
         config_file = tmp_path / "restore_config.json"
         with open(config_file, "w") as f:
@@ -949,12 +937,7 @@ class TestBatchCommands:
         # Try to restore with wrong passphrase
         config_data = {
             "passphrase": "WrongPassphrase123!",
-            "restores": [
-                {
-                    "image": str(backup),
-                    "label": "Restore 1"
-                }
-            ]
+            "restores": [{"image": str(backup), "label": "Restore 1"}],
         }
 
         config_file = tmp_path / "restore_config.json"
