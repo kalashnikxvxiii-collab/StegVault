@@ -49,26 +49,70 @@ def calculate_capacity(image: Image.Image) -> int:
     return (width * height * 3) // 8
 
 
-def _generate_pixel_sequence(width: int, height: int, seed: int) -> list:
+def _generate_pixel_sequence(width: int, height: int, seed: int, count: Optional[int] = None) -> list:
     """
     Generate pseudo-random sequence of pixel coordinates.
+
+    Optimized to generate only the number of pixels needed rather than
+    shuffling all pixels in the image. For small images or when many pixels
+    are needed, falls back to the shuffle-all approach for reliability.
 
     Args:
         width: Image width
         height: Image height
         seed: Random seed (derived from salt for reproducibility)
+        count: Number of pixels to generate (if None, generates all pixels)
 
     Returns:
         List of (x, y) tuples in pseudo-random order
     """
-    # Create all pixel coordinates
-    pixels = [(x, y) for y in range(height) for x in range(width)]
+    total_pixels = width * height
 
-    # Shuffle deterministically based on seed (using seed derived from cryptographic salt)
+    # Use shuffle-all approach if:
+    # 1. count is not specified
+    # 2. count >= total pixels
+    # 3. count > 10% of total pixels (threshold for optimization benefit)
+    # 4. total pixels < 50,000 (small images, shuffling is cheap)
+    if (count is None or
+        count >= total_pixels or
+        count > total_pixels * 0.1 or
+        total_pixels < 50000):
+
+        # Create all pixel coordinates
+        pixels = [(x, y) for y in range(height) for x in range(width)]
+
+        # Shuffle deterministically based on seed (using seed derived from cryptographic salt)
+        # nosec B311: random.Random() is used here for deterministic pixel ordering,
+        # not for cryptographic purposes. The seed itself is derived from crypto-grade randomness.
+        rng = random.Random(seed)  # nosec B311
+        rng.shuffle(pixels)
+
+        # Return only the number of pixels needed
+        return pixels[:count] if count is not None else pixels
+
+    # Optimized approach: generate only the pixels we need
+    # (only used for large images where we need very few pixels)
     # nosec B311: random.Random() is used here for deterministic pixel ordering,
     # not for cryptographic purposes. The seed itself is derived from crypto-grade randomness.
     rng = random.Random(seed)  # nosec B311
-    rng.shuffle(pixels)
+
+    pixels = []
+    used_positions = set()
+
+    while len(pixels) < count:
+        # Generate random position
+        pos = rng.randint(0, total_pixels - 1)
+
+        # Skip if already used
+        if pos in used_positions:
+            continue
+
+        used_positions.add(pos)
+
+        # Convert linear position to (x, y) coordinates
+        y = pos // width
+        x = pos % width
+        pixels.append((x, y))
 
     return pixels
 
@@ -196,7 +240,11 @@ def embed_payload(
 
         # Embed remaining payload with pseudo-random ordering
         if bit_index < len(payload_bits):
-            pixel_sequence = _generate_pixel_sequence(width, height, seed)
+            # Calculate how many pixels we need (3 bits per pixel for RGB)
+            remaining_bits = len(payload_bits) - bit_index
+            pixels_needed = (remaining_bits + 2) // 3  # Round up
+
+            pixel_sequence = _generate_pixel_sequence(width, height, seed, pixels_needed)
 
             for x, y in pixel_sequence:
                 if bit_index >= len(payload_bits):
@@ -300,7 +348,11 @@ def extract_payload(image_path: str, payload_size: int, seed: int) -> bytes:
 
         # Extract remaining payload with pseudo-random ordering
         if len(extracted_bits) < bits_needed:
-            pixel_sequence = _generate_pixel_sequence(width, height, seed)
+            # Calculate how many pixels we need (3 bits per pixel for RGB)
+            remaining_bits = bits_needed - len(extracted_bits)
+            pixels_needed = (remaining_bits + 2) // 3  # Round up
+
+            pixel_sequence = _generate_pixel_sequence(width, height, seed, pixels_needed)
 
             for x, y in pixel_sequence:
                 if len(extracted_bits) >= bits_needed:

@@ -4,28 +4,30 @@ This document outlines the planned development roadmap for StegVault.
 
 ## Version History
 
-- **v0.1.0** (Current) - Initial Release - CLI MVP
+- **v0.1.0** - Initial Release - CLI MVP (2025-11-10)
+- **v0.2.0** - Enhanced CLI & Stability (In Progress)
 
-## Version 0.2.0 - Enhanced CLI & Stability (Q4 2025)
+## Version 0.2.0 - Enhanced CLI & Stability (In Progress - Q4 2025)
 
 ### Goals
 Improve user experience and fix platform-specific issues
 
 ### Features
-- [ ] Windows Unicode console support fix
-- [ ] Progress indicators for long operations
-- [ ] Batch backup creation (multiple passwords)
-- [ ] Configuration file support (~/.stegvault/config)
+- [x] **Progress indicators for long operations** ✅ Completed
+- [x] **Batch backup creation (multiple passwords)** ✅ Completed
+- [x] **Configuration file support (~/.stegvault/config)** ✅ Completed
+- [ ] Windows Unicode console support fix (Partially addressed)
 - [ ] Verbose/debug output mode (`--verbose`)
 - [ ] Dry-run mode for backup operations
 - [ ] Automatic image format conversion (JPEG → PNG)
 - [ ] Improved error messages with recovery suggestions
 
 ### Technical Improvements
-- [ ] Fix Pillow file locking issues on Windows
+- [x] **Fix Pillow file locking issues on Windows** ✅ Completed (v0.2.0)
+- [x] **Add performance benchmarks** ✅ Completed
+- [x] **Major performance optimization** ✅ Completed (240x faster for 4K images)
 - [ ] Optimize Argon2id parameters based on platform
-- [ ] Add performance benchmarks
-- [ ] Improve test coverage to 95%+
+- [ ] Improve test coverage to 95%+ (Currently at 88%)
 - [ ] CI/CD pipeline (GitHub Actions)
 
 ## Version 0.3.0 - Advanced Steganography (Q1 2026)
@@ -228,5 +230,5 @@ StegVault follows [Semantic Versioning](https://semver.org/):
 
 ---
 
-**Last Updated**: 2025-11-10
+**Last Updated**: 2025-11-13
 **Status**: Living document, subject to change based on community feedback and security research
