@@ -123,7 +123,7 @@ class TestBatchConfigLoading:
         finally:
             try:
                 os.unlink(config_path)
-            except:
+            except OSError:
                 pass
 
     def test_load_missing_passphrase(self, test_image):
@@ -150,7 +150,7 @@ class TestBatchConfigLoading:
         finally:
             try:
                 os.unlink(config_path)
-            except:
+            except OSError:
                 pass
 
     def test_load_missing_backup_field(self, test_image):
@@ -178,7 +178,7 @@ class TestBatchConfigLoading:
         finally:
             try:
                 os.unlink(config_path)
-            except:
+            except OSError:
                 pass
 
     def test_load_empty_backup_and_restore(self):
@@ -198,7 +198,7 @@ class TestBatchConfigLoading:
         finally:
             try:
                 os.unlink(config_path)
-            except:
+            except OSError:
                 pass
 
 
@@ -233,7 +233,7 @@ class TestBatchBackup:
                 try:
                     if os.path.exists(path):
                         os.unlink(path)
-                except:
+                except OSError:
                     pass
 
     def test_batch_backup_with_progress_callback(self, test_image):
@@ -260,7 +260,7 @@ class TestBatchBackup:
             try:
                 if os.path.exists(output):
                     os.unlink(output)
-            except:
+            except OSError:
                 pass
 
     def test_batch_backup_continue_on_error(self, test_image):
@@ -291,7 +291,7 @@ class TestBatchBackup:
             try:
                 if os.path.exists(output1):
                     os.unlink(output1)
-            except:
+            except OSError:
                 pass
 
     def test_batch_backup_stop_on_error(self, test_image):
@@ -324,7 +324,7 @@ class TestBatchBackup:
                 try:
                     if os.path.exists(path):
                         os.unlink(path)
-                except:
+                except OSError:
                     pass
 
     def test_batch_backup_insufficient_capacity(self, test_image_small):
@@ -356,7 +356,7 @@ class TestBatchBackup:
             try:
                 if os.path.exists(output):
                     os.unlink(output)
-            except:
+            except OSError:
                 pass
 
 
@@ -420,7 +420,7 @@ class TestBatchRestore:
                 try:
                     if os.path.exists(path):
                         os.unlink(path)
-                except:
+                except OSError:
                     pass
 
     def test_batch_restore_wrong_passphrase(self, test_image):
@@ -459,7 +459,7 @@ class TestBatchRestore:
                 try:
                     if os.path.exists(path):
                         os.unlink(path)
-                except:
+                except OSError:
                     pass
 
     def test_batch_restore_continue_on_error(self, test_image):
@@ -505,7 +505,7 @@ class TestBatchRestore:
                 try:
                     if os.path.exists(path):
                         os.unlink(path)
-                except:
+                except OSError:
                     pass
 
     def test_batch_restore_without_output_file(self, test_image):
@@ -543,7 +543,7 @@ class TestBatchRestore:
             try:
                 if os.path.exists(backup):
                     os.unlink(backup)
-            except:
+            except OSError:
                 pass
 
 

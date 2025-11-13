@@ -4,7 +4,6 @@ Unit tests for configuration module.
 
 import pytest
 import tempfile
-import os
 import sys
 from pathlib import Path
 from unittest import mock
