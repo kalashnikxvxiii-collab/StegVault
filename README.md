@@ -3,22 +3,32 @@
 > Secure password manager using steganography to embed encrypted credentials within images
 
 [![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![Version](https://img.shields.io/badge/version-0.3.2-blue.svg)](https://github.com/kalashnikxvxiii-collab/StegVault/releases/tag/v0.3.2)
+[![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)](https://github.com/kalashnikxvxiii-collab/StegVault/releases/tag/v0.4.0)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-145_passing-brightgreen.svg)](tests/)
-[![Coverage](https://img.shields.io/badge/coverage-87%25-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-194_passing-brightgreen.svg)](tests/)
+[![Coverage](https://img.shields.io/badge/coverage-67%25-yellow.svg)](tests/)
 
-**StegVault** combines modern cryptography with steganography to create a secure, portable password backup system. Your master password is encrypted using battle-tested algorithms (XChaCha20-Poly1305 + Argon2id) and then hidden within ordinary PNG images using LSB steganography.
+**StegVault** is a full-featured password manager that combines modern cryptography with steganography. It can store either a single password or an entire vault of credentials, all encrypted using battle-tested algorithms (XChaCha20-Poly1305 + Argon2id) and hidden within ordinary PNG images using LSB steganography.
+
+**New in v0.4.0:** Full vault mode with multiple passwords in one image!
 
 ## Features
 
+### Core Features
 - 🔐 **Strong Encryption**: XChaCha20-Poly1305 AEAD with Argon2id KDF
-- 🖼️ **Invisible Storage**: LSB steganography with pseudo-random pixel ordering
+- 🖼️ **Invisible Storage**: LSB steganography with sequential pixel ordering
 - 🔒 **Zero-Knowledge**: All operations performed locally, no cloud dependencies
 - ✅ **Authenticated**: AEAD tag ensures data integrity
-- 🧪 **Well-Tested**: 145 unit tests with 87% overall coverage (all passing)
+- 🧪 **Well-Tested**: 194 unit tests with 67% overall coverage (all passing)
 - ⏱️ **User-Friendly**: Progress indicators for long operations
-- 🚀 **Easy to Use**: Simple CLI interface
+
+### Vault Mode (NEW in v0.4.0)
+- 🗄️ **Multiple Passwords**: Store entire password vault in one image
+- 🎯 **Key-Based Access**: Retrieve specific passwords by key (e.g., "gmail", "github")
+- 🔑 **Password Generator**: Cryptographically secure password generation
+- 📋 **Rich Metadata**: Username, URL, notes, tags, timestamps for each entry
+- 🔄 **Dual-Mode**: Choose single password OR vault mode
+- ♻️ **Auto-Detection**: Automatically detects format on restore (backward compatible)
 
 ## Quick Start
 
@@ -36,42 +46,71 @@ pip install -e .
 
 ### Usage
 
-#### 1. Check Image Capacity
+#### Mode 1: Single Password (Simple Backup)
 
+**1. Check Image Capacity**
 ```bash
 stegvault check -i myimage.png
 ```
 
-Output:
-```
-Image: myimage.png
-Format: PNG
-Mode: RGB
-Size: 500x500 pixels
-
-Capacity: 93750 bytes (91.55 KB)
-Max password size: ~93686 bytes (93686 characters)
-
-✓ Image has sufficient capacity for password storage.
-```
-
-#### 2. Create Backup
-
+**2. Create Backup**
 ```bash
 stegvault backup -i cover.png -o backup.png
 ```
 
-You'll be prompted for:
-- Master password (the password to encrypt and store)
-- Encryption passphrase (keep this secret!)
-
-#### 3. Restore Password
-
+**3. Restore Password**
 ```bash
-stegvault restore -i backup.png
+stegvault restore backup.png
 ```
 
-You'll be prompted for your encryption passphrase, then your password is displayed.
+#### Mode 2: Vault (Multiple Passwords) - NEW!
+
+**1. Create Vault with First Entry**
+```bash
+stegvault vault create -i cover.png -o vault.png -k gmail --generate
+# Automatically generates a secure password for Gmail
+```
+
+**2. Add More Passwords**
+```bash
+stegvault vault add vault.png -o vault_v2.png -k github -u myusername --generate
+stegvault vault add vault_v2.png -o vault_v3.png -k aws
+```
+
+**3. Retrieve Specific Password**
+```bash
+stegvault vault get vault_v3.png -k gmail
+# Output:
+# Entry: gmail
+# Username: user@gmail.com
+# URL: https://gmail.com
+# Password: X7k$mP2!qL5@wN
+```
+
+**4. List All Keys**
+```bash
+stegvault vault list vault_v3.png
+# Output:
+# Vault contains 3 entries:
+#   1. gmail (user@gmail.com)
+#   2. github (myusername)
+#   3. aws
+```
+
+**5. Update Entry**
+```bash
+stegvault vault update vault_v3.png -o vault_v4.png -k gmail --password newpass123
+```
+
+**6. Export Vault**
+```bash
+stegvault vault export vault_v4.png -o backup.json --pretty
+```
+
+**7. Delete Entry**
+```bash
+stegvault vault delete vault_v4.png -o vault_v5.png -k oldservice
+```
 
 ## How It Works
 
