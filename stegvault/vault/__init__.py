@@ -18,6 +18,7 @@ from .operations import (
     detect_format,
     parse_payload,
     single_password_to_vault,
+    import_vault_from_file,
 )
 from .generator import (
     PasswordGenerator,
@@ -25,6 +26,14 @@ from .generator import (
     generate_passphrase,
     estimate_entropy,
     assess_password_strength,
+)
+from .totp import (
+    generate_totp_secret,
+    generate_totp_code,
+    verify_totp_code,
+    get_totp_provisioning_uri,
+    generate_qr_code_ascii,
+    get_totp_time_remaining,
 )
 
 __all__ = [
@@ -42,9 +51,16 @@ __all__ = [
     "detect_format",
     "parse_payload",
     "single_password_to_vault",
+    "import_vault_from_file",
     "PasswordGenerator",
     "generate_password",
     "generate_passphrase",
     "estimate_entropy",
     "assess_password_strength",
+    "generate_totp_secret",
+    "generate_totp_code",
+    "verify_totp_code",
+    "get_totp_provisioning_uri",
+    "generate_qr_code_ascii",
+    "get_totp_time_remaining",
 ]

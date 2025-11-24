@@ -10,8 +10,9 @@ This document outlines the planned development roadmap for StegVault.
 - **v0.3.0** - Configuration & Batch Operations (2025-11-13)
 - **v0.3.1** - Test Coverage Improvements (2025-11-13)
 - **v0.3.2** - Expanded Test Suite (2025-11-13)
-- **v0.3.3** - Version Management Fixes (2025-11-13) ✅ **CURRENT**
-- **v0.4.0** - Vault Mode & Password Manager (In Progress)
+- **v0.3.3** - Version Management Fixes (2025-11-13)
+- **v0.4.0** - Vault Mode & Password Manager (2025-01-14) ✅
+- **v0.5.0** - Complete Password Manager (2025-11-15) ✅ **CURRENT**
 
 ## Completed Milestones
 
@@ -23,9 +24,19 @@ This document outlines the planned development roadmap for StegVault.
 - [x] Batch operations (JSON-based workflows)
 - [x] Configuration file support (TOML)
 - [x] Fix Pillow file locking issues on Windows
-- [x] Comprehensive test suite (145 tests, 87% coverage)
+- [x] Comprehensive test suite (145 tests, 87% coverage → 220 tests, 85% coverage in v0.4.0)
 - [x] PyPI publication and CI/CD pipeline
 - [x] Performance optimization (sequential embedding)
+
+### v0.5.0 ✅ (Released 2025-11-15)
+- [x] Vault import command for backup/restore workflows
+- [x] Clipboard integration with auto-clear functionality
+- [x] TOTP/2FA authenticator support with QR codes and manual entry
+- [x] Realistic password strength validation using zxcvbn
+- [x] Critical bug fixes for all vault CLI commands
+- [x] Test suite expansion (194 → 275 tests, 80% coverage)
+- [x] New vault.totp module (100% coverage)
+- [x] Password strength meter with detailed feedback
 
 ## Version 0.3.0 - Advanced Steganography (Q1 2026)
 
@@ -51,7 +62,7 @@ Add JPEG support and improve detection resistance
 - [ ] Evaluate F5, nsF5, and other advanced algorithms
 - [ ] Study optimal Argon2 parameters for mobile devices
 
-## Version 0.4.0 - Vault Mode & Dual-Mode Architecture (In Progress - Q4 2025)
+## Version 0.4.0 - Vault Mode & Dual-Mode Architecture ✅ (Released 2025-01-14)
 
 ### Goals
 Transform StegVault into flexible password manager with dual-mode operation
@@ -63,27 +74,42 @@ Transform StegVault into flexible password manager with dual-mode operation
 
 Users choose which mode fits their needs. Both use same crypto stack.
 
-### Features - Vault Mode
-- [ ] JSON-based vault structure with multiple entries
-- [ ] `stegvault vault create` - Initialize new vault in image
-- [ ] `stegvault vault add <key>` - Add password entry to vault
-- [ ] `stegvault vault get <key>` - Retrieve specific password by key
-- [ ] `stegvault vault list` - Show all keys (no passwords)
-- [ ] `stegvault vault update <key>` - Modify existing entry
-- [ ] `stegvault vault delete <key>` - Remove entry
-- [ ] `stegvault vault show <key>` - Display entry details (except password)
-- [ ] Auto-detection of format (single vs vault) on restore
+### Features - Vault Mode ✅
+- [x] JSON-based vault structure with multiple entries
+- [x] `stegvault vault create` - Initialize new vault in image
+- [x] `stegvault vault add <key>` - Add password entry to vault
+- [x] `stegvault vault get <key>` - Retrieve specific password by key (with --clipboard support)
+- [x] `stegvault vault list` - Show all keys (no passwords)
+- [x] `stegvault vault update <key>` - Modify existing entry
+- [x] `stegvault vault delete <key>` - Remove entry
+- [x] `stegvault vault show <key>` - Display entry details (except password)
+- [x] `stegvault vault totp <key>` - Generate TOTP/2FA codes
+- [x] Auto-detection of format (single vs vault) on restore
+- [x] `stegvault vault export` - Export vault to JSON
+- [x] `stegvault vault import` - Import vault from JSON backup
 
-### Features - Utilities
-- [ ] Integrated password generator (`--generate` flag)
-- [ ] Password strength validation
-- [ ] Entry metadata (username, URL, tags, timestamps)
-- [ ] Export vault to JSON (encrypted/plaintext options)
+### Features - Utilities ✅
+- [x] Integrated password generator (`--generate` flag)
+- [x] Password strength validation and entropy calculation
+- [x] Entry metadata (username, URL, tags, timestamps)
+- [x] Export vault to JSON (encrypted/plaintext options)
+- [x] Import vault from JSON (complete backup/restore workflow)
+- [x] Memorable passphrase generation
+- [x] Clipboard integration with auto-clear timeout
+- [x] TOTP/2FA authenticator with QR code generation
 
-### Backward Compatibility
-- [ ] Existing `backup`/`restore` commands unchanged
-- [ ] Auto-detect format during restore operation
-- [ ] Migration tool: single password → vault format
+### Backward Compatibility ✅
+- [x] Existing `backup`/`restore` commands unchanged
+- [x] Auto-detect format during restore operation
+- [ ] Migration tool: single password → vault format (planned for future release)
+
+### Testing & Quality ✅
+- [x] 49 comprehensive unit tests for vault module
+- [x] 38 comprehensive CLI tests for vault commands (import, clipboard, TOTP)
+- [x] 19 comprehensive TOTP tests (100% coverage)
+- [x] Critical bug fixes: all vault commands fully functional
+- [x] Coverage: 93% vault module, 79% CLI, 81% overall
+- [x] Total test count: 251 tests (all passing)
 
 ### Data Format
 ```json
@@ -382,22 +408,24 @@ StegVault follows [Semantic Versioning](https://semver.org/):
 
 ---
 
-**Last Updated**: 2025-01-14
+**Last Updated**: 2025-11-15
 **Status**: Living document, subject to change based on community feedback and security research
 
-## Quick Reference: Current Focus (v0.4.0)
+## Quick Reference: Current Focus (v0.5.0)
 
-**NOW IMPLEMENTING:**
-1. ✅ Vault mode - multiple passwords in single image
-2. ✅ Dual-mode architecture (single password OR vault)
-3. ✅ New CLI commands: `vault create/add/get/list/update/delete`
-4. ✅ Password generator utility
-5. ✅ Auto-detection of format on restore
+**RECENTLY COMPLETED (v0.5.0):**
+1. ✅ Vault import/export workflow - complete backup/restore
+2. ✅ Clipboard integration - secure password copying with auto-clear
+3. ✅ TOTP/2FA authenticator - built-in with QR code support
+4. ✅ Realistic password strength validation - zxcvbn integration
+5. ✅ Critical vault CLI bug fixes - all commands fully functional
+6. ✅ Test suite expansion - 275 tests, 80% coverage
 
-**NEXT UP (v0.5.0):**
+**NEXT UP (v0.6.0 / Gallery Foundation):**
 - Gallery foundation - multi-file vault management
 - Cross-vault search capabilities
 - Gallery metadata tracking
+- Vault search/filter commands
 
 **THE VISION:**
 Transform StegVault into a multimedia gallery where each photo/video/audio file can secretly store encrypted vaults. Privacy-first, distributed security, plausible deniability.

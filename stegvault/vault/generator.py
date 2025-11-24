@@ -250,24 +250,32 @@ def estimate_entropy(password: str) -> float:
 
 def assess_password_strength(password: str) -> tuple[str, float]:
     """
-    Assess password strength.
+    Assess password strength using zxcvbn (realistic analysis).
+
+    This function uses zxcvbn for realistic password strength assessment,
+    which is much more accurate than simple entropy calculations.
+    It detects patterns, dictionary words, common sequences, etc.
 
     Args:
         password: The password to assess
 
     Returns:
-        Tuple of (strength_label, entropy_bits)
-        strength_label can be: "Weak", "Fair", "Good", "Strong", "Very Strong"
+        Tuple of (strength_label, score)
+        strength_label: "Very Weak", "Weak", "Fair", "Strong", "Very Strong"
+        score: 0-4 (zxcvbn score)
     """
-    entropy = estimate_entropy(password)
+    from stegvault.crypto import get_password_strength_details
 
-    if entropy < 28:
-        return ("Weak", entropy)
-    elif entropy < 36:
-        return ("Fair", entropy)
-    elif entropy < 60:
-        return ("Good", entropy)
-    elif entropy < 128:
-        return ("Strong", entropy)
-    else:
-        return ("Very Strong", entropy)
+    details = get_password_strength_details(password)
+    score = details["score"]
+
+    # Map zxcvbn score to label
+    labels = {
+        0: "Very Weak",
+        1: "Weak",
+        2: "Fair",
+        3: "Strong",
+        4: "Very Strong",
+    }
+
+    return (labels[score], score)

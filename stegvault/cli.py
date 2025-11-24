@@ -38,6 +38,42 @@ from stegvault.config import (
 )
 
 
+def extract_full_payload(image_path: str) -> bytes:
+    """
+    Extract full payload from image following the standard pattern.
+
+    This handles the multi-step extraction process:
+    1. Extract header to determine payload size
+    2. Derive seed from salt
+    3. Extract full payload with correct seed
+    """
+    import struct
+
+    # Extract just enough to get magic + salt (first 20 bytes)
+    initial_extract_size = 20
+    header_bytes = extract_payload(image_path, initial_extract_size, seed=0)
+
+    # Validate magic header
+    if header_bytes[:4] != b"SPW1":
+        raise ValueError("Invalid or corrupted payload (bad magic header)")
+
+    # Extract salt and derive seed
+    salt = header_bytes[4:20]
+    seed = int.from_bytes(salt[:4], byteorder="big")
+
+    # Extract full header to get payload size
+    header_size = 48  # 4 (magic) + 16 (salt) + 24 (nonce) + 4 (length)
+    header_bytes = extract_payload(image_path, header_size, seed)
+
+    # Parse ciphertext length from header
+    ct_length = struct.unpack(">I", header_bytes[44:48])[0]
+    total_payload_size = header_size + ct_length
+
+    # Extract full payload
+    payload = extract_payload(image_path, total_payload_size, seed)
+    return payload
+
+
 @click.group()
 @click.version_option(version=__version__)
 def main() -> None:
@@ -733,6 +769,8 @@ def vault() -> None:
       update  - Update an existing entry
       delete  - Delete an entry from the vault
       export  - Export vault to JSON file
+      import  - Import vault from JSON file
+      totp    - Generate TOTP (2FA) code for an entry
     """
     pass
 
@@ -747,16 +785,19 @@ def vault() -> None:
 @click.option("--username", "-u", help="Username or email")
 @click.option("--url", help="Website URL")
 @click.option("--notes", "-n", help="Additional notes")
-def create(image: str, output: str, passphrase: str, key: str, password: Optional[str], generate: bool, username: Optional[str], url: Optional[str], notes: Optional[str]) -> None:
+@click.option("--totp-secret", help="TOTP secret (base32) for 2FA")
+@click.option("--totp-generate", "--totp", is_flag=True, help="Generate a new TOTP secret for 2FA")
+def create(image: str, output: str, passphrase: str, key: str, password: Optional[str], generate: bool, username: Optional[str], url: Optional[str], notes: Optional[str], totp_secret: Optional[str], totp_generate: bool) -> None:
     """
     Create a new vault with the first entry.
 
     \b
-    Example:
+    Examples:
         stegvault vault create -i cover.png -o vault.png -k gmail -u user@gmail.com --generate
+        stegvault vault create -i cover.png -o vault.png -k gmail --generate --totp-generate
     """
     try:
-        from stegvault.vault import create_vault, add_entry, vault_to_json, generate_password
+        from stegvault.vault import create_vault, add_entry, vault_to_json, generate_password, generate_totp_secret, get_totp_provisioning_uri, generate_qr_code_ascii
         from PIL import Image
 
         # Load configuration
@@ -777,10 +818,44 @@ def create(image: str, output: str, passphrase: str, key: str, password: Optiona
         elif not password:
             password = click.prompt("Password", hide_input=True, confirmation_prompt=True)
 
+        # Handle TOTP
+        final_totp_secret = None
+        if totp_generate and totp_secret:
+            click.echo("Error: Cannot use both --totp-generate and --totp-secret", err=True)
+            sys.exit(1)
+
+        if totp_generate:
+            final_totp_secret = generate_totp_secret()
+            click.echo(f"\n[TOTP Setup]")
+            click.echo(f"Generated TOTP secret: {final_totp_secret}")
+            click.echo("=" * 60)
+
+            # Display QR code
+            account_name = f"{key}@StegVault"
+            if username:
+                account_name = f"{username} ({key})"
+            uri = get_totp_provisioning_uri(final_totp_secret, account_name)
+
+            click.echo("\n📱 Option 1: Scan QR code with your authenticator app")
+            click.echo("-" * 60)
+            qr_code = generate_qr_code_ascii(uri)
+            click.echo(qr_code)
+
+            click.echo("\n🔑 Option 2: Manual entry (if QR scan fails)")
+            click.echo("-" * 60)
+            click.echo(f"Account: {account_name}")
+            click.echo(f"Secret:  {final_totp_secret}")
+            click.echo(f"Type:    Time-based (TOTP)")
+            click.echo(f"Digits:  6")
+            click.echo(f"Period:  30 seconds")
+            click.echo("=" * 60)
+        elif totp_secret:
+            final_totp_secret = totp_secret
+
         # Create vault and add first entry
-        click.echo(f"Creating vault with entry '{key}'...")
+        click.echo(f"\nCreating vault with entry '{key}'...")
         vault_obj = create_vault()
-        add_entry(vault_obj, key=key, password=password, username=username, url=url, notes=notes)
+        add_entry(vault_obj, key=key, password=password, username=username, url=url, notes=notes, totp_secret=final_totp_secret)
 
         # Serialize vault to JSON
         vault_json = vault_to_json(vault_obj)
@@ -859,7 +934,9 @@ def create(image: str, output: str, passphrase: str, key: str, password: Optiona
 @click.option("--username", "-u", help="Username or email")
 @click.option("--url", help="Website URL")
 @click.option("--notes", "-n", help="Additional notes")
-def add(vault_image: str, output: str, passphrase: str, key: str, password: Optional[str], generate: bool, username: Optional[str], url: Optional[str], notes: Optional[str]) -> None:
+@click.option("--totp-secret", help="TOTP secret (base32) for 2FA")
+@click.option("--totp-generate", "--totp", is_flag=True, help="Generate a new TOTP secret for 2FA")
+def add(vault_image: str, output: str, passphrase: str, key: str, password: Optional[str], generate: bool, username: Optional[str], url: Optional[str], notes: Optional[str], totp_secret: Optional[str], totp_generate: bool) -> None:
     """
     Add a new entry to an existing vault.
 
@@ -868,7 +945,8 @@ def add(vault_image: str, output: str, passphrase: str, key: str, password: Opti
         stegvault vault add vault.png -o vault_updated.png -k github --generate
     """
     try:
-        from stegvault.vault import add_entry as vault_add, vault_from_json, vault_to_json, generate_password, parse_payload
+        from stegvault.vault import add_entry as vault_add, vault_from_json, vault_to_json, generate_password, parse_payload as parse_vault_payload, generate_totp_secret, get_totp_provisioning_uri, generate_qr_code_ascii
+        from stegvault.utils.payload import parse_payload as parse_binary_payload
         from PIL import Image
 
         # Load configuration
@@ -889,24 +967,54 @@ def add(vault_image: str, output: str, passphrase: str, key: str, password: Opti
         elif not password:
             password = click.prompt("Password", hide_input=True, confirmation_prompt=True)
 
+        # Handle TOTP
+        final_totp_secret = None
+        if totp_generate and totp_secret:
+            click.echo("Error: Cannot use both --totp-generate and --totp-secret", err=True)
+            sys.exit(1)
+
+        if totp_generate:
+            final_totp_secret = generate_totp_secret()
+            click.echo(f"\n[TOTP Setup]")
+            click.echo(f"Generated TOTP secret: {final_totp_secret}")
+            click.echo("=" * 60)
+
+            # Display QR code
+            account_name = f"{key}@StegVault"
+            if username:
+                account_name = f"{username} ({key})"
+            uri = get_totp_provisioning_uri(final_totp_secret, account_name)
+
+            click.echo("\n📱 Option 1: Scan QR code with your authenticator app")
+            click.echo("-" * 60)
+            qr_code = generate_qr_code_ascii(uri)
+            click.echo(qr_code)
+
+            click.echo("\n🔑 Option 2: Manual entry (if QR scan fails)")
+            click.echo("-" * 60)
+            click.echo(f"Account: {account_name}")
+            click.echo(f"Secret:  {final_totp_secret}")
+            click.echo(f"Type:    Time-based (TOTP)")
+            click.echo(f"Digits:  6")
+            click.echo(f"Period:  30 seconds")
+            click.echo("=" * 60)
+        elif totp_secret:
+            final_totp_secret = totp_secret
+
         # Extract and decrypt existing vault
         click.echo("Extracting vault from image...")
-        img = Image.open(vault_image)
-        seed = 0  # Will be determined from salt
-        img.close()
-
-        payload = extract_payload(vault_image, seed)
-        salt, nonce, ciphertext = parse_payload(payload)
+        payload = extract_full_payload(vault_image)
+        salt, nonce, ciphertext = parse_binary_payload(payload)
 
         # Decrypt
         click.echo("Decrypting vault...")
-        decrypted = decrypt_data(ciphertext, passphrase, salt, nonce,
+        decrypted = decrypt_data(ciphertext, salt, nonce, passphrase,
                                  time_cost=config.crypto.argon2_time_cost,
                                  memory_cost=config.crypto.argon2_memory_cost,
                                  parallelism=config.crypto.argon2_parallelism)
 
         # Parse vault
-        parsed = parse_payload(decrypted.decode("utf-8"))
+        parsed = parse_vault_payload(decrypted.decode("utf-8"))
         if isinstance(parsed, str):
             click.echo("Error: This image contains a single password, not a vault", err=True)
             click.echo("Use 'stegvault restore' to retrieve it", err=True)
@@ -915,8 +1023,8 @@ def add(vault_image: str, output: str, passphrase: str, key: str, password: Opti
         vault_obj = parsed
 
         # Add new entry
-        click.echo(f"Adding entry '{key}' to vault...")
-        vault_add(vault_obj, key=key, password=password, username=username, url=url, notes=notes)
+        click.echo(f"\nAdding entry '{key}' to vault...")
+        vault_add(vault_obj, key=key, password=password, username=username, url=url, notes=notes, totp_secret=final_totp_secret)
 
         # Re-encrypt and embed
         vault_json = vault_to_json(vault_obj)
@@ -963,17 +1071,33 @@ def add(vault_image: str, output: str, passphrase: str, key: str, password: Opti
 @click.argument("vault_image", type=click.Path(exists=True))
 @click.option("--passphrase", prompt=True, hide_input=True, help="Vault passphrase")
 @click.option("--key", "-k", required=True, help="Entry key to retrieve")
-@click.option("--copy/--no-copy", default=False, help="Copy password to clipboard (if available)")
-def get(vault_image: str, passphrase: str, key: str, copy: bool) -> None:
+@click.option("--clipboard", "-c", is_flag=True, help="Copy password to clipboard instead of displaying")
+@click.option("--clipboard-timeout", type=int, default=0, help="Auto-clear clipboard after N seconds (0 = no auto-clear)")
+def get(vault_image: str, passphrase: str, key: str, clipboard: bool, clipboard_timeout: int) -> None:
     """
     Retrieve a password from the vault.
 
+    By default, displays the password on screen. Use --clipboard to copy
+    to clipboard instead (more secure).
+
     \b
-    Example:
+    Examples:
         stegvault vault get vault.png -k gmail
+        stegvault vault get vault.png -k gmail --clipboard
+        stegvault vault get vault.png -k gmail --clipboard --clipboard-timeout 30
     """
     try:
-        from stegvault.vault import get_entry, parse_payload
+        from stegvault.vault import get_entry, parse_payload as parse_vault_payload
+        from stegvault.utils.payload import parse_payload as parse_binary_payload
+        import pyperclip
+
+        # Validate clipboard_timeout
+        if clipboard_timeout < 0:
+            click.echo("Error: Clipboard timeout must be >= 0", err=True)
+            sys.exit(1)
+
+        if clipboard_timeout > 0 and not clipboard:
+            click.echo("Warning: --clipboard-timeout ignored without --clipboard flag", err=True)
 
         # Load configuration
         try:
@@ -984,16 +1108,16 @@ def get(vault_image: str, passphrase: str, key: str, copy: bool) -> None:
 
         # Extract and decrypt
         click.echo("Decrypting vault...")
-        payload = extract_payload(vault_image, 0)
-        salt, nonce, ciphertext = parse_payload(payload)
+        payload = extract_full_payload(vault_image)
+        salt, nonce, ciphertext = parse_binary_payload(payload)
 
-        decrypted = decrypt_data(ciphertext, passphrase, salt, nonce,
+        decrypted = decrypt_data(ciphertext, salt, nonce, passphrase,
                                  time_cost=config.crypto.argon2_time_cost,
                                  memory_cost=config.crypto.argon2_memory_cost,
                                  parallelism=config.crypto.argon2_parallelism)
 
         # Parse vault
-        parsed = parse_payload(decrypted.decode("utf-8"))
+        parsed = parse_vault_payload(decrypted.decode("utf-8"))
         if isinstance(parsed, str):
             click.echo("Error: This image contains a single password, not a vault", err=True)
             sys.exit(1)
@@ -1007,22 +1131,36 @@ def get(vault_image: str, passphrase: str, key: str, copy: bool) -> None:
             click.echo(f"Available keys: {', '.join(vault_obj.list_keys())}", err=True)
             sys.exit(1)
 
+        # Display entry info (always show metadata, conditionally show password)
         click.echo(f"\nEntry: {key}")
         if entry.username:
             click.echo(f"Username: {entry.username}")
         if entry.url:
             click.echo(f"URL: {entry.url}")
-        click.echo(f"Password: {entry.password}")
+
+        if clipboard:
+            # Copy to clipboard instead of displaying
+            try:
+                pyperclip.copy(entry.password)
+                click.echo(f"Password: ********** (copied to clipboard)")
+                click.echo("\n[OK] Password copied to clipboard")
+
+                if clipboard_timeout > 0:
+                    click.echo(f"     Clipboard will be cleared in {clipboard_timeout} seconds...")
+                    time.sleep(clipboard_timeout)
+                    pyperclip.copy("")  # Clear clipboard
+                    click.echo(f"     Clipboard cleared")
+                else:
+                    click.echo("     Remember to clear clipboard manually when done")
+            except Exception as e:
+                click.echo(f"\nError: Failed to copy to clipboard: {e}", err=True)
+                click.echo(f"Password: {entry.password}")  # Fallback to display
+        else:
+            # Display password on screen
+            click.echo(f"Password: {entry.password}")
+
         if entry.notes:
             click.echo(f"Notes: {entry.notes}")
-
-        if copy:
-            try:
-                import pyperclip
-                pyperclip.copy(entry.password)
-                click.echo("\n[OK] Password copied to clipboard")
-            except ImportError:
-                click.echo("\nWarning: pyperclip not installed, cannot copy to clipboard", err=True)
 
     except DecryptionError:
         click.echo("Error: Wrong passphrase", err=True)
@@ -1044,7 +1182,8 @@ def list(vault_image: str, passphrase: str) -> None:
         stegvault vault list vault.png
     """
     try:
-        from stegvault.vault import list_entries, parse_payload
+        from stegvault.vault import list_entries, parse_payload as parse_vault_payload
+        from stegvault.utils.payload import parse_payload as parse_binary_payload
 
         # Load configuration
         try:
@@ -1055,16 +1194,16 @@ def list(vault_image: str, passphrase: str) -> None:
 
         # Extract and decrypt
         click.echo("Decrypting vault...")
-        payload = extract_payload(vault_image, 0)
-        salt, nonce, ciphertext = parse_payload(payload)
+        payload = extract_full_payload(vault_image)
+        salt, nonce, ciphertext = parse_binary_payload(payload)
 
-        decrypted = decrypt_data(ciphertext, passphrase, salt, nonce,
+        decrypted = decrypt_data(ciphertext, salt, nonce, passphrase,
                                  time_cost=config.crypto.argon2_time_cost,
                                  memory_cost=config.crypto.argon2_memory_cost,
                                  parallelism=config.crypto.argon2_parallelism)
 
         # Parse vault
-        parsed = parse_payload(decrypted.decode("utf-8"))
+        parsed = parse_vault_payload(decrypted.decode("utf-8"))
         if isinstance(parsed, str):
             click.echo("Error: This image contains a single password, not a vault", err=True)
             sys.exit(1)
@@ -1102,6 +1241,7 @@ def show(vault_image: str, passphrase: str, key: str) -> None:
     """
     try:
         from stegvault.vault import get_entry, parse_payload as vault_parse
+        from stegvault.utils.payload import parse_payload as parse_binary_payload
 
         # Load configuration
         try:
@@ -1112,10 +1252,10 @@ def show(vault_image: str, passphrase: str, key: str) -> None:
 
         # Extract and decrypt
         click.echo("Decrypting vault...")
-        payload = extract_payload(vault_image, 0)
-        salt, nonce, ciphertext = parse_payload(payload)
+        payload = extract_full_payload(vault_image)
+        salt, nonce, ciphertext = parse_binary_payload(payload)
 
-        decrypted = decrypt_data(ciphertext, passphrase, salt, nonce,
+        decrypted = decrypt_data(ciphertext, salt, nonce, passphrase,
                                  time_cost=config.crypto.argon2_time_cost,
                                  memory_cost=config.crypto.argon2_memory_cost,
                                  parallelism=config.crypto.argon2_parallelism)
@@ -1166,7 +1306,10 @@ def show(vault_image: str, passphrase: str, key: str) -> None:
 @click.option("--username", "-u", help="New username")
 @click.option("--url", help="New URL")
 @click.option("--notes", "-n", help="New notes")
-def update(vault_image: str, output: str, passphrase: str, key: str, password: Optional[str], username: Optional[str], url: Optional[str], notes: Optional[str]) -> None:
+@click.option("--totp-secret", help="New TOTP secret (base32) for 2FA")
+@click.option("--totp-generate", "--totp", is_flag=True, help="Generate a new TOTP secret for 2FA")
+@click.option("--totp-remove", is_flag=True, help="Remove TOTP from entry")
+def update(vault_image: str, output: str, passphrase: str, key: str, password: Optional[str], username: Optional[str], url: Optional[str], notes: Optional[str], totp_secret: Optional[str], totp_generate: bool, totp_remove: bool) -> None:
     """
     Update an existing entry in the vault.
 
@@ -1175,7 +1318,8 @@ def update(vault_image: str, output: str, passphrase: str, key: str, password: O
         stegvault vault update vault.png -o vault_updated.png -k gmail --password newpass123
     """
     try:
-        from stegvault.vault import update_entry as vault_update, vault_to_json, parse_payload as vault_parse
+        from stegvault.vault import update_entry as vault_update, vault_to_json, parse_payload as vault_parse, generate_totp_secret, get_totp_provisioning_uri, generate_qr_code_ascii
+        from stegvault.utils.payload import parse_payload as parse_binary_payload
         from PIL import Image
 
         # Load configuration
@@ -1185,17 +1329,23 @@ def update(vault_image: str, output: str, passphrase: str, key: str, password: O
             from stegvault.config import get_default_config
             config = get_default_config()
 
+        # Handle TOTP flags validation
+        totp_flags_count = sum([bool(totp_secret), totp_generate, totp_remove])
+        if totp_flags_count > 1:
+            click.echo("Error: Only one of --totp-secret, --totp-generate, or --totp-remove can be used", err=True)
+            sys.exit(1)
+
         # Check if at least one field is being updated
-        if not any([password, username, url, notes]):
+        if not any([password, username, url, notes, totp_secret, totp_generate, totp_remove]):
             click.echo("Error: At least one field must be specified for update", err=True)
             sys.exit(1)
 
         # Extract and decrypt
         click.echo("Decrypting vault...")
-        payload_data = extract_payload(vault_image, 0)
-        salt, nonce, ciphertext = parse_payload(payload_data)
+        payload_data = extract_full_payload(vault_image)
+        salt, nonce, ciphertext = parse_binary_payload(payload_data)
 
-        decrypted = decrypt_data(ciphertext, passphrase, salt, nonce,
+        decrypted = decrypt_data(ciphertext, salt, nonce, passphrase,
                                  time_cost=config.crypto.argon2_time_cost,
                                  memory_cost=config.crypto.argon2_memory_cost,
                                  parallelism=config.crypto.argon2_parallelism)
@@ -1208,6 +1358,34 @@ def update(vault_image: str, output: str, passphrase: str, key: str, password: O
 
         vault_obj = parsed
 
+        # Handle TOTP updates
+        final_totp_update = None
+        totp_was_updated = False
+
+        if totp_generate:
+            final_totp_update = generate_totp_secret()
+            click.echo(f"\nGenerated TOTP secret: {final_totp_update}")
+            click.echo("Save this secret in your authenticator app!")
+
+            # Get entry for account name
+            from stegvault.vault import get_entry
+            entry = get_entry(vault_obj, key)
+            if entry:
+                account_name = f"{key}@StegVault"
+                if entry.username:
+                    account_name = f"{entry.username} ({key})"
+                uri = get_totp_provisioning_uri(final_totp_update, account_name)
+                qr_code = generate_qr_code_ascii(uri)
+                click.echo("\nScan this QR code with your authenticator app:\n")
+                click.echo(qr_code)
+            totp_was_updated = True
+        elif totp_secret:
+            final_totp_update = totp_secret
+            totp_was_updated = True
+        elif totp_remove:
+            final_totp_update = None
+            totp_was_updated = True
+
         # Build update dict
         updates = {}
         if password:
@@ -1218,6 +1396,8 @@ def update(vault_image: str, output: str, passphrase: str, key: str, password: O
             updates["url"] = url
         if notes:
             updates["notes"] = notes
+        if totp_was_updated:
+            updates["totp_secret"] = final_totp_update
 
         # Update entry
         click.echo(f"Updating entry '{key}'...")
@@ -1279,6 +1459,7 @@ def delete(vault_image: str, output: str, passphrase: str, key: str, confirm: bo
     """
     try:
         from stegvault.vault import delete_entry as vault_delete, vault_to_json, parse_payload as vault_parse
+        from stegvault.utils.payload import parse_payload as parse_binary_payload
         from PIL import Image
 
         # Load configuration
@@ -1290,10 +1471,10 @@ def delete(vault_image: str, output: str, passphrase: str, key: str, confirm: bo
 
         # Extract and decrypt
         click.echo("Decrypting vault...")
-        payload_data = extract_payload(vault_image, 0)
-        salt, nonce, ciphertext = parse_payload(payload_data)
+        payload_data = extract_full_payload(vault_image)
+        salt, nonce, ciphertext = parse_binary_payload(payload_data)
 
-        decrypted = decrypt_data(ciphertext, passphrase, salt, nonce,
+        decrypted = decrypt_data(ciphertext, salt, nonce, passphrase,
                                  time_cost=config.crypto.argon2_time_cost,
                                  memory_cost=config.crypto.argon2_memory_cost,
                                  parallelism=config.crypto.argon2_parallelism)
@@ -1369,6 +1550,7 @@ def export(vault_image: str, output: str, passphrase: str, decrypt: bool, pretty
     """
     try:
         from stegvault.vault import vault_to_json, parse_payload as vault_parse
+        from stegvault.utils.payload import parse_payload as parse_binary_payload
         import json as json_module
 
         # Load configuration
@@ -1380,10 +1562,10 @@ def export(vault_image: str, output: str, passphrase: str, decrypt: bool, pretty
 
         # Extract and decrypt
         click.echo("Decrypting vault...")
-        payload_data = extract_payload(vault_image, 0)
-        salt, nonce, ciphertext = parse_payload(payload_data)
+        payload_data = extract_full_payload(vault_image)
+        salt, nonce, ciphertext = parse_binary_payload(payload_data)
 
-        decrypted = decrypt_data(ciphertext, passphrase, salt, nonce,
+        decrypted = decrypt_data(ciphertext, salt, nonce, passphrase,
                                  time_cost=config.crypto.argon2_time_cost,
                                  memory_cost=config.crypto.argon2_memory_cost,
                                  parallelism=config.crypto.argon2_parallelism)
@@ -1426,6 +1608,269 @@ def export(vault_image: str, output: str, passphrase: str, decrypt: bool, pretty
             click.echo(f"     Mode: PLAINTEXT (passwords visible)")
         else:
             click.echo(f"     Mode: REDACTED (passwords masked)")
+
+    except DecryptionError:
+        click.echo("Error: Wrong passphrase", err=True)
+        sys.exit(1)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+
+@vault.command(name="import")
+@click.argument("json_file", type=click.Path(exists=True))
+@click.option("--image", "-i", required=True, type=click.Path(exists=True), help="Cover image")
+@click.option("--output", "-o", required=True, type=click.Path(), help="Output path for vault image")
+@click.option("--passphrase", prompt=True, hide_input=True, confirmation_prompt=True, help="Vault encryption passphrase")
+@click.option("--check-strength/--no-check-strength", default=True, help="Verify passphrase strength")
+def import_vault(json_file: str, image: str, output: str, passphrase: str, check_strength: bool) -> None:
+    """
+    Import vault from JSON file and embed in image.
+
+    Creates a new vault image from a JSON backup file. This is useful for:
+    - Restoring from exported backups
+    - Migrating vaults to new images
+    - Creating vaults from external sources
+
+    \b
+    Example:
+        stegvault vault import backup.json -i cover.png -o vault.png
+    """
+    try:
+        from stegvault.vault import import_vault_from_file, vault_to_json
+
+        # Load configuration
+        try:
+            config = load_config()
+        except ConfigError:
+            from stegvault.config import get_default_config
+            config = get_default_config()
+
+        # Verify passphrase strength
+        if check_strength:
+            is_strong, message = verify_passphrase_strength(passphrase)
+            if not is_strong:
+                click.echo(f"Warning: {message}", err=True)
+                if not click.confirm("Continue anyway?"):
+                    click.echo("Import cancelled")
+                    sys.exit(0)
+
+        # Import vault from JSON
+        click.echo(f"Loading vault from: {json_file}")
+        vault_obj = import_vault_from_file(json_file)
+        click.echo(f"[OK] Loaded vault with {len(vault_obj.entries)} entries")
+
+        # Check if any entries have no passwords (could be redacted export)
+        redacted_count = sum(1 for e in vault_obj.entries if e.password == "***REDACTED***")
+        if redacted_count > 0:
+            click.echo(f"\nWarning: {redacted_count} entries have redacted passwords!", err=True)
+            click.echo("These entries were likely exported with --no-decrypt flag.", err=True)
+            click.echo("The vault will be created, but these passwords will be '***REDACTED***'.", err=True)
+            if not click.confirm("Continue?"):
+                click.echo("Import cancelled")
+                sys.exit(0)
+
+        # Serialize vault to JSON
+        vault_json = vault_to_json(vault_obj, pretty=False)
+        vault_bytes = vault_json.encode("utf-8")
+
+        # Check image capacity
+        from PIL import Image
+        img = Image.open(image)
+        capacity = calculate_capacity(img)
+        img.close()
+
+        click.echo(f"Image capacity: {capacity} bytes")
+        click.echo(f"Vault size: {len(vault_bytes)} bytes")
+
+        if not validate_payload_capacity(capacity, len(vault_bytes)):
+            click.echo(
+                f"Error: Image too small for vault. Need at least "
+                f"{len(vault_bytes) + 64} bytes, have {capacity} bytes",
+                err=True,
+            )
+            sys.exit(1)
+
+        # Encrypt vault
+        click.echo("Encrypting vault...", nl=False)
+        click.echo(" (this may take a few seconds)", err=True)
+
+        # Show progress for key derivation
+        result: List[Any] = [None]
+        exception: List[Any] = [None]
+
+        def encrypt_worker() -> None:
+            try:
+                result[0] = encrypt_data(
+                    vault_bytes,
+                    passphrase,
+                    time_cost=config.crypto.argon2_time_cost,
+                    memory_cost=config.crypto.argon2_memory_cost,
+                    parallelism=config.crypto.argon2_parallelism,
+                )
+            except Exception as e:
+                exception[0] = e
+
+        with click.progressbar(
+            length=100,
+            label="Deriving encryption key",
+            show_eta=False,
+            show_percent=False,
+            bar_template="%(label)s [%(bar)s] %(info)s",
+        ) as bar:
+            thread = threading.Thread(target=encrypt_worker)
+            thread.start()
+
+            while thread.is_alive():
+                bar.update(10)
+                time.sleep(0.1)
+
+            thread.join()
+
+            if exception[0]:
+                raise exception[0]
+
+            bar.update(100)
+
+        if result[0] is None:
+            click.echo("Error: Encryption failed", err=True)
+            sys.exit(1)
+
+        ciphertext, salt, nonce = result[0]
+        click.echo("[OK] Encryption complete")
+
+        # Serialize payload
+        payload = serialize_payload(salt, nonce, ciphertext)
+        click.echo(f"Payload size: {len(payload)} bytes")
+
+        # Derive seed from salt for reproducible pixel ordering
+        seed = int.from_bytes(salt[:4], byteorder="big")
+
+        # Embed in image
+        click.echo("Embedding vault in image...")
+        embed_payload(image, payload, seed, output)
+        click.echo("[OK] Embedding complete")
+
+        click.echo(f"\n[OK] Vault imported successfully: {output}")
+        click.echo(f"     Entries: {len(vault_obj.entries)}")
+        click.echo("\nIMPORTANT:")
+        click.echo("- Keep both the image AND passphrase safe")
+        click.echo("- Losing either means permanent data loss")
+        click.echo("- Create multiple backup copies")
+
+    except FileNotFoundError as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except ValueError as e:
+        click.echo(f"Error: Invalid JSON file - {e}", err=True)
+        sys.exit(1)
+    except CapacityError as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except CryptoError as e:
+        click.echo(f"Encryption error: {e}", err=True)
+        sys.exit(1)
+    except StegoError as e:
+        click.echo(f"Steganography error: {e}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+
+@vault.command()
+@click.argument("vault_image", type=click.Path(exists=True))
+@click.option("--passphrase", prompt=True, hide_input=True, help="Vault passphrase")
+@click.option("--key", "-k", required=True, help="Entry key")
+@click.option("--qr", is_flag=True, help="Display QR code for authenticator app setup")
+def totp(vault_image: str, passphrase: str, key: str, qr: bool) -> None:
+    """
+    Generate TOTP (2FA) code for an entry.
+
+    Displays the current 6-digit time-based one-time password code.
+    Use --qr to display QR code for setting up in authenticator apps.
+
+    \b
+    Examples:
+        stegvault vault totp vault.png -k gmail
+        stegvault vault totp vault.png -k gmail --qr
+    """
+    try:
+        from stegvault.vault import (
+            get_entry,
+            parse_payload as parse_vault_payload,
+            generate_totp_code,
+            get_totp_time_remaining,
+            get_totp_provisioning_uri,
+            generate_qr_code_ascii,
+        )
+        from stegvault.utils.payload import parse_payload as parse_binary_payload
+
+        # Load configuration
+        try:
+            config = load_config()
+        except ConfigError:
+            from stegvault.config import get_default_config
+            config = get_default_config()
+
+        # Extract and decrypt
+        click.echo("Decrypting vault...")
+        payload = extract_full_payload(vault_image)
+        salt, nonce, ciphertext = parse_binary_payload(payload)
+
+        decrypted = decrypt_data(ciphertext, salt, nonce, passphrase,
+                                 time_cost=config.crypto.argon2_time_cost,
+                                 memory_cost=config.crypto.argon2_memory_cost,
+                                 parallelism=config.crypto.argon2_parallelism)
+
+        # Parse vault
+        parsed = parse_vault_payload(decrypted.decode("utf-8"))
+        if isinstance(parsed, str):
+            click.echo("Error: This image contains a single password, not a vault", err=True)
+            sys.exit(1)
+
+        vault_obj = parsed
+
+        # Get entry
+        entry = get_entry(vault_obj, key)
+        if not entry:
+            click.echo(f"Error: Entry '{key}' not found", err=True)
+            click.echo(f"Available keys: {', '.join(vault_obj.list_keys())}", err=True)
+            sys.exit(1)
+
+        # Check if TOTP is configured
+        if not entry.totp_secret:
+            click.echo(f"Error: Entry '{key}' does not have TOTP configured", err=True)
+            click.echo("Use 'vault update' with --totp-generate to add TOTP", err=True)
+            sys.exit(1)
+
+        # Generate TOTP code
+        try:
+            code = generate_totp_code(entry.totp_secret)
+            time_remaining = get_totp_time_remaining()
+
+            click.echo(f"\nEntry: {key}")
+            click.echo(f"TOTP Code: {code}")
+            click.echo(f"Valid for: {time_remaining} seconds")
+
+            if qr:
+                # Display QR code
+                click.echo("\nScan this QR code with your authenticator app:")
+                click.echo("(Google Authenticator, Authy, Microsoft Authenticator, etc.)\n")
+
+                # Generate provisioning URI
+                account_name = f"{key}@StegVault"
+                if entry.username:
+                    account_name = f"{entry.username} ({key})"
+
+                uri = get_totp_provisioning_uri(entry.totp_secret, account_name)
+                qr_code = generate_qr_code_ascii(uri)
+                click.echo(qr_code)
+                click.echo(f"\nSecret (manual entry): {entry.totp_secret}")
+
+        except ValueError as e:
+            click.echo(f"Error: {e}", err=True)
+            sys.exit(1)
 
     except DecryptionError:
         click.echo("Error: Wrong passphrase", err=True)

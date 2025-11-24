@@ -7,6 +7,99 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2025-11-15
+
+### Added - Major Features
+- **🎉 Vault Import/Export Workflow**
+  - New `vault import` command: Restore entire vault from JSON backup
+  - Complements existing `vault export` for complete backup/restore workflows
+  - Enables vault migration and cross-platform backups
+  - Full validation of imported JSON structure
+  - 7 comprehensive tests for import functionality
+
+- **🔐 TOTP/2FA Authenticator Support**
+  - New `vault totp` command: Generate time-based one-time passwords
+  - Built-in authenticator eliminates need for separate 2FA apps
+  - QR code display (ASCII art) for easy setup with mobile authenticators
+  - Manual entry option with complete setup details (account, secret, type, digits, period)
+  - TOTP secret storage in vault entries
+  - Integration with `create`, `add`, and `update` commands via `--totp` flag
+  - Alias `--totp` for easier use (in addition to `--totp-generate`)
+  - Time remaining indicator for code validity
+  - New `stegvault.vault.totp` module with 6 functions (100% coverage)
+  - 19 comprehensive TOTP tests
+  - Dependencies: `pyotp>=2.9.0`, `qrcode>=7.4.0`
+
+- **📋 Secure Clipboard Integration**
+  - New `--clipboard` flag for `vault get` command
+  - Copy passwords directly to clipboard without screen display
+  - Auto-clear functionality with `--clipboard-timeout` option
+  - Enhanced security: passwords masked when using clipboard
+  - Cross-platform support (Windows, Linux, macOS)
+  - 5 comprehensive clipboard tests
+  - Dependency: `pyperclip>=1.8.0`
+
+- **🛡️ Realistic Password Strength Validation**
+  - Integrated **zxcvbn** library for industry-standard password strength assessment
+  - Detects common passwords, patterns, dictionary words, sequences
+  - Provides specific, actionable feedback for weak passwords
+  - 5-level scoring (0-4: Very Weak, Weak, Fair, Strong, Very Strong)
+  - New `get_password_strength_details()` function for comprehensive analysis
+  - Returns score, crack time estimate, warnings, and suggestions
+  - Updated `assess_password_strength()` to use zxcvbn instead of entropy
+  - More accurate than basic character-type validation
+  - 24 comprehensive tests for password strength validation
+  - Dependency: `zxcvbn>=4.4.28`
+
+### Fixed
+- **Critical vault CLI bug fixes** (all 8 vault commands were non-functional in v0.4.0):
+  - Fixed `parse_payload` import conflicts between vault and utils.payload modules
+  - Fixed `extract_payload` missing parameters (seed, payload_size)
+  - Fixed `decrypt_data` parameter order bug (salt/passphrase positions swapped)
+  - Created `extract_full_payload()` helper function for proper multi-step extraction
+  - All vault commands now fully functional: create, add, get, list, show, update, delete, export, import
+- **TOTP UX improvements**:
+  - Better QR code parameters for scanning (error correction, inverted colors)
+  - Manual entry option always shown (not all authenticators can scan ASCII QR)
+  - Flag alias `--totp` added for convenience
+
+### Improved
+- **Test suite expansion**:
+  - Total test count: 194 → 275 tests (+81 tests, all passing)
+  - New test files: `test_vault_cli.py` (38 tests), `test_totp.py` (19 tests), `test_password_strength.py` (24 tests)
+  - Vault CLI tests: 26 → 38 tests (import, clipboard, TOTP)
+  - 100% coverage for TOTP module
+  - Comprehensive real-world password testing
+- **Test coverage**:
+  - Overall coverage: 67% → 80% (total statements: 1843)
+  - CLI module coverage: 44% → 71% (+27 percentage points)
+  - Crypto module coverage: 87% → 84% (more code, similar coverage)
+  - Vault generator module: 87% → 93% (+6 percentage points)
+  - Vault operations module: 91% coverage (import functionality)
+- **Code quality**:
+  - Fixed test fixture file conflicts with independent temp file creation
+  - Improved test reliability across all platforms
+  - Better separation of concerns in payload parsing
+  - Comprehensive monkeypatching for clipboard and user input testing
+  - More realistic password validation than entropy-based methods
+
+### Changed
+- **Password strength validation behavior**:
+  - Now uses zxcvbn for realistic strength assessment
+  - More permissive: Long passphrases accepted even without all character types
+  - More strict: Common passwords rejected even with all character types
+  - Better feedback: Specific warnings instead of generic "add uppercase" messages
+- **Password generator assessment**:
+  - `assess_password_strength()` now returns `(label, zxcvbn_score)` instead of `(label, entropy)`
+  - Labels updated: "Very Weak", "Weak", "Fair", "Strong", "Very Strong" (5 levels)
+
+### Documentation
+- Updated README.md with all new features (import, clipboard, TOTP, password strength)
+- Updated version badges and test statistics (275 tests, 80% coverage)
+- Updated ROADMAP.md to reflect completed features
+- Removed completed items from "Coming Soon" section
+- Updated project structure documentation with new modules
+
 ## [0.4.0] - 2025-01-14
 
 ### Added
@@ -273,6 +366,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Windows console Unicode character display issues (does not affect functionality)
 - Temporary file cleanup warnings in Windows during tests (Pillow file locking)
 
+[0.5.0]: https://github.com/kalashnikxvxiii-collab/stegvault/releases/tag/v0.5.0
 [0.4.0]: https://github.com/kalashnikxvxiii-collab/stegvault/releases/tag/v0.4.0
 [0.3.3]: https://github.com/kalashnikxvxiii-collab/stegvault/releases/tag/v0.3.3
 [0.3.2]: https://github.com/kalashnikxvxiii-collab/stegvault/releases/tag/v0.3.2

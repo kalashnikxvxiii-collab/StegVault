@@ -554,11 +554,12 @@ class TestPasswordGenerator:
         assert strong_entropy > 80
 
     def test_assess_password_strength(self):
-        """Assess password strength."""
-        weak_label, weak_entropy = assess_password_strength("pass")
-        assert weak_label == "Weak"
-        assert weak_entropy < 28
+        """Assess password strength using zxcvbn."""
+        # Now returns (label, score) instead of (label, entropy)
+        weak_label, weak_score = assess_password_strength("pass")
+        assert weak_label in ["Very Weak", "Weak"]  # zxcvbn might rate "pass" as 0 or 1
+        assert weak_score <= 1  # Score 0-1 for weak passwords
 
-        strong_label, strong_entropy = assess_password_strength("Xk9$mP2!qL5@wN8#vR3^")
+        strong_label, strong_score = assess_password_strength("Xk9$mP2!qL5@wN8#vR3^")
         assert strong_label in ["Strong", "Very Strong"]
-        assert strong_entropy > 60
+        assert strong_score >= 3  # Score 3-4 for strong passwords

@@ -231,3 +231,29 @@ def single_password_to_vault(password: str, key: str = "default") -> Vault:
     vault = create_vault()
     add_entry(vault, key=key, password=password)
     return vault
+
+
+def import_vault_from_file(json_path: str) -> Vault:
+    """
+    Import a vault from a JSON file.
+
+    Args:
+        json_path: Path to the JSON file containing vault data
+
+    Returns:
+        Vault instance loaded from the file
+
+    Raises:
+        ValueError: If the file doesn't exist, is invalid JSON, or not a vault format
+        FileNotFoundError: If the JSON file doesn't exist
+    """
+    import os
+
+    if not os.path.exists(json_path):
+        raise FileNotFoundError(f"JSON file not found: {json_path}")
+
+    with open(json_path, 'r', encoding='utf-8') as f:
+        json_str = f.read()
+
+    # vault_from_json will raise ValueError if invalid
+    return vault_from_json(json_str)

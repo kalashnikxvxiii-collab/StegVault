@@ -3,14 +3,14 @@
 > Secure password manager using steganography to embed encrypted credentials within images
 
 [![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)](https://github.com/kalashnikxvxiii-collab/StegVault/releases/tag/v0.4.0)
+[![Version](https://img.shields.io/badge/version-0.5.0-blue.svg)](https://github.com/kalashnikxvxiii-collab/StegVault/releases/tag/v0.5.0)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-194_passing-brightgreen.svg)](tests/)
-[![Coverage](https://img.shields.io/badge/coverage-67%25-yellow.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-275_passing-brightgreen.svg)](tests/)
+[![Coverage](https://img.shields.io/badge/coverage-80%25-brightgreen.svg)](tests/)
 
 **StegVault** is a full-featured password manager that combines modern cryptography with steganography. It can store either a single password or an entire vault of credentials, all encrypted using battle-tested algorithms (XChaCha20-Poly1305 + Argon2id) and hidden within ordinary PNG images using LSB steganography.
 
-**New in v0.4.0:** Full vault mode with multiple passwords in one image!
+**Latest Features (v0.5.0):** Complete password manager with vault import/export, secure clipboard integration, TOTP/2FA authenticator with QR codes, and realistic password strength validation using zxcvbn!
 
 ## Features
 
@@ -19,16 +19,20 @@
 - 🖼️ **Invisible Storage**: LSB steganography with sequential pixel ordering
 - 🔒 **Zero-Knowledge**: All operations performed locally, no cloud dependencies
 - ✅ **Authenticated**: AEAD tag ensures data integrity
-- 🧪 **Well-Tested**: 194 unit tests with 67% overall coverage (all passing)
+- 🧪 **Well-Tested**: 275 unit tests with 80% overall coverage (all passing)
 - ⏱️ **User-Friendly**: Progress indicators for long operations
 
-### Vault Mode (NEW in v0.4.0)
+### Vault Mode
 - 🗄️ **Multiple Passwords**: Store entire password vault in one image
 - 🎯 **Key-Based Access**: Retrieve specific passwords by key (e.g., "gmail", "github")
 - 🔑 **Password Generator**: Cryptographically secure password generation
 - 📋 **Rich Metadata**: Username, URL, notes, tags, timestamps for each entry
 - 🔄 **Dual-Mode**: Choose single password OR vault mode
 - ♻️ **Auto-Detection**: Automatically detects format on restore (backward compatible)
+- 📤 **Import/Export**: Backup and restore vaults via JSON
+- 📋 **Clipboard Support**: Copy passwords to clipboard with auto-clear
+- 🔐 **TOTP/2FA**: Built-in authenticator with QR code support
+- 🛡️ **Password Strength**: Realistic validation using zxcvbn with actionable feedback
 
 ## Quick Start
 
@@ -107,9 +111,36 @@ stegvault vault update vault_v3.png -o vault_v4.png -k gmail --password newpass1
 stegvault vault export vault_v4.png -o backup.json --pretty
 ```
 
-**7. Delete Entry**
+**7. Import Vault**
+```bash
+stegvault vault import backup.json -i cover.png -o restored_vault.png
+```
+
+**8. Delete Entry**
 ```bash
 stegvault vault delete vault_v4.png -o vault_v5.png -k oldservice
+```
+
+**9. Copy Password to Clipboard**
+```bash
+stegvault vault get vault.png -k gmail --clipboard
+# Password copied to clipboard (not displayed on screen)
+
+# Auto-clear clipboard after 30 seconds
+stegvault vault get vault.png -k gmail --clipboard --clipboard-timeout 30
+```
+
+**10. Setup TOTP/2FA**
+```bash
+# Add TOTP secret to entry
+stegvault vault add vault.png -o vault_v2.png -k github -u myuser --totp
+
+# Generate TOTP code
+stegvault vault totp vault_v2.png -k github
+# Output: Current TOTP code for 'github': 123456 (valid for 25 seconds)
+
+# Show QR code for authenticator app
+stegvault vault totp vault_v2.png -k github --qr
 ```
 
 ## How It Works
@@ -129,7 +160,7 @@ stegvault vault delete vault_v4.png -o vault_v5.png -k oldservice
        • Cover Image
                                       2. Extract Payload
     2. Encryption                        • LSB Extraction
-       • Generate Salt (16B)             • Pseudo-random Order
+       • Generate Salt (16B)             • Sequential Order
        • Derive Key (Argon2id)           • Parse Binary Format
        • Encrypt (XChaCha20)
                                       3. Decryption
@@ -139,7 +170,7 @@ stegvault vault delete vault_v4.png -o vault_v5.png -k oldservice
        • Ciphertext + Tag
                                       4. Recover Password
     4. LSB Embedding                     • Display/Save Password
-       • Pseudo-random Pixels
+       • Sequential Pixels
        • Modify LSB of R,G,B
        • Save Stego Image
 
@@ -177,18 +208,17 @@ Binary structure embedded in images:
 
 **LSB (Least Significant Bit) Embedding**:
 
-1. **Pseudo-random Pixel Ordering**: Seed derived from salt ensures reproducible but unpredictable pixel sequence
+1. **Sequential Pixel Ordering**: All payload bits stored left-to-right, top-to-bottom for reliability and simplicity
 2. **Distributed Embedding**: Payload bits spread across R, G, B channels
 3. **Minimal Visual Impact**: Only LSB modified (imperceptible to human eye)
+4. **Security Philosophy**: Cryptographic strength (XChaCha20-Poly1305 + Argon2id) provides security, not pixel ordering
 
 ```python
 # Simplified example
-seed = int.from_bytes(salt[:4], 'big')
-pixels = shuffle_pixels(image, seed)  # Pseudo-random order
-
-for pixel in pixels:
-    for channel in [R, G, B]:
-        channel_value = (channel_value & 0xFE) | payload_bit
+for y in range(height):
+    for x in range(width):
+        for channel in [R, G, B]:
+            channel_value = (channel_value & 0xFE) | payload_bit
 ```
 
 ## Security Considerations
@@ -198,7 +228,7 @@ for pixel in pixels:
 - **Modern Cryptography**: XChaCha20-Poly1305 is a modern AEAD cipher resistant to various attacks
 - **Strong KDF**: Argon2id winner of Password Hashing Competition, resistant to GPU/ASIC attacks
 - **Authenticated Encryption**: Poly1305 MAC ensures integrity; tampering detected automatically
-- **Detection Resistance**: Pseudo-random bit placement resists basic steganographic analysis
+- **Cryptographic Security**: Security provided by strong cryptography, not by hiding embedding pattern
 - **No Key Reuse**: Fresh nonce generated for each encryption
 
 ### ⚠️ Limitations & Warnings
@@ -255,14 +285,31 @@ stegvault/
 │   │   └── png_lsb.py
 │   ├── utils/           # Payload format handling
 │   │   ├── __init__.py
-│   │   └── payload.py
+│   │   ├── payload.py
+│   │   └── config.py
+│   ├── vault/           # Password vault management (NEW in v0.4.0)
+│   │   ├── __init__.py
+│   │   ├── core.py       # Vault and VaultEntry classes
+│   │   ├── operations.py # Vault CRUD operations + import
+│   │   ├── generator.py  # Password generator
+│   │   └── totp.py       # TOTP/2FA support
+│   ├── batch/           # Batch operations
+│   │   ├── __init__.py
+│   │   └── processor.py
 │   ├── __init__.py
 │   └── cli.py           # Command-line interface
-├── tests/               # Test suite
+├── tests/               # Test suite (275 tests, 80% coverage)
 │   ├── unit/
-│   │   ├── test_crypto.py     # 26 tests
-│   │   ├── test_payload.py    # 22 tests
-│   │   └── test_stego.py      # 15 tests
+│   │   ├── test_crypto.py              # 26 tests
+│   │   ├── test_payload.py             # 22 tests
+│   │   ├── test_stego.py               # 16 tests
+│   │   ├── test_config.py              # 28 tests
+│   │   ├── test_batch.py               # 20 tests
+│   │   ├── test_vault.py               # 49 tests (vault module)
+│   │   ├── test_cli.py                 # 53 tests (core CLI)
+│   │   ├── test_vault_cli.py           # 38 tests (vault CLI)
+│   │   ├── test_totp.py                # 19 tests (TOTP/2FA)
+│   │   └── test_password_strength.py   # 24 tests (password validation)
 │   └── __init__.py
 ├── docs/                # Documentation
 ├── examples/            # Example images
@@ -284,9 +331,8 @@ See [ROADMAP.md](ROADMAP.md) for planned features and development timeline.
 
 - GUI application (Electron or Qt)
 - JPEG DCT steganography (more robust)
-- Multiple password vault support
-- Image capacity auto-check
-- Compression for large passwords
+- Multi-vault operations and search
+- Gallery foundation for multi-file vault management
 - Optional cloud storage integration
 
 ## Contributing

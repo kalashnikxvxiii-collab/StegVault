@@ -217,7 +217,16 @@ def decrypt_data(
 
 def verify_passphrase_strength(passphrase: str, min_length: int = 12) -> Tuple[bool, str]:
     """
-    Basic passphrase strength verification.
+    Advanced passphrase strength verification using zxcvbn.
+
+    zxcvbn performs realistic password strength estimation by detecting
+    common patterns, dictionary words, repeats, sequences, and more.
+
+    Score interpretation:
+    - 0-1: Too weak (e.g., "password123", "qwerty")
+    - 2: Weak (acceptable but could be better)
+    - 3: Strong (good password)
+    - 4: Very strong (excellent password)
 
     Args:
         passphrase: Passphrase to verify
@@ -226,15 +235,76 @@ def verify_passphrase_strength(passphrase: str, min_length: int = 12) -> Tuple[b
     Returns:
         Tuple of (is_valid, message)
     """
+    import zxcvbn
+
+    # Basic length check
     if len(passphrase) < min_length:
         return False, f"Passphrase must be at least {min_length} characters"
 
-    # Check for basic complexity
-    has_upper = any(c.isupper() for c in passphrase)
-    has_lower = any(c.islower() for c in passphrase)
-    has_digit = any(c.isdigit() for c in passphrase)
+    # Use zxcvbn for realistic strength assessment
+    result = zxcvbn.zxcvbn(passphrase)
+    score = result["score"]  # 0-4 scale
+    feedback = result.get("feedback", {})
 
-    if not (has_upper and has_lower and has_digit):
-        return False, "Passphrase should contain uppercase, lowercase, and digits"
+    # Build detailed feedback message
+    if score < 2:
+        # Too weak
+        warnings = feedback.get("warning", "")
+        suggestions = feedback.get("suggestions", [])
 
-    return True, "Passphrase strength is acceptable"
+        message = "Passphrase is too weak"
+        if warnings:
+            message += f": {warnings}"
+        if suggestions:
+            message += f". Suggestions: {', '.join(suggestions)}"
+
+        return False, message
+
+    elif score == 2:
+        # Acceptable but could be better
+        suggestions = feedback.get("suggestions", [])
+        message = "Passphrase strength is acceptable"
+        if suggestions:
+            message += f" (tip: {suggestions[0]})"
+        return True, message
+
+    elif score == 3:
+        return True, "Passphrase strength is good"
+
+    else:  # score == 4
+        return True, "Passphrase strength is excellent"
+
+
+def get_password_strength_details(password: str) -> dict:
+    """
+    Get detailed password strength analysis using zxcvbn.
+
+    This function provides comprehensive information about password strength,
+    useful for displaying to users or for testing.
+
+    Args:
+        password: Password to analyze
+
+    Returns:
+        Dictionary containing:
+        - score: int (0-4) - Strength score
+        - crack_time_display: str - Human-readable crack time
+        - warning: str - Specific warning if any
+        - suggestions: list - Suggestions to improve password
+        - guesses: int - Estimated number of guesses needed
+        - guesses_log10: float - Log10 of guesses (for comparison)
+    """
+    import zxcvbn
+
+    result = zxcvbn.zxcvbn(password)
+
+    return {
+        "score": result["score"],
+        "crack_time_display": result.get("crack_times_display", {}).get(
+            "offline_slow_hashing_1e4_per_second", "unknown"
+        ),
+        "warning": result.get("feedback", {}).get("warning", ""),
+        "suggestions": result.get("feedback", {}).get("suggestions", []),
+        "guesses": result.get("guesses", 0),
+        "guesses_log10": result.get("guesses_log10", 0),
+    }

@@ -46,12 +46,27 @@ mypy stegvault
 stegvault/
 ├── crypto/          # Cryptography: Argon2id + XChaCha20-Poly1305
 ├── stego/           # Steganography: PNG LSB embedding
-├── utils/           # Payload format and utilities
+├── utils/           # Payload format, config handling
+├── vault/           # Password vault management (v0.4.0+)
+│   ├── core.py       # Vault and VaultEntry classes
+│   ├── operations.py # Vault CRUD operations + import
+│   ├── generator.py  # Password generator
+│   └── totp.py       # TOTP/2FA support (v0.5.0+)
+├── batch/           # Batch operations processor
 └── cli.py           # Command-line interface
 
 tests/
-├── unit/            # Unit tests for individual modules
-└── integration/     # End-to-end roundtrip tests
+├── unit/            # Unit tests (275 tests, 80% coverage)
+│   ├── test_crypto.py              # 26 tests
+│   ├── test_payload.py             # 22 tests
+│   ├── test_stego.py               # 16 tests
+│   ├── test_config.py              # 28 tests
+│   ├── test_batch.py               # 20 tests
+│   ├── test_vault.py               # 49 tests
+│   ├── test_cli.py                 # 53 tests
+│   ├── test_vault_cli.py           # 38 tests (vault CLI)
+│   ├── test_totp.py                # 19 tests (TOTP/2FA)
+│   └── test_password_strength.py   # 24 tests (password validation)
 
 examples/            # Example cover images and usage demos
 docs/                # Additional documentation

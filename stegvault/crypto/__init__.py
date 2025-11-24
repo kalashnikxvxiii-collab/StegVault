@@ -9,6 +9,7 @@ from stegvault.crypto.core import (
     decrypt_data,
     derive_key,
     verify_passphrase_strength,
+    get_password_strength_details,
     CryptoError,
     DecryptionError,
 )
@@ -18,6 +19,7 @@ __all__ = [
     "decrypt_data",
     "derive_key",
     "verify_passphrase_strength",
+    "get_password_strength_details",
     "CryptoError",
     "DecryptionError",
 ]
