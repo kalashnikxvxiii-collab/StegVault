@@ -1220,16 +1220,11 @@ class TestVaultExportCommand:
                     "--output",
                     temp_output,
                     "--passphrase",
-                    "Test123!",
+                    "StrongPass123!",  # Long enough to bypass strength check
+                    "--no-check-strength",  # Skip strength check entirely
                 ],
-                input="Test123!\n",
+                input="StrongPass123!\n",
             )
-
-            # Debug output for CI
-            if result.exit_code != 1:
-                print(f"DEBUG: exit_code={result.exit_code}")
-                print(f"DEBUG: output={result.output}")
-                print(f"DEBUG: exception={result.exception}")
 
             assert result.exit_code == 1
             assert "Invalid JSON" in result.output or "error" in result.output.lower()
