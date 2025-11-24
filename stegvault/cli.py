@@ -1751,7 +1751,7 @@ def export(vault_image: str, output: str, passphrase: str, decrypt: bool, pretty
             # Export without passwords (mask them)
             vault_dict = vault_obj.to_dict()
             for entry in vault_dict["entries"]:
-                entry["password"] = "***REDACTED***"
+                entry["password"] = "***REDACTED***"  # nosec B105 - intentional placeholder
 
             if pretty:
                 vault_json = json_module.dumps(vault_dict, indent=2, ensure_ascii=False)
@@ -1834,7 +1834,9 @@ def import_vault(
         click.echo(f"[OK] Loaded vault with {len(vault_obj.entries)} entries")
 
         # Check if any entries have no passwords (could be redacted export)
-        redacted_count = sum(1 for e in vault_obj.entries if e.password == "***REDACTED***")
+        redacted_count = sum(
+            1 for e in vault_obj.entries if e.password == "***REDACTED***"  # nosec B105
+        )
         if redacted_count > 0:
             click.echo(f"\nWarning: {redacted_count} entries have redacted passwords!", err=True)
             click.echo("These entries were likely exported with --no-decrypt flag.", err=True)
