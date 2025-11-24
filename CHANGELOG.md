@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2025-11-24
+
 ### Added
 - **🔍 Vault Search and Filter Commands**
   - New `vault search` command: Search entries by query string across multiple fields
@@ -379,6 +381,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Windows console Unicode character display issues (does not affect functionality)
 - Temporary file cleanup warnings in Windows during tests (Pillow file locking)
 
+[0.4.1]: https://github.com/kalashnikxvxiii-collab/stegvault/releases/tag/v0.4.1
 [0.4.0]: https://github.com/kalashnikxvxiii-collab/stegvault/releases/tag/v0.4.0
 [0.3.3]: https://github.com/kalashnikxvxiii-collab/stegvault/releases/tag/v0.3.3
 [0.3.2]: https://github.com/kalashnikxvxiii-collab/stegvault/releases/tag/v0.3.2
