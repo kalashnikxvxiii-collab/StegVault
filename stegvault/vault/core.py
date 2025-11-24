@@ -40,8 +40,12 @@ class VaultEntry:
     notes: Optional[str] = None
     tags: List[str] = field(default_factory=list)
     totp_secret: Optional[str] = None
-    created: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"))
-    modified: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"))
+    created: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    )
+    modified: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    )
     accessed: Optional[str] = None
 
     def to_dict(self) -> dict:
@@ -77,8 +81,12 @@ class Vault:
 
     version: str = VaultFormat.V2_VAULT.value
     entries: List[VaultEntry] = field(default_factory=list)
-    created: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"))
-    modified: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"))
+    created: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    )
+    modified: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    )
     metadata: dict = field(default_factory=dict)
 
     def __post_init__(self):
@@ -219,7 +227,11 @@ class Vault:
         return cls(
             version=data.get("version", VaultFormat.V2_VAULT.value),
             entries=entries,
-            created=data.get("created", datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")),
-            modified=data.get("modified", datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")),
+            created=data.get(
+                "created", datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+            ),
+            modified=data.get(
+                "modified", datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+            ),
             metadata=data.get("metadata", {}),
         )

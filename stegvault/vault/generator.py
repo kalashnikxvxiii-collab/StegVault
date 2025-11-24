@@ -223,9 +223,7 @@ def estimate_entropy(password: str) -> float:
     has_lower = any(c in string.ascii_lowercase for c in password)
     has_upper = any(c in string.ascii_uppercase for c in password)
     has_digit = any(c in string.digits for c in password)
-    has_symbol = any(
-        c in "!@#$%^&*()-_=+[]{}|;:,.<>?/~`" for c in password
-    )
+    has_symbol = any(c in "!@#$%^&*()-_=+[]{}|;:,.<>?/~`" for c in password)
 
     # Calculate character space size
     charset_size = 0

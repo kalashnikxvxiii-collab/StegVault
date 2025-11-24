@@ -252,7 +252,7 @@ def import_vault_from_file(json_path: str) -> Vault:
     if not os.path.exists(json_path):
         raise FileNotFoundError(f"JSON file not found: {json_path}")
 
-    with open(json_path, 'r', encoding='utf-8') as f:
+    with open(json_path, "r", encoding="utf-8") as f:
         json_str = f.read()
 
     # vault_from_json will raise ValueError if invalid

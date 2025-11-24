@@ -44,7 +44,11 @@ class TestPasswordStrengthValidation:
         for password in acceptable:
             is_valid, message = verify_passphrase_strength(password)
             assert is_valid is True
-            assert "acceptable" in message.lower() or "good" in message.lower() or "excellent" in message.lower()
+            assert (
+                "acceptable" in message.lower()
+                or "good" in message.lower()
+                or "excellent" in message.lower()
+            )
 
     def test_good_passwords(self):
         """Should recognize good passwords (score 3+)."""
@@ -146,7 +150,9 @@ class TestAssessPasswordStrength:
         for password, (expected_score, expected_label) in test_cases.items():
             label, score = assess_password_strength(password)
             # zxcvbn may vary slightly, allow ±1 score difference for weak passwords
-            assert abs(score - expected_score) <= 1, f"Password '{password}' expected score {expected_score}, got {score}"
+            assert (
+                abs(score - expected_score) <= 1
+            ), f"Password '{password}' expected score {expected_score}, got {score}"
             # Label should match the score
             expected_labels_for_score = {
                 0: "Very Weak",

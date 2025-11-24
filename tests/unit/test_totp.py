@@ -115,7 +115,7 @@ class TestProvisioningURI:
 
         assert uri.startswith("otpauth://totp/")
         # @ is URL-encoded as %40
-        assert ("user@example.com" in uri or "user%40example.com" in uri)
+        assert "user@example.com" in uri or "user%40example.com" in uri
         assert issuer in uri
         assert secret in uri
 

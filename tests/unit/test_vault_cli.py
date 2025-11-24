@@ -54,14 +54,22 @@ class TestVaultCreateCommand:
             vault,
             [
                 "create",
-                "--image", test_image,
-                "--output", temp_output,
-                "--passphrase", "StrongVaultPass123!",
-                "--key", "gmail",
-                "--password", "MyEmailPassword123",
-                "--username", "user@gmail.com",
-                "--url", "https://gmail.com",
-                "--notes", "Personal email",
+                "--image",
+                test_image,
+                "--output",
+                temp_output,
+                "--passphrase",
+                "StrongVaultPass123!",
+                "--key",
+                "gmail",
+                "--password",
+                "MyEmailPassword123",
+                "--username",
+                "user@gmail.com",
+                "--url",
+                "https://gmail.com",
+                "--notes",
+                "Personal email",
             ],
         )
 
@@ -77,12 +85,17 @@ class TestVaultCreateCommand:
             vault,
             [
                 "create",
-                "--image", test_image,
-                "--output", temp_output,
-                "--passphrase", "StrongVaultPass123!",
-                "--key", "github",
+                "--image",
+                test_image,
+                "--output",
+                temp_output,
+                "--passphrase",
+                "StrongVaultPass123!",
+                "--key",
+                "github",
                 "--generate",
-                "--username", "myuser",
+                "--username",
+                "myuser",
             ],
         )
 
@@ -97,10 +110,14 @@ class TestVaultCreateCommand:
             vault,
             [
                 "create",
-                "--image", test_image,
-                "--output", temp_output,
-                "--passphrase", "StrongVaultPass123!",
-                "--key", "test",
+                "--image",
+                test_image,
+                "--output",
+                temp_output,
+                "--passphrase",
+                "StrongVaultPass123!",
+                "--key",
+                "test",
             ],
             input="MyPassword123\nMyPassword123\n",
         )
@@ -114,11 +131,16 @@ class TestVaultCreateCommand:
             vault,
             [
                 "create",
-                "--image", test_image,
-                "--output", temp_output,
-                "--passphrase", "StrongVaultPass123!",
-                "--key", "test",
-                "--password", "MyPass123",
+                "--image",
+                test_image,
+                "--output",
+                temp_output,
+                "--passphrase",
+                "StrongVaultPass123!",
+                "--key",
+                "test",
+                "--password",
+                "MyPass123",
                 "--generate",
             ],
         )
@@ -140,11 +162,16 @@ class TestVaultCreateCommand:
                 vault,
                 [
                     "create",
-                    "--image", tiny_image,
-                    "--output", temp_output,
-                    "--passphrase", "StrongVaultPass123!",
-                    "--key", "test",
-                    "--password", "MyPassword123",
+                    "--image",
+                    tiny_image,
+                    "--output",
+                    temp_output,
+                    "--passphrase",
+                    "StrongVaultPass123!",
+                    "--key",
+                    "test",
+                    "--password",
+                    "MyPassword123",
                 ],
             )
 
@@ -162,11 +189,16 @@ class TestVaultCreateCommand:
             vault,
             [
                 "create",
-                "--image", "/nonexistent/image.png",
-                "--output", temp_output,
-                "--passphrase", "StrongVaultPass123!",
-                "--key", "test",
-                "--password", "MyPassword123",
+                "--image",
+                "/nonexistent/image.png",
+                "--output",
+                temp_output,
+                "--passphrase",
+                "StrongVaultPass123!",
+                "--key",
+                "test",
+                "--password",
+                "MyPassword123",
             ],
         )
 
@@ -189,11 +221,16 @@ class TestVaultAddCommand:
             vault,
             [
                 "create",
-                "--image", test_image,
-                "--output", vault_path,
-                "--passphrase", "VaultPass123!",
-                "--key", "first_entry",
-                "--password", "FirstPassword123",
+                "--image",
+                test_image,
+                "--output",
+                vault_path,
+                "--passphrase",
+                "VaultPass123!",
+                "--key",
+                "first_entry",
+                "--password",
+                "FirstPassword123",
             ],
         )
         assert result.exit_code == 0, f"Vault creation failed:\n{result.output}"
@@ -219,11 +256,16 @@ class TestVaultAddCommand:
                 [
                     "add",
                     vault_image,
-                    "--output", new_vault,
-                    "--passphrase", "VaultPass123!",
-                    "--key", "second_entry",
-                    "--password", "SecondPassword123",
-                    "--username", "user2",
+                    "--output",
+                    new_vault,
+                    "--passphrase",
+                    "VaultPass123!",
+                    "--key",
+                    "second_entry",
+                    "--password",
+                    "SecondPassword123",
+                    "--username",
+                    "user2",
                 ],
             )
 
@@ -248,9 +290,12 @@ class TestVaultAddCommand:
                 [
                     "add",
                     vault_image,
-                    "--output", new_vault,
-                    "--passphrase", "VaultPass123!",
-                    "--key", "new_entry",
+                    "--output",
+                    new_vault,
+                    "--passphrase",
+                    "VaultPass123!",
+                    "--key",
+                    "new_entry",
                     "--generate",
                 ],
             )
@@ -275,10 +320,14 @@ class TestVaultAddCommand:
                 [
                     "add",
                     vault_image,
-                    "--output", new_vault,
-                    "--passphrase", "WrongPassphrase123!",
-                    "--key", "test",
-                    "--password", "TestPass123",
+                    "--output",
+                    new_vault,
+                    "--passphrase",
+                    "WrongPassphrase123!",
+                    "--key",
+                    "test",
+                    "--password",
+                    "TestPass123",
                 ],
             )
 
@@ -301,10 +350,14 @@ class TestVaultAddCommand:
                 [
                     "add",
                     vault_image,
-                    "--output", new_vault,
-                    "--passphrase", "VaultPass123!",
-                    "--key", "first_entry",  # Duplicate key
-                    "--password", "AnotherPass123",
+                    "--output",
+                    new_vault,
+                    "--passphrase",
+                    "VaultPass123!",
+                    "--key",
+                    "first_entry",  # Duplicate key
+                    "--password",
+                    "AnotherPass123",
                 ],
             )
 
@@ -330,13 +383,20 @@ class TestVaultGetCommand:
             vault,
             [
                 "create",
-                "--image", test_image,
-                "--output", vault_path,
-                "--passphrase", "VaultPass123!",
-                "--key", "test_entry",
-                "--password", "TestPassword123",
-                "--username", "testuser",
-                "--url", "https://example.com",
+                "--image",
+                test_image,
+                "--output",
+                vault_path,
+                "--passphrase",
+                "VaultPass123!",
+                "--key",
+                "test_entry",
+                "--password",
+                "TestPassword123",
+                "--username",
+                "testuser",
+                "--url",
+                "https://example.com",
             ],
         )
         assert result.exit_code == 0, f"Vault creation failed:\n{result.output}"
@@ -355,8 +415,10 @@ class TestVaultGetCommand:
             [
                 "get",
                 vault_image,
-                "--passphrase", "VaultPass123!",
-                "--key", "test_entry",
+                "--passphrase",
+                "VaultPass123!",
+                "--key",
+                "test_entry",
             ],
         )
 
@@ -373,8 +435,10 @@ class TestVaultGetCommand:
             [
                 "get",
                 vault_image,
-                "--passphrase", "VaultPass123!",
-                "--key", "nonexistent",
+                "--passphrase",
+                "VaultPass123!",
+                "--key",
+                "nonexistent",
             ],
         )
 
@@ -388,8 +452,10 @@ class TestVaultGetCommand:
             [
                 "get",
                 vault_image,
-                "--passphrase", "WrongPass123!",
-                "--key", "test_entry",
+                "--passphrase",
+                "WrongPass123!",
+                "--key",
+                "test_entry",
             ],
         )
 
@@ -405,6 +471,7 @@ class TestVaultGetCommand:
             copied_value.append(text)
 
         import pyperclip
+
         monkeypatch.setattr(pyperclip, "copy", mock_copy)
 
         result = runner.invoke(
@@ -412,8 +479,10 @@ class TestVaultGetCommand:
             [
                 "get",
                 vault_image,
-                "--passphrase", "VaultPass123!",
-                "--key", "test_entry",
+                "--passphrase",
+                "VaultPass123!",
+                "--key",
+                "test_entry",
                 "--clipboard",
             ],
         )
@@ -432,8 +501,10 @@ class TestVaultGetCommand:
             [
                 "get",
                 vault_image,
-                "--passphrase", "VaultPass123!",
-                "--key", "test_entry",
+                "--passphrase",
+                "VaultPass123!",
+                "--key",
+                "test_entry",
             ],
         )
 
@@ -452,6 +523,7 @@ class TestVaultGetCommand:
 
         import pyperclip
         import time as time_module
+
         monkeypatch.setattr(pyperclip, "copy", mock_copy)
         monkeypatch.setattr(time_module, "sleep", mock_sleep)
 
@@ -460,10 +532,13 @@ class TestVaultGetCommand:
             [
                 "get",
                 vault_image,
-                "--passphrase", "VaultPass123!",
-                "--key", "test_entry",
+                "--passphrase",
+                "VaultPass123!",
+                "--key",
+                "test_entry",
                 "--clipboard",
-                "--clipboard-timeout", "5",
+                "--clipboard-timeout",
+                "5",
             ],
         )
 
@@ -482,9 +557,12 @@ class TestVaultGetCommand:
             [
                 "get",
                 vault_image,
-                "--passphrase", "VaultPass123!",
-                "--key", "test_entry",
-                "--clipboard-timeout", "30",
+                "--passphrase",
+                "VaultPass123!",
+                "--key",
+                "test_entry",
+                "--clipboard-timeout",
+                "30",
             ],
         )
 
@@ -497,10 +575,13 @@ class TestVaultGetCommand:
             [
                 "get",
                 vault_image,
-                "--passphrase", "VaultPass123!",
-                "--key", "test_entry",
+                "--passphrase",
+                "VaultPass123!",
+                "--key",
+                "test_entry",
                 "--clipboard",
-                "--clipboard-timeout", "-1",
+                "--clipboard-timeout",
+                "-1",
             ],
         )
 
@@ -522,11 +603,16 @@ class TestVaultListCommand:
             vault,
             [
                 "create",
-                "--image", test_image,
-                "--output", vault1_path,
-                "--passphrase", "VaultPass123!",
-                "--key", "entry1",
-                "--password", "Pass1",
+                "--image",
+                test_image,
+                "--output",
+                vault1_path,
+                "--passphrase",
+                "VaultPass123!",
+                "--key",
+                "entry1",
+                "--password",
+                "Pass1",
             ],
         )
         assert result.exit_code == 0, f"Vault creation failed:\n{result.output}"
@@ -540,10 +626,14 @@ class TestVaultListCommand:
             [
                 "add",
                 vault1_path,
-                "--output", vault2_path,
-                "--passphrase", "VaultPass123!",
-                "--key", "entry2",
-                "--password", "Pass2",
+                "--output",
+                vault2_path,
+                "--passphrase",
+                "VaultPass123!",
+                "--key",
+                "entry2",
+                "--password",
+                "Pass2",
             ],
         )
         assert result.exit_code == 0, f"Adding entry failed:\n{result.output}"
@@ -569,7 +659,8 @@ class TestVaultListCommand:
             [
                 "list",
                 multi_entry_vault,
-                "--passphrase", "VaultPass123!",
+                "--passphrase",
+                "VaultPass123!",
             ],
         )
 
@@ -585,7 +676,8 @@ class TestVaultListCommand:
             [
                 "list",
                 multi_entry_vault,
-                "--passphrase", "WrongPass123!",
+                "--passphrase",
+                "WrongPass123!",
             ],
         )
 
@@ -603,13 +695,20 @@ class TestVaultShowCommand:
             vault,
             [
                 "create",
-                "--image", test_image,
-                "--output", temp_output,
-                "--passphrase", "VaultPass123!",
-                "--key", "show_test",
-                "--password", "ShowPassword123",
-                "--username", "showuser",
-                "--notes", "Test notes",
+                "--image",
+                test_image,
+                "--output",
+                temp_output,
+                "--passphrase",
+                "VaultPass123!",
+                "--key",
+                "show_test",
+                "--password",
+                "ShowPassword123",
+                "--username",
+                "showuser",
+                "--notes",
+                "Test notes",
             ],
         )
         assert result.exit_code == 0
@@ -622,8 +721,10 @@ class TestVaultShowCommand:
             [
                 "show",
                 vault_image,
-                "--passphrase", "VaultPass123!",
-                "--key", "show_test",
+                "--passphrase",
+                "VaultPass123!",
+                "--key",
+                "show_test",
             ],
         )
 
@@ -640,8 +741,10 @@ class TestVaultShowCommand:
             [
                 "show",
                 vault_image,
-                "--passphrase", "VaultPass123!",
-                "--key", "nonexistent",
+                "--passphrase",
+                "VaultPass123!",
+                "--key",
+                "nonexistent",
             ],
         )
 
@@ -662,12 +765,18 @@ class TestVaultUpdateCommand:
             vault,
             [
                 "create",
-                "--image", test_image,
-                "--output", vault_path,
-                "--passphrase", "VaultPass123!",
-                "--key", "update_test",
-                "--password", "OldPassword123",
-                "--username", "olduser",
+                "--image",
+                test_image,
+                "--output",
+                vault_path,
+                "--passphrase",
+                "VaultPass123!",
+                "--key",
+                "update_test",
+                "--password",
+                "OldPassword123",
+                "--username",
+                "olduser",
             ],
         )
         assert result.exit_code == 0, f"Vault creation failed:\n{result.output}"
@@ -690,10 +799,14 @@ class TestVaultUpdateCommand:
                 [
                     "update",
                     vault_image,
-                    "--output", new_vault,
-                    "--passphrase", "VaultPass123!",
-                    "--key", "update_test",
-                    "--password", "NewPassword123",
+                    "--output",
+                    new_vault,
+                    "--passphrase",
+                    "VaultPass123!",
+                    "--key",
+                    "update_test",
+                    "--password",
+                    "NewPassword123",
                 ],
             )
 
@@ -716,10 +829,14 @@ class TestVaultUpdateCommand:
                 [
                     "update",
                     vault_image,
-                    "--output", new_vault,
-                    "--passphrase", "VaultPass123!",
-                    "--key", "update_test",
-                    "--username", "newuser",
+                    "--output",
+                    new_vault,
+                    "--passphrase",
+                    "VaultPass123!",
+                    "--key",
+                    "update_test",
+                    "--username",
+                    "newuser",
                 ],
             )
 
@@ -742,10 +859,14 @@ class TestVaultUpdateCommand:
                 [
                     "update",
                     vault_image,
-                    "--output", new_vault,
-                    "--passphrase", "VaultPass123!",
-                    "--key", "nonexistent",
-                    "--password", "NewPass123",
+                    "--output",
+                    new_vault,
+                    "--passphrase",
+                    "VaultPass123!",
+                    "--key",
+                    "nonexistent",
+                    "--password",
+                    "NewPass123",
                 ],
             )
 
@@ -771,11 +892,16 @@ class TestVaultDeleteCommand:
             vault,
             [
                 "create",
-                "--image", test_image,
-                "--output", vault_path,
-                "--passphrase", "VaultPass123!",
-                "--key", "delete_me",
-                "--password", "DeletePassword123",
+                "--image",
+                test_image,
+                "--output",
+                vault_path,
+                "--passphrase",
+                "VaultPass123!",
+                "--key",
+                "delete_me",
+                "--password",
+                "DeletePassword123",
             ],
         )
         assert result.exit_code == 0, f"Vault creation failed:\n{result.output}"
@@ -798,15 +924,20 @@ class TestVaultDeleteCommand:
                 [
                     "delete",
                     vault_image,
-                    "--output", new_vault,
-                    "--passphrase", "VaultPass123!",
-                    "--key", "delete_me",
+                    "--output",
+                    new_vault,
+                    "--passphrase",
+                    "VaultPass123!",
+                    "--key",
+                    "delete_me",
                     "--no-confirm",  # Skip confirmation prompt
                 ],
             )
 
             assert result.exit_code == 0, f"Delete failed:\n{result.output}"
-            assert "Entry deleted successfully" in result.output or "deleted" in result.output.lower()
+            assert (
+                "Entry deleted successfully" in result.output or "deleted" in result.output.lower()
+            )
         finally:
             try:
                 os.unlink(new_vault)
@@ -824,15 +955,20 @@ class TestVaultDeleteCommand:
                 [
                     "delete",
                     vault_image,
-                    "--output", new_vault,
-                    "--passphrase", "VaultPass123!",
-                    "--key", "delete_me",
+                    "--output",
+                    new_vault,
+                    "--passphrase",
+                    "VaultPass123!",
+                    "--key",
+                    "delete_me",
                 ],
                 input="y\n",  # Confirm deletion
             )
 
             assert result.exit_code == 0
-            assert "Entry deleted successfully" in result.output or "deleted" in result.output.lower()
+            assert (
+                "Entry deleted successfully" in result.output or "deleted" in result.output.lower()
+            )
         finally:
             try:
                 os.unlink(new_vault)
@@ -850,9 +986,12 @@ class TestVaultDeleteCommand:
                 [
                     "delete",
                     vault_image,
-                    "--output", new_vault,
-                    "--passphrase", "VaultPass123!",
-                    "--key", "nonexistent",
+                    "--output",
+                    new_vault,
+                    "--passphrase",
+                    "VaultPass123!",
+                    "--key",
+                    "nonexistent",
                     "--confirm",
                 ],
             )
@@ -879,12 +1018,18 @@ class TestVaultExportCommand:
             vault,
             [
                 "create",
-                "--image", test_image,
-                "--output", vault_path,
-                "--passphrase", "VaultPass123!",
-                "--key", "export_test",
-                "--password", "ExportPassword123",
-                "--username", "exportuser",
+                "--image",
+                test_image,
+                "--output",
+                vault_path,
+                "--passphrase",
+                "VaultPass123!",
+                "--key",
+                "export_test",
+                "--password",
+                "ExportPassword123",
+                "--username",
+                "exportuser",
             ],
         )
         assert result.exit_code == 0, f"Vault creation failed:\n{result.output}"
@@ -907,15 +1052,20 @@ class TestVaultExportCommand:
                 [
                     "export",
                     vault_image,
-                    "--output", json_file,
-                    "--passphrase", "VaultPass123!",
+                    "--output",
+                    json_file,
+                    "--passphrase",
+                    "VaultPass123!",
                     "--decrypt",
                 ],
                 input="y\n",  # Confirm export with plaintext passwords
             )
 
             assert result.exit_code == 0, f"Export failed:\n{result.output}"
-            assert "Vault exported successfully" in result.output or "exported" in result.output.lower()
+            assert (
+                "Vault exported successfully" in result.output
+                or "exported" in result.output.lower()
+            )
             assert os.path.exists(json_file)
 
             # Verify JSON content
@@ -940,8 +1090,10 @@ class TestVaultExportCommand:
                 [
                     "export",
                     vault_image,
-                    "--output", json_file,
-                    "--passphrase", "VaultPass123!",
+                    "--output",
+                    json_file,
+                    "--passphrase",
+                    "VaultPass123!",
                     "--decrypt",
                     "--pretty",
                 ],
@@ -973,8 +1125,10 @@ class TestVaultExportCommand:
                 [
                     "export",
                     vault_image,
-                    "--output", json_file,
-                    "--passphrase", "WrongPass123!",
+                    "--output",
+                    json_file,
+                    "--passphrase",
+                    "WrongPass123!",
                     "--decrypt",
                 ],
             )
@@ -1011,11 +1165,12 @@ class TestVaultExportCommand:
             "metadata": {
                 "total_entries": 1,
                 "app_version": "0.4.0",
-            }
+            },
         }
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as tmp:
             import json as json_module
+
             json_module.dump(vault_json, tmp)
             json_file = tmp.name
 
@@ -1025,15 +1180,21 @@ class TestVaultExportCommand:
                 [
                     "import",
                     json_file,
-                    "--image", test_image,
-                    "--output", temp_output,
-                    "--passphrase", "ImportTest123!",
+                    "--image",
+                    test_image,
+                    "--output",
+                    temp_output,
+                    "--passphrase",
+                    "ImportTest123!",
                 ],
                 input="ImportTest123!\n",  # Confirmation
             )
 
             assert result.exit_code == 0, f"Import failed:\n{result.output}"
-            assert "Vault imported successfully" in result.output or "imported" in result.output.lower()
+            assert (
+                "Vault imported successfully" in result.output
+                or "imported" in result.output.lower()
+            )
             assert os.path.exists(temp_output)
         finally:
             try:
@@ -1043,9 +1204,12 @@ class TestVaultExportCommand:
 
     def test_import_invalid_json(self, runner, test_image, temp_output):
         """Should error with invalid JSON file."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False
+        ) as tmp:
             tmp.write("not valid json{}")
             json_file = tmp.name
+            tmp.flush()  # Ensure data is written to disk
 
         try:
             result = runner.invoke(
@@ -1053,9 +1217,12 @@ class TestVaultExportCommand:
                 [
                     "import",
                     json_file,
-                    "--image", test_image,
-                    "--output", temp_output,
-                    "--passphrase", "Test123!",
+                    "--image",
+                    test_image,
+                    "--output",
+                    temp_output,
+                    "--passphrase",
+                    "Test123!",
                 ],
                 input="Test123!\n",
             )
@@ -1075,9 +1242,12 @@ class TestVaultExportCommand:
             [
                 "import",
                 "nonexistent_vault.json",
-                "--image", test_image,
-                "--output", temp_output,
-                "--passphrase", "Test123!",
+                "--image",
+                test_image,
+                "--output",
+                temp_output,
+                "--passphrase",
+                "Test123!",
             ],
             input="Test123!\n",
         )
@@ -1109,11 +1279,12 @@ class TestVaultExportCommand:
             "metadata": {
                 "total_entries": 1,
                 "app_version": "0.4.0",
-            }
+            },
         }
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as tmp:
             import json as json_module
+
             json_module.dump(vault_json, tmp)
             json_file = tmp.name
 
@@ -1123,9 +1294,12 @@ class TestVaultExportCommand:
                 [
                     "import",
                     json_file,
-                    "--image", test_image,
-                    "--output", temp_output,
-                    "--passphrase", "Test123!",
+                    "--image",
+                    test_image,
+                    "--output",
+                    temp_output,
+                    "--passphrase",
+                    "Test123!",
                 ],
                 input="Test123!\ny\n",  # Passphrase confirmation + redacted warning confirmation
             )
@@ -1160,11 +1334,12 @@ class TestVaultExportCommand:
             "metadata": {
                 "total_entries": 1,
                 "app_version": "0.4.0",
-            }
+            },
         }
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as tmp:
             import json as json_module
+
             json_module.dump(vault_json, tmp)
             json_file = tmp.name
 
@@ -1174,9 +1349,12 @@ class TestVaultExportCommand:
                 [
                     "import",
                     json_file,
-                    "--image", test_image,
-                    "--output", temp_output,
-                    "--passphrase", "weak",
+                    "--image",
+                    test_image,
+                    "--output",
+                    temp_output,
+                    "--passphrase",
+                    "weak",
                 ],
                 input="weak\n",  # Confirmation
             )
@@ -1207,8 +1385,10 @@ class TestVaultExportCommand:
                 [
                     "export",
                     vault_image,
-                    "--output", json_file,
-                    "--passphrase", "VaultPass123!",
+                    "--output",
+                    json_file,
+                    "--passphrase",
+                    "VaultPass123!",
                     "--decrypt",
                 ],
                 input="y\n",  # Confirm export
@@ -1221,9 +1401,12 @@ class TestVaultExportCommand:
                 [
                     "import",
                     json_file,
-                    "--image", test_image,
-                    "--output", vault_out,
-                    "--passphrase", "NewPassword123!",
+                    "--image",
+                    test_image,
+                    "--output",
+                    vault_out,
+                    "--passphrase",
+                    "NewPassword123!",
                 ],
                 input="NewPassword123!\n",  # Confirmation
             )
@@ -1237,8 +1420,10 @@ class TestVaultExportCommand:
                 [
                     "get",
                     vault_out,
-                    "--key", "export_test",
-                    "--passphrase", "NewPassword123!",
+                    "--key",
+                    "export_test",
+                    "--passphrase",
+                    "NewPassword123!",
                 ],
             )
             assert get_result.exit_code == 0
@@ -1276,11 +1461,12 @@ class TestVaultExportCommand:
             "metadata": {
                 "total_entries": 1,
                 "app_version": "0.4.0",
-            }
+            },
         }
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as tmp:
             import json as json_module
+
             json_module.dump(vault_json, tmp)
             json_file = tmp.name
 
@@ -1290,9 +1476,12 @@ class TestVaultExportCommand:
                 [
                     "import",
                     json_file,
-                    "--image", test_image,
-                    "--output", temp_output,
-                    "--passphrase", "weak",
+                    "--image",
+                    test_image,
+                    "--output",
+                    temp_output,
+                    "--passphrase",
+                    "weak",
                     "--no-check-strength",
                 ],
                 input="weak\n",  # Confirmation

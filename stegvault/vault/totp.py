@@ -106,4 +106,5 @@ def get_totp_time_remaining() -> int:
         Seconds remaining (0-29, typically)
     """
     import time
+
     return 30 - int(time.time()) % 30

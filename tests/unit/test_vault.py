@@ -107,6 +107,7 @@ class TestVaultEntry:
         entry = VaultEntry(key="test", password="secret")
         original_modified = entry.modified
         import time
+
         time.sleep(0.01)  # Ensure time passes
         entry.update_modified()
         assert entry.modified != original_modified
@@ -226,6 +227,7 @@ class TestVault:
 
         original_modified = entry.modified
         import time
+
         time.sleep(0.01)
         vault.update_entry("test", password="new")
 
