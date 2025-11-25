@@ -59,8 +59,8 @@ black stegvault tests
 ```bash
 pytest
 ```
-**Why**: Catch test failures early. All 305 tests must pass.
-**Expected**: `305 passed` (or current test count)
+**Why**: Catch test failures early. All 324 tests must pass.
+**Expected**: `324 passed` (or current test count)
 
 ### 3. Run Bandit Security Scan
 ```bash
@@ -177,18 +177,20 @@ stegvault/
 └── cli.py           # Command-line interface
 
 tests/
-├── unit/            # Unit tests (305 tests, 79% coverage)
-│   ├── test_crypto.py              # 26 tests
-│   ├── test_payload.py             # 22 tests
-│   ├── test_stego.py               # 16 tests
-│   ├── test_config.py              # 28 tests
-│   ├── test_batch.py               # 20 tests
-│   ├── test_vault.py               # 49 tests
-│   ├── test_cli.py                 # 53 tests
-│   ├── test_vault_cli.py           # 44 tests (vault CLI + TOTP)
-│   ├── test_totp.py                # 19 tests (TOTP/2FA)
-│   ├── test_password_strength.py   # 24 tests (password validation)
-│   └── test_vault_search.py        # 24 tests (search/filter)
+├── unit/            # Unit tests (324 tests, 84% coverage)
+│   ├── test_crypto.py                    # 26 tests
+│   ├── test_payload.py                   # 22 tests
+│   ├── test_stego.py                     # 16 tests
+│   ├── test_config.py                    # 28 tests
+│   ├── test_batch.py                     # 20 tests
+│   ├── test_vault.py                     # 49 tests
+│   ├── test_cli.py                       # 53 tests
+│   ├── test_vault_cli.py                 # 46 tests (vault CLI + TOTP)
+│   ├── test_totp.py                      # 19 tests (TOTP/2FA)
+│   ├── test_password_strength.py         # 24 tests (password validation)
+│   ├── test_vault_search.py              # 24 tests (search/filter backend)
+│   ├── test_vault_search_filter_cli.py   # 5 tests (search/filter CLI)
+│   └── test_vault_update_delete_cli.py   # 12 tests (update/delete CLI)
 
 examples/            # Example cover images and usage demos
 docs/                # Additional documentation

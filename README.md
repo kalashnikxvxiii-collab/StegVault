@@ -5,8 +5,8 @@
 [![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)](https://github.com/kalashnikxvxiii-collab/StegVault/releases/tag/v0.4.0)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-305_passing-brightgreen.svg)](tests/)
-[![Coverage](https://img.shields.io/badge/coverage-79%25-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-324_passing-brightgreen.svg)](tests/)
+[![Coverage](https://img.shields.io/badge/coverage-84%25-brightgreen.svg)](tests/)
 
 **StegVault** is a full-featured password manager that combines modern cryptography with steganography. It can store either a single password or an entire vault of credentials, all encrypted using battle-tested algorithms (XChaCha20-Poly1305 + Argon2id) and hidden within ordinary PNG images using LSB steganography.
 
@@ -19,7 +19,7 @@
 - 🖼️ **Invisible Storage**: LSB steganography with sequential pixel ordering
 - 🔒 **Zero-Knowledge**: All operations performed locally, no cloud dependencies
 - ✅ **Authenticated**: AEAD tag ensures data integrity
-- 🧪 **Well-Tested**: 305 unit tests with 79% overall coverage (all passing)
+- 🧪 **Well-Tested**: 324 unit tests with 84% overall coverage (all passing)
 - ⏱️ **User-Friendly**: Progress indicators for long operations
 
 ### Vault Mode
@@ -310,7 +310,7 @@ stegvault/
 │   │   └── processor.py
 │   ├── __init__.py
 │   └── cli.py           # Command-line interface
-├── tests/               # Test suite (275 tests, 80% coverage)
+├── tests/               # Test suite (324 tests, 84% coverage)
 │   ├── unit/
 │   │   ├── test_crypto.py              # 26 tests
 │   │   ├── test_payload.py             # 22 tests

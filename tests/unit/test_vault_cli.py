@@ -391,6 +391,77 @@ class TestVaultAddCommand:
             except (PermissionError, FileNotFoundError):
                 pass
 
+    def test_add_with_totp_generate(self, runner, vault_image, temp_output):
+        """Should add entry with TOTP generated and display QR code."""
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            new_vault = tmp.name
+
+        try:
+            result = runner.invoke(
+                vault,
+                [
+                    "add",
+                    vault_image,
+                    "--output",
+                    new_vault,
+                    "--passphrase",
+                    "VaultPass123!",
+                    "--key",
+                    "totp_entry",
+                    "--password",
+                    "TestPass123!",
+                    "--username",
+                    "testuser",
+                    "--totp-generate",
+                ],
+            )
+
+            assert result.exit_code == 0
+            assert "[TOTP Setup]" in result.output
+            assert "Generated TOTP secret:" in result.output
+            assert "Option 1: Scan QR code" in result.output
+            assert "Option 2: Manual entry" in result.output
+            assert "Account:" in result.output
+            assert "Secret:" in result.output
+            assert "Entry added successfully" in result.output
+        finally:
+            try:
+                os.unlink(new_vault)
+            except (PermissionError, FileNotFoundError):
+                pass
+
+    def test_add_with_totp_secret(self, runner, vault_image, temp_output):
+        """Should add entry with provided TOTP secret."""
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            new_vault = tmp.name
+
+        try:
+            result = runner.invoke(
+                vault,
+                [
+                    "add",
+                    vault_image,
+                    "--output",
+                    new_vault,
+                    "--passphrase",
+                    "VaultPass123!",
+                    "--key",
+                    "totp_entry",
+                    "--password",
+                    "TestPass123!",
+                    "--totp-secret",
+                    "JBSWY3DPEHPK3PXP",
+                ],
+            )
+
+            assert result.exit_code == 0
+            assert "Entry added successfully" in result.output
+        finally:
+            try:
+                os.unlink(new_vault)
+            except (PermissionError, FileNotFoundError):
+                pass
+
 
 class TestVaultGetCommand:
     """Tests for vault get command."""
