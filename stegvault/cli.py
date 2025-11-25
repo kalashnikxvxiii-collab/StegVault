@@ -2107,15 +2107,15 @@ def search(
         stegvault vault search vault.png --query gmail
         stegvault vault search vault.png -q github --fields key --fields username
     """
-    from stegvault.vault import search_entries
+    from stegvault.vault import search_entries, parse_payload as parse_vault_payload
+    from stegvault.utils.payload import parse_payload as parse_binary_payload
 
     try:
         # Extract and decrypt vault
-        vault_bytes = load_image(vault_image)
-        payload_bytes = extract_full_payload(vault_bytes)
-        salt, nonce, ciphertext = parse_payload(payload_bytes)
+        payload_bytes = extract_full_payload(vault_image)
+        salt, nonce, ciphertext = parse_binary_payload(payload_bytes)
         decrypted_data = decrypt_data(ciphertext, salt, nonce, passphrase)
-        vault_obj = parse_payload(decrypted_data)
+        vault_obj = parse_vault_payload(decrypted_data.decode("utf-8"))
 
         if isinstance(vault_obj, str):
             click.echo("Error: This is a single-password backup, not a vault", err=True)
@@ -2203,7 +2203,8 @@ def filter(
         stegvault vault filter vault.png --url github.com
         stegvault vault filter vault.png --tag work --url corp.com
     """
-    from stegvault.vault import filter_by_tags, filter_by_url
+    from stegvault.vault import filter_by_tags, filter_by_url, parse_payload as parse_vault_payload
+    from stegvault.utils.payload import parse_payload as parse_binary_payload
 
     if not tag and not url:
         click.echo("Error: Must specify at least one filter (--tag or --url)", err=True)
@@ -2211,11 +2212,10 @@ def filter(
 
     try:
         # Extract and decrypt vault
-        vault_bytes = load_image(vault_image)
-        payload_bytes = extract_full_payload(vault_bytes)
-        salt, nonce, ciphertext = parse_payload(payload_bytes)
+        payload_bytes = extract_full_payload(vault_image)
+        salt, nonce, ciphertext = parse_binary_payload(payload_bytes)
         decrypted_data = decrypt_data(ciphertext, salt, nonce, passphrase)
-        vault_obj = parse_payload(decrypted_data)
+        vault_obj = parse_vault_payload(decrypted_data.decode("utf-8"))
 
         if isinstance(vault_obj, str):
             click.echo("Error: This is a single-password backup, not a vault", err=True)
