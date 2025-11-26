@@ -185,6 +185,23 @@ def _cache_vault_entries(db: GalleryDB, vault: VaultMetadata, passphrase: str):
         # Cache each entry
         entry_count = 0
         for entry in vault_obj.entries:
+            # Parse timestamps - remove 'Z' suffix for Python <3.11 compatibility
+            created_at = None
+            if entry.created:
+                created_str = (
+                    entry.created.replace("Z", "+00:00") if "Z" in entry.created else entry.created
+                )
+                created_at = datetime.fromisoformat(created_str)
+
+            updated_at = None
+            if entry.modified:
+                modified_str = (
+                    entry.modified.replace("Z", "+00:00")
+                    if "Z" in entry.modified
+                    else entry.modified
+                )
+                updated_at = datetime.fromisoformat(modified_str)
+
             cache_entry = VaultEntryCache(
                 vault_id=vault.vault_id,
                 entry_key=entry.key,
@@ -192,8 +209,8 @@ def _cache_vault_entries(db: GalleryDB, vault: VaultMetadata, passphrase: str):
                 url=entry.url,
                 tags=entry.tags or [],
                 has_totp=bool(entry.totp_secret),
-                created_at=datetime.fromisoformat(entry.created) if entry.created else None,
-                updated_at=datetime.fromisoformat(entry.modified) if entry.modified else None,
+                created_at=created_at,
+                updated_at=updated_at,
             )
             db.add_entry_cache(cache_entry)
             entry_count += 1

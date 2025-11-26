@@ -294,7 +294,8 @@ class GalleryDB:
             params.append(datetime.now())
             params.append(name)
 
-            query = f"UPDATE vaults SET {', '.join(updates)} WHERE name = ?"
+            # Safe: updates list contains only validated column names, all values are parameterized
+            query = f"UPDATE vaults SET {', '.join(updates)} WHERE name = ?"  # nosec B608
             cursor.execute(query, params)
             self.conn.commit()
 
@@ -417,13 +418,14 @@ class GalleryDB:
 
             where_clause = " AND ".join(conditions) if conditions else "1=1"
 
+            # Safe: where_clause built from validated field names, all values are parameterized
             sql = f"""
                 SELECT e.*, v.*
                 FROM vault_entries_cache e
                 JOIN vaults v ON e.vault_id = v.id
                 WHERE {where_clause}
                 ORDER BY v.name, e.entry_key
-            """
+            """  # nosec B608
 
             cursor.execute(sql, params)
             rows = cursor.fetchall()
