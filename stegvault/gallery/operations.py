@@ -55,6 +55,8 @@ def add_vault(
         # If passphrase provided, cache entries
         if passphrase and vault:
             _cache_vault_entries(db, vault, passphrase)
+            # Refresh vault metadata after caching
+            vault = db.get_vault(name)
 
         return vault
 

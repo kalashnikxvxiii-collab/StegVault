@@ -317,6 +317,18 @@ class TestGalleryOperations:
         assert vault.description == "Test vault"
         assert vault.tags == ["work"]
 
+    def test_add_vault_with_passphrase_caches_entries(self, temp_db, temp_vault_image):
+        """Should cache entries when passphrase is provided."""
+        from stegvault.gallery.operations import add_vault
+
+        vault_path, passphrase = temp_vault_image
+
+        # Add vault with passphrase to trigger entry caching
+        vault = add_vault(temp_db, "test-vault", vault_path, "Test vault", ["work"], passphrase)
+
+        assert vault is not None
+        assert vault.entry_count == 2  # Should have cached 2 entries
+
     def test_add_nonexistent_vault_fails(self, temp_db):
         """Should fail when adding nonexistent vault image."""
         from stegvault.gallery.operations import add_vault
@@ -669,3 +681,76 @@ class TestGallery:
         vaults = temp_gallery.list_vaults()
 
         assert len(vaults) == 0
+
+    def test_vault_metadata_to_dict(self):
+        """Should convert VaultMetadata to dict."""
+        from stegvault.gallery.core import VaultMetadata
+        from datetime import datetime
+
+        vault = VaultMetadata(
+            name="test-vault",
+            image_path="/test/vault.png",
+            description="Test",
+            tags=["work"],
+            entry_count=2,
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+            last_accessed=None,
+            vault_id=1,
+        )
+
+        vault_dict = vault.to_dict()
+
+        assert vault_dict["name"] == "test-vault"
+        assert vault_dict["image_path"] == "/test/vault.png"
+        assert "created_at" in vault_dict
+        assert "vault_id" in vault_dict
+
+    def test_vault_metadata_from_dict(self):
+        """Should create VaultMetadata from dict."""
+        from stegvault.gallery.core import VaultMetadata
+        from datetime import datetime
+
+        data = {
+            "name": "test",
+            "image_path": "/test/path.png",
+            "description": "Test",
+            "tags": ["work"],
+            "entry_count": 5,
+            "created_at": datetime.now().isoformat(),
+            "updated_at": datetime.now().isoformat(),
+            "last_accessed": None,
+            "vault_id": 1,
+        }
+
+        vault = VaultMetadata.from_dict(data)
+
+        assert vault.name == "test"
+        assert vault.image_path == "/test/path.png"
+        assert vault.entry_count == 5
+
+    def test_cached_entry_to_dict(self):
+        """Should convert VaultEntryCache to dict."""
+        from stegvault.gallery.core import VaultEntryCache
+
+        entry = VaultEntryCache(
+            vault_id=1,
+            entry_key="github",
+            username="dev",
+            url="https://github.com",
+            tags=["work"],
+            has_totp=False,
+        )
+
+        entry_dict = entry.to_dict()
+
+        assert entry_dict["entry_key"] == "github"
+        assert entry_dict["username"] == "dev"
+        assert entry_dict["tags"] == ["work"]
+
+    def test_gallery_get_vault(self, temp_gallery):
+        """Should get vault by name using Gallery.get_vault method."""
+        # Test that Gallery.get_vault returns None for non-existent vault
+        vault = temp_gallery.get_vault("non-existent")
+
+        assert vault is None

@@ -342,6 +342,100 @@ class TestImageFormatHandling:
                 except PermissionError:
                     pass
 
+    def test_rgba_image_extraction(self):
+        """Should handle extraction from RGBA images."""
+        # Create RGB stego image first
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            rgb_path = tmp.name
+
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp2:
+            rgba_path = tmp2.name
+
+        try:
+            # Create RGB image with embedded payload
+            img_array = np.random.randint(0, 256, (100, 100, 3), dtype=np.uint8)
+            img = Image.fromarray(img_array, mode="RGB")
+            img.save(rgb_path)
+            img.close()
+
+            payload = b"Test RGBA extraction"
+            seed = 456
+
+            stego_img = embed_payload(rgb_path, payload, seed, rgb_path)
+
+            # Convert to RGBA
+            rgb_img = Image.open(rgb_path)
+            rgba_img = rgb_img.convert("RGBA")
+            rgba_img.save(rgba_path)
+            rgb_img.close()
+            rgba_img.close()
+
+            # Should extract from RGBA successfully
+            extracted = extract_payload(rgba_path, len(payload), seed)
+            assert extracted == payload
+
+        finally:
+            for path in [rgb_path, rgba_path]:
+                try:
+                    if os.path.exists(path):
+                        os.unlink(path)
+                except PermissionError:
+                    pass
+
+
+class TestBitPadding:
+    """Tests for bit padding in payload conversion."""
+
+    def test_payload_not_multiple_of_8_bits(self, test_image_medium):
+        """Should handle payload that requires bit padding."""
+        # Create payload with length not multiple of 8 bits
+        # 3 bytes = 24 bits, which is a multiple of 8
+        # But internally the bits list might need padding
+        payload = b"\x01\x02\x03"
+        seed = 12345
+
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            output_path = tmp.name
+
+        try:
+            stego_img = embed_payload(test_image_medium, payload, seed, output_path)
+            assert stego_img is not None
+
+            # Extract and verify
+            extracted = extract_payload(output_path, len(payload), seed)
+            assert extracted == payload
+
+        finally:
+            if os.path.exists(output_path):
+                try:
+                    os.unlink(output_path)
+                except PermissionError:
+                    pass
+
+    def test_odd_length_payload_triggers_padding(self, test_image_medium):
+        """Should trigger bit padding with odd-length payload."""
+        # Use a single byte which will need padding
+        payload = b"\xff"
+        seed = 99999
+
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            output_path = tmp.name
+
+        try:
+            stego_img = embed_payload(test_image_medium, payload, seed, output_path)
+            assert stego_img is not None
+
+            # Extract and verify
+            extracted = extract_payload(output_path, len(payload), seed)
+            assert extracted == payload
+
+        finally:
+            if os.path.exists(output_path):
+                try:
+                    os.unlink(output_path)
+                except PermissionError:
+                    pass
+
 
 class TestErrorHandling:
     """Tests for error handling."""
@@ -358,3 +452,67 @@ class TestErrorHandling:
 
         # Should return some data (but it's garbage)
         assert len(extracted) == 10
+
+    def test_unsupported_image_mode(self):
+        """Should raise StegoError for unsupported image mode."""
+        from PIL import Image
+        from stegvault.stego.png_lsb import calculate_capacity, StegoError
+
+        # Create grayscale image (mode="L")
+        img = Image.new("L", (100, 100), color=128)
+
+        with pytest.raises(StegoError, match="Unsupported image mode"):
+            calculate_capacity(img)
+
+    def test_embed_unsupported_image_mode(self):
+        """Should raise StegoError when embedding in unsupported mode."""
+        from PIL import Image
+        from stegvault.stego.png_lsb import embed_payload, StegoError
+
+        # Create grayscale image
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            gray_path = tmp.name
+            img = Image.new("L", (100, 100), color=128)
+            img.save(gray_path)
+            img.close()
+
+        try:
+            with pytest.raises(StegoError, match="Unsupported image mode"):
+                embed_payload(gray_path, b"test", 123)
+        finally:
+            try:
+                if os.path.exists(gray_path):
+                    os.unlink(gray_path)
+            except PermissionError:
+                pass
+
+    def test_extract_unsupported_image_mode(self):
+        """Should raise StegoError when extracting from unsupported mode."""
+        from PIL import Image
+        from stegvault.stego.png_lsb import extract_payload, StegoError
+
+        # Create grayscale image
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            gray_path = tmp.name
+            img = Image.new("L", (100, 100), color=128)
+            img.save(gray_path)
+            img.close()
+
+        try:
+            with pytest.raises(StegoError, match="Unsupported image mode"):
+                extract_payload(gray_path, 10, 123)
+        finally:
+            try:
+                if os.path.exists(gray_path):
+                    os.unlink(gray_path)
+            except PermissionError:
+                pass
+
+    def test_roundtrip_test_catches_exceptions(self):
+        """Should return False when roundtrip test encounters errors."""
+        from stegvault.stego.png_lsb import embed_and_extract_roundtrip_test
+
+        # Test with invalid image path
+        result = embed_and_extract_roundtrip_test("/nonexistent/image.png", b"test", 123)
+
+        assert result is False

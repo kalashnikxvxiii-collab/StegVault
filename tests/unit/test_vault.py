@@ -435,6 +435,19 @@ class TestVaultSerialization:
         assert vault2.get_entry("gmail").password == "pass1"
         assert vault2.get_entry("github").password == "pass2"
 
+    def test_vault_from_json_not_a_dict(self):
+        """vault_from_json should raise if JSON is not a dict."""
+        json_str = '["not", "a", "dict"]'  # JSON array instead of object
+        with pytest.raises(ValueError, match="must be an object"):
+            vault_from_json(json_str)
+
+    def test_import_vault_from_file_not_found(self):
+        """import_vault_from_file should raise FileNotFoundError for missing file."""
+        from stegvault.vault.operations import import_vault_from_file
+
+        with pytest.raises(FileNotFoundError, match="not found"):
+            import_vault_from_file("/nonexistent/path/vault.json")
+
 
 class TestFormatDetection:
     """Tests for format auto-detection."""
@@ -489,6 +502,38 @@ class TestFormatDetection:
         assert len(vault.entries) == 1
         assert vault.entries[0].key == "default"
         assert vault.entries[0].password == password
+
+    def test_detect_format_non_utf8_bytes(self):
+        """detect_format should handle non-UTF8 bytes as single password."""
+        # Invalid UTF-8 bytes
+        invalid_bytes = b"\xff\xfe\x00\x01"
+
+        format_type = detect_format(invalid_bytes)
+        assert format_type == VaultFormat.V1_SINGLE
+
+    def test_detect_format_json_not_vault(self):
+        """detect_format should treat valid JSON (not vault) as single password."""
+        # Valid JSON but not a vault structure
+        json_str = '{"foo": "bar", "baz": 123}'
+
+        format_type = detect_format(json_str)
+        assert format_type == VaultFormat.V1_SINGLE
+
+    def test_parse_payload_bytes(self):
+        """parse_payload should handle bytes payload."""
+        from stegvault.vault.operations import parse_payload
+
+        # Create a vault and convert to bytes
+        vault = create_vault()
+        add_entry(vault, key="test", password="secret123")
+        json_str = vault_to_json(vault)
+        json_bytes = json_str.encode("utf-8")
+
+        # Should decode and parse correctly
+        parsed_vault = parse_payload(json_bytes)
+        assert isinstance(parsed_vault, Vault)
+        assert len(parsed_vault.entries) == 1
+        assert parsed_vault.entries[0].key == "test"
 
 
 class TestPasswordGenerator:
@@ -617,6 +662,33 @@ class TestPasswordGenerator:
         # Should contain at least one symbol
         symbols = "!@#$%^&*()-_=+[]{}|;:,.<>?"
         assert any(c in symbols for c in password)
+
+    def test_password_meets_requirements_missing_lowercase(self):
+        """Should detect when password is missing required lowercase."""
+        gen = PasswordGenerator(
+            length=20, use_lowercase=True, use_uppercase=True, use_digits=True, use_symbols=False
+        )
+        # Password without lowercase should fail requirement check
+        password_no_lower = "ABCDEF123456"
+        assert not gen._meets_requirements(password_no_lower)
+
+    def test_password_meets_requirements_missing_uppercase(self):
+        """Should detect when password is missing required uppercase."""
+        gen = PasswordGenerator(
+            length=20, use_lowercase=True, use_uppercase=True, use_digits=True, use_symbols=False
+        )
+        # Password without uppercase should fail requirement check
+        password_no_upper = "abcdef123456"
+        assert not gen._meets_requirements(password_no_upper)
+
+    def test_password_meets_requirements_missing_symbols(self):
+        """Should detect when password is missing required symbols."""
+        gen = PasswordGenerator(
+            length=20, use_lowercase=True, use_uppercase=True, use_digits=True, use_symbols=True
+        )
+        # Password without symbols should fail requirement check
+        password_no_symbols = "Abcdef123456"
+        assert not gen._meets_requirements(password_no_symbols)
 
     def test_estimate_entropy_empty_charset(self):
         """Should return 0.0 for passwords with no recognizable characters."""

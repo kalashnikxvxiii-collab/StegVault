@@ -152,3 +152,70 @@ class TestVaultFilterCLI:
         )
 
         assert result.exit_code == 1
+
+    def test_filter_by_url_only(self, test_vault_image, runner):
+        """Test filtering by URL only."""
+        vault_image, passphrase = test_vault_image
+
+        result = runner.invoke(
+            vault_cli,
+            ["filter", vault_image, "--passphrase", passphrase, "--url", "github"],
+        )
+
+        assert result.exit_code == 0
+        assert "github" in result.output.lower()
+
+    def test_filter_exact_url(self, test_vault_image, runner):
+        """Test filtering with exact URL match."""
+        vault_image, passphrase = test_vault_image
+
+        result = runner.invoke(
+            vault_cli,
+            [
+                "filter",
+                vault_image,
+                "--passphrase",
+                passphrase,
+                "--url",
+                "https://github.com",
+                "--exact-url",
+            ],
+        )
+
+        assert result.exit_code == 0
+
+    def test_filter_single_password_image(self, runner):
+        """Test filter rejects single-password images."""
+        from stegvault.crypto import encrypt_data
+        from stegvault.stego import embed_payload
+        from stegvault.utils import serialize_payload
+
+        cover_path = None
+        vault_path = None
+
+        try:
+            # Create cover image
+            cover_path = tempfile.mktemp(suffix=".png")
+            test_image = get_test_image()
+            test_image.save(cover_path, format="PNG")
+
+            # Embed single password
+            vault_path = tempfile.mktemp(suffix=".png")
+            passphrase = "TestPass123!"
+            password = "MySecret123"
+            ciphertext, salt, nonce = encrypt_data(password.encode("utf-8"), passphrase)
+            payload = serialize_payload(salt, nonce, ciphertext)
+            stego_img = embed_payload(cover_path, payload)
+            stego_img.save(vault_path)
+
+            result = runner.invoke(
+                vault_cli,
+                ["filter", vault_path, "--passphrase", passphrase, "--tag", "work"],
+            )
+
+            assert result.exit_code != 0
+            assert "single-password backup" in result.output.lower()
+
+        finally:
+            cleanup_file(cover_path)
+            cleanup_file(vault_path)

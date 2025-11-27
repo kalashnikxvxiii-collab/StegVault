@@ -2187,27 +2187,25 @@ def filter(
             sys.exit(1)
 
         # Apply filters
-        results = set()
+        results_list = []
 
-        if tag:
+        if tag and url:
+            # Both filters: intersection
             tag_results = filter_by_tags(vault_obj, list(tag), match_all=match_all)
-            if url:
-                # Both filters: intersection
-                results = set(tag_results)
-            else:
-                # Only tag filter
-                results = set(tag_results)
-
-        if url:
             url_results = filter_by_url(vault_obj, url, exact=exact_url)
-            if tag:
-                # Both filters: intersection
-                results = results.intersection(set(url_results))
-            else:
-                # Only URL filter
-                results = set(url_results)
+            # Find intersection by key
+            tag_keys = {e.key for e in tag_results}
+            url_keys = {e.key for e in url_results}
+            intersection_keys = tag_keys.intersection(url_keys)
+            results_list = [e for e in tag_results if e.key in intersection_keys]
+        elif tag:
+            # Only tag filter
+            results_list = filter_by_tags(vault_obj, list(tag), match_all=match_all)
+        elif url:
+            # Only URL filter
+            results_list = filter_by_url(vault_obj, url, exact=exact_url)
 
-        results_list = sorted(list(results), key=lambda e: e.key)
+        results_list = sorted(results_list, key=lambda e: e.key)
 
         if not results_list:
             click.echo("No entries found matching the specified filters")

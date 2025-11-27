@@ -257,3 +257,30 @@ class TestUtilityFunctions:
 
         assert validate_payload_capacity(required - 1, plaintext_size) is False
         assert validate_payload_capacity(0, plaintext_size) is False
+
+
+class TestExtractFullPayload:
+    """Tests for extract_full_payload utility function."""
+
+    def test_extract_full_payload_invalid_magic(self, tmp_path):
+        """Should raise ValueError when magic header is invalid."""
+        import pytest
+        import numpy as np
+        from PIL import Image
+        from stegvault.stego import embed_payload
+        from stegvault.utils import extract_full_payload
+
+        # Create test image
+        img_path = tmp_path / "test.png"
+        img_array = np.random.randint(0, 256, (100, 100, 3), dtype=np.uint8)
+        test_image = Image.fromarray(img_array, mode="RGB")
+        test_image.save(img_path, format="PNG")
+
+        # Embed payload with wrong magic header (not "SPW1")
+        bad_payload = b"XXXX" + b"\x00" * 44  # Wrong magic header
+        stego_img = embed_payload(str(img_path), bad_payload, seed=0)
+        stego_img.save(str(img_path))
+
+        # Should raise ValueError for bad magic header
+        with pytest.raises(ValueError, match="Invalid or corrupted payload"):
+            extract_full_payload(str(img_path))

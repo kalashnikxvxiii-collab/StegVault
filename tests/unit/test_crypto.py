@@ -61,6 +61,27 @@ class TestKeyDerivation:
         with pytest.raises(CryptoError, match="Salt must be exactly"):
             derive_key("passphrase", b"short")
 
+    def test_derive_key_invalid_time_cost(self):
+        """Should raise error for invalid time_cost parameter."""
+        salt = generate_salt()
+
+        with pytest.raises(CryptoError, match="time_cost must be >= 1"):
+            derive_key("test", salt, time_cost=0)
+
+    def test_derive_key_invalid_memory_cost(self):
+        """Should raise error for invalid memory_cost parameter."""
+        salt = generate_salt()
+
+        with pytest.raises(CryptoError, match="memory_cost must be >= 8"):
+            derive_key("test", salt, memory_cost=7)
+
+    def test_derive_key_invalid_parallelism(self):
+        """Should raise error for invalid parallelism parameter."""
+        salt = generate_salt()
+
+        with pytest.raises(CryptoError, match="parallelism must be >= 1"):
+            derive_key("test", salt, parallelism=0)
+
 
 class TestRandomGeneration:
     """Tests for random salt and nonce generation."""
