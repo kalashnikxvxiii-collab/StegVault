@@ -1336,6 +1336,80 @@ class TestVaultExportCommand:
             except (PermissionError, FileNotFoundError):
                 pass
 
+    def test_export_with_redact(self, runner, vault_image, temp_output):
+        """Should export vault with passwords redacted (default behavior without --decrypt)."""
+        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as tmp:
+            json_file = tmp.name
+
+        try:
+            # Export WITHOUT --decrypt flag = passwords are redacted
+            result = runner.invoke(
+                vault,
+                [
+                    "export",
+                    vault_image,
+                    "--output",
+                    json_file,
+                    "--passphrase",
+                    "VaultPass123!",
+                ],
+            )
+
+            assert result.exit_code == 0, f"Export failed:\n{result.output}"
+            assert os.path.exists(json_file)
+
+            # Verify passwords are redacted
+            with open(json_file, "r") as f:
+                content = f.read()
+                assert "***REDACTED***" in content
+                # Password should NOT be in plaintext
+                assert "ExportPassword123" not in content
+                # But other fields should be present
+                assert "export_test" in content
+                assert "exportuser" in content
+
+        finally:
+            try:
+                os.unlink(json_file)
+            except (PermissionError, FileNotFoundError):
+                pass
+
+    def test_export_with_redact_pretty(self, runner, vault_image, temp_output):
+        """Should export with redacted passwords and pretty formatting."""
+        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as tmp:
+            json_file = tmp.name
+
+        try:
+            # Export WITHOUT --decrypt but WITH --pretty = redacted + formatted
+            result = runner.invoke(
+                vault,
+                [
+                    "export",
+                    vault_image,
+                    "--output",
+                    json_file,
+                    "--passphrase",
+                    "VaultPass123!",
+                    "--pretty",
+                ],
+            )
+
+            assert result.exit_code == 0, f"Export failed:\n{result.output}"
+            assert os.path.exists(json_file)
+
+            # Verify pretty formatting (indentation) and redaction
+            with open(json_file, "r") as f:
+                content = f.read()
+                assert "  " in content  # Should have indentation
+                assert "***REDACTED***" in content
+                assert "ExportPassword123" not in content
+
+        finally:
+            try:
+                os.unlink(json_file)
+            except (PermissionError, FileNotFoundError):
+                pass
+
     def test_import_success(self, runner, test_image, temp_output):
         """Should import vault from JSON file."""
         # Create a valid vault JSON file
