@@ -8,7 +8,7 @@ and routes to the appropriate steganography implementation (PNG LSB or JPEG DCT)
 from typing import Optional, Union
 from stegvault.utils.image_format import detect_format, ImageFormat
 from stegvault.stego import png_lsb, jpeg_dct
-from stegvault.stego.png_lsb import StegoError, CapacityError, ExtractionError
+from stegvault.stego.png_lsb import StegoError
 
 
 def calculate_capacity(image: Union[str, "PIL.Image.Image"]) -> int:  # type: ignore

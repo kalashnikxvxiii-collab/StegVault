@@ -7,7 +7,6 @@ steganography module.
 
 import os
 from enum import Enum
-from typing import Tuple
 
 
 class ImageFormat(Enum):
