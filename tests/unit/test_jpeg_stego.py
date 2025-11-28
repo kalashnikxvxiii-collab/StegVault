@@ -443,6 +443,41 @@ class TestDispatcher:
             if os.path.exists(bmp_path):
                 os.unlink(bmp_path)
 
+    def test_calculate_capacity_pil_image_unsupported(self, monkeypatch):
+        """Should raise StegoError for unsupported PIL Image format."""
+        from stegvault.stego.png_lsb import StegoError as PNGStegoError
+
+        # Create BMP file and open as PIL Image
+        with tempfile.NamedTemporaryFile(suffix=".bmp", delete=False) as tmp:
+            img_array = np.random.randint(0, 256, (50, 50, 3), dtype=np.uint8)
+            img = Image.fromarray(img_array, mode="RGB")
+            img.save(tmp.name, format="BMP")
+            bmp_path = tmp.name
+
+        try:
+            # Open BMP as PIL Image object
+            img = Image.open(bmp_path)
+
+            # Mock detect_format to return UNKNOWN for the temp file
+            # This forces the code to raise the error at line 49
+            from stegvault.utils import image_format
+
+            def mock_detect_format(path):
+                # Return UNKNOWN to trigger the else branch at line 48
+                return image_format.ImageFormat.UNKNOWN
+
+            monkeypatch.setattr("stegvault.stego.dispatcher.detect_format", mock_detect_format)
+
+            # Should raise StegoError for unsupported format
+            with pytest.raises(PNGStegoError, match="Unsupported image format: BMP"):
+                dispatcher.calculate_capacity(img)
+
+            img.close()
+
+        finally:
+            if os.path.exists(bmp_path):
+                os.unlink(bmp_path)
+
 
 class TestImageFormat:
     """Tests for image format detection module."""
