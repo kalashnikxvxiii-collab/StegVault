@@ -212,6 +212,89 @@ class TestBackupCommand:
         assert "Using default settings" in result.output
         assert result.exit_code == 0
 
+    def test_backup_crypto_error(self, runner, test_image, temp_output, monkeypatch):
+        """Should handle CryptoError during backup."""
+        from stegvault.crypto import CryptoError
+
+        # Mock encrypt_data to raise CryptoError
+        def mock_encrypt(*args, **kwargs):
+            raise CryptoError("Encryption failed")
+
+        monkeypatch.setattr("stegvault.cli.encrypt_data", mock_encrypt)
+
+        result = runner.invoke(
+            backup,
+            [
+                "--image",
+                test_image,
+                "--output",
+                temp_output,
+                "--password",
+                "TestPassword123",
+                "--passphrase",
+                "StrongPassphrase!@#456",
+                "--no-check-strength",
+            ],
+        )
+
+        assert result.exit_code == 1
+        assert "Encryption error" in result.output
+
+    def test_backup_stego_error(self, runner, test_image, temp_output, monkeypatch):
+        """Should handle StegoError during backup."""
+        from stegvault.stego import StegoError
+
+        # Mock embed_payload to raise StegoError
+        def mock_embed(*args, **kwargs):
+            raise StegoError("Steganography failed")
+
+        monkeypatch.setattr("stegvault.cli.embed_payload", mock_embed)
+
+        result = runner.invoke(
+            backup,
+            [
+                "--image",
+                test_image,
+                "--output",
+                temp_output,
+                "--password",
+                "TestPassword123",
+                "--passphrase",
+                "StrongPassphrase!@#456",
+                "--no-check-strength",
+            ],
+        )
+
+        assert result.exit_code == 1
+        assert "Steganography error" in result.output
+
+    def test_backup_unexpected_error(self, runner, test_image, temp_output, monkeypatch):
+        """Should handle unexpected errors during backup."""
+
+        # Mock PIL Image.open to raise generic Exception
+        def mock_image_open(*args, **kwargs):
+            raise RuntimeError("Unexpected error occurred")
+
+        monkeypatch.setattr("PIL.Image.open", mock_image_open)
+
+        result = runner.invoke(
+            backup,
+            [
+                "--image",
+                test_image,
+                "--output",
+                temp_output,
+                "--password",
+                "TestPassword123",
+                "--passphrase",
+                "StrongPassphrase!@#456",
+                "--no-check-strength",
+            ],
+        )
+
+        assert result.exit_code == 1
+        assert "Unexpected error" in result.output
+
 
 class TestRestoreCommand:
     """Tests for restore command."""
@@ -495,6 +578,43 @@ class TestRestoreCommand:
         assert "Using default settings" in result.output
         assert result.exit_code == 0
 
+    def test_restore_unexpected_error(self, runner, test_image, temp_output, monkeypatch):
+        """Should handle unexpected errors during restore."""
+        # First create a valid backup
+        password = "MyTestPassword123"
+        passphrase = "StrongPassphrase!@#456"
+
+        backup_result = runner.invoke(
+            backup,
+            [
+                "--image",
+                test_image,
+                "--output",
+                temp_output,
+                "--password",
+                password,
+                "--passphrase",
+                passphrase,
+                "--no-check-strength",
+            ],
+        )
+        assert backup_result.exit_code == 0
+
+        # Mock extract_payload to raise generic Exception
+        def mock_extract(*args, **kwargs):
+            raise RuntimeError("Unexpected extraction error")
+
+        monkeypatch.setattr("stegvault.cli.extract_payload", mock_extract)
+
+        # Try to restore
+        result = runner.invoke(
+            restore,
+            ["--image", temp_output, "--passphrase", passphrase],
+        )
+
+        assert result.exit_code == 1
+        assert "Unexpected error" in result.output
+
 
 class TestCheckCommand:
     """Tests for check command."""
@@ -590,6 +710,20 @@ class TestCheckCommand:
                 os.unlink(medium_image)
             except (PermissionError, FileNotFoundError):
                 pass
+
+    def test_check_unexpected_error(self, runner, test_image, monkeypatch):
+        """Should handle unexpected errors during check."""
+
+        # Mock calculate_capacity to raise generic Exception
+        def mock_capacity(*args, **kwargs):
+            raise RuntimeError("Unexpected error during capacity calculation")
+
+        monkeypatch.setattr("stegvault.cli.calculate_capacity", mock_capacity)
+
+        result = runner.invoke(check, ["--image", test_image])
+
+        assert result.exit_code == 1
+        assert "Error:" in result.output
 
 
 class TestMainCommand:

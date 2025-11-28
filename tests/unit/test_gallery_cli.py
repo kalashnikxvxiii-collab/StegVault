@@ -105,6 +105,58 @@ class TestGalleryInit:
         assert result.exit_code == 0
         assert "already exists" in result.output
 
+    def test_init_gallery_default_path(self):
+        """Should initialize gallery at default path when no --db-path specified."""
+        import os
+        from click.testing import CliRunner
+
+        runner = CliRunner()
+        default_path = os.path.expanduser("~/.stegvault/gallery.db")
+
+        # Clean up if exists
+        try:
+            if os.path.exists(default_path):
+                os.unlink(default_path)
+        except:
+            pass
+
+        try:
+            result = runner.invoke(main, ["gallery", "init"])
+
+            # Should succeed and create at default path
+            assert result.exit_code == 0
+            assert "Gallery initialized" in result.output
+            assert os.path.exists(default_path)
+
+        finally:
+            # Cleanup
+            try:
+                if os.path.exists(default_path):
+                    os.unlink(default_path)
+                # Also cleanup the directory if empty
+                gallery_dir = os.path.dirname(default_path)
+                if os.path.exists(gallery_dir) and not os.listdir(gallery_dir):
+                    os.rmdir(gallery_dir)
+            except:
+                pass
+
+    def test_init_gallery_error(self, temp_db, monkeypatch):
+        """Should handle errors during gallery initialization."""
+        from click.testing import CliRunner
+
+        runner = CliRunner()
+
+        # Mock Gallery in the gallery module
+        def mock_gallery_class(*args, **kwargs):
+            raise RuntimeError("Database initialization failed")
+
+        monkeypatch.setattr("stegvault.gallery.Gallery", mock_gallery_class)
+
+        result = runner.invoke(main, ["gallery", "init", "--db-path", temp_db])
+
+        assert result.exit_code == 1
+        assert "Error:" in result.output
+
 
 class TestGalleryAdd:
     """Tests for gallery add command."""
@@ -322,3 +374,193 @@ class TestGalleryRefresh:
 
         assert result.exit_code == 0
         assert "Refreshed" in result.output or "test-vault" in result.output
+
+
+class TestGalleryErrorHandling:
+    """Tests for Gallery CLI error handling."""
+
+    def test_add_vault_error_invalid_passphrase(self, temp_db, temp_vault_image):
+        """Should fail when adding vault with wrong passphrase."""
+        runner = CliRunner()
+        vault_path, _correct_passphrase = temp_vault_image
+
+        runner.invoke(main, ["gallery", "init", "--db-path", temp_db])
+
+        # Try to add with wrong passphrase
+        result = runner.invoke(
+            main,
+            [
+                "gallery",
+                "add",
+                vault_path,
+                "--name",
+                "error-vault",
+                "--passphrase",
+                "WrongPassword123!",
+                "--db-path",
+                temp_db,
+            ],
+        )
+
+        assert result.exit_code == 1
+        assert "Error" in result.output
+
+    def test_add_vault_error_nonexistent_file(self, temp_db):
+        """Should fail when adding non-existent vault file."""
+        runner = CliRunner()
+
+        runner.invoke(main, ["gallery", "init", "--db-path", temp_db])
+
+        result = runner.invoke(
+            main,
+            [
+                "gallery",
+                "add",
+                "nonexistent_vault.png",
+                "--name",
+                "error-vault",
+                "--passphrase",
+                "pass123",
+                "--db-path",
+                temp_db,
+            ],
+        )
+
+        # Click returns exit code 2 for invalid file path
+        assert result.exit_code == 2
+        assert "does not exist" in result.output or "Error" in result.output
+
+    def test_remove_vault_nonexistent(self, temp_db):
+        """Should fail when removing non-existent vault."""
+        runner = CliRunner()
+
+        runner.invoke(main, ["gallery", "init", "--db-path", temp_db])
+
+        result = runner.invoke(
+            main,
+            ["gallery", "remove", "nonexistent-vault", "--db-path", temp_db],
+            input="y\n",
+        )
+
+        assert result.exit_code == 1
+        assert "not found" in result.output
+
+    def test_refresh_vault_nonexistent(self, temp_db):
+        """Should fail when refreshing non-existent vault."""
+        runner = CliRunner()
+
+        runner.invoke(main, ["gallery", "init", "--db-path", temp_db])
+
+        result = runner.invoke(
+            main,
+            [
+                "gallery",
+                "refresh",
+                "nonexistent-vault",
+                "--passphrase",
+                "pass123",
+                "--db-path",
+                temp_db,
+            ],
+        )
+
+        assert result.exit_code == 1
+        assert "Error" in result.output
+
+    def test_search_by_username_field(self, temp_db, temp_vault_image):
+        """Should search by username field across gallery."""
+        runner = CliRunner()
+        vault_path, passphrase = temp_vault_image
+
+        runner.invoke(main, ["gallery", "init", "--db-path", temp_db])
+        runner.invoke(
+            main,
+            [
+                "gallery",
+                "add",
+                vault_path,
+                "--name",
+                "field-vault",
+                "--passphrase",
+                passphrase,
+                "--db-path",
+                temp_db,
+            ],
+        )
+
+        # Search by username field
+        result = runner.invoke(
+            main, ["gallery", "search", "dev", "--fields", "username", "--db-path", temp_db]
+        )
+
+        assert result.exit_code == 0
+        assert "github" in result.output.lower() or "dev" in result.output.lower()
+
+    def test_search_by_url_field(self, temp_db, temp_vault_image):
+        """Should search by URL field."""
+        runner = CliRunner()
+        vault_path, passphrase = temp_vault_image
+
+        runner.invoke(main, ["gallery", "init", "--db-path", temp_db])
+        runner.invoke(
+            main,
+            [
+                "gallery",
+                "add",
+                vault_path,
+                "--name",
+                "url-vault",
+                "--passphrase",
+                passphrase,
+                "--db-path",
+                temp_db,
+            ],
+        )
+
+        # Search by URL field
+        result = runner.invoke(
+            main, ["gallery", "search", "gmail", "--fields", "url", "--db-path", temp_db]
+        )
+
+        assert result.exit_code == 0
+        assert "gmail" in result.output.lower()
+
+    def test_search_no_results(self, temp_db, temp_vault_image):
+        """Should handle search with no results."""
+        runner = CliRunner()
+        vault_path, passphrase = temp_vault_image
+
+        runner.invoke(main, ["gallery", "init", "--db-path", temp_db])
+        runner.invoke(
+            main,
+            [
+                "gallery",
+                "add",
+                vault_path,
+                "--name",
+                "no-results-vault",
+                "--passphrase",
+                passphrase,
+                "--db-path",
+                temp_db,
+            ],
+        )
+
+        # Search for something that doesn't exist
+        result = runner.invoke(main, ["gallery", "search", "nonexistent", "--db-path", temp_db])
+
+        assert result.exit_code == 0
+        # Should complete successfully but show no results
+
+    def test_init_gallery_overwrite_yes(self, temp_db):
+        """Should overwrite gallery when user confirms."""
+        runner = CliRunner()
+
+        # Create first
+        runner.invoke(main, ["gallery", "init", "--db-path", temp_db])
+
+        # Overwrite - answer yes
+        result = runner.invoke(main, ["gallery", "init", "--db-path", temp_db], input="y\n")
+
+        assert result.exit_code == 0
+        assert "Gallery initialized" in result.output
