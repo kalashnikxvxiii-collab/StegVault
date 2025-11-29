@@ -4,7 +4,7 @@ Welcome to the StegVault documentation wiki!
 
 ## What is StegVault?
 
-StegVault is a secure password manager that uses steganography to hide encrypted passwords within ordinary images. It combines modern cryptography (XChaCha20-Poly1305 + Argon2id) with LSB steganography to create a portable, zero-knowledge backup system.
+StegVault is a secure password manager that uses steganography to hide encrypted passwords within ordinary images. It combines modern cryptography (XChaCha20-Poly1305 + Argon2id) with dual steganography (PNG LSB + JPEG DCT) to create a portable, zero-knowledge backup system.
 
 ## Quick Links
 
@@ -44,18 +44,24 @@ StegVault is a secure password manager that uses steganography to hide encrypted
 
 ## Project Status
 
-- **Version**: 0.1.0 (Initial Release)
-- **Status**: Alpha - Testing and feedback welcome
+- **Version**: 0.6.1 (Application Layer)
+- **Status**: Beta - Production-ready features
 - **License**: MIT
 - **Language**: Python 3.9+
+- **Tests**: 614 passing (92% coverage)
 
 ## Key Features
 
 - ✅ XChaCha20-Poly1305 AEAD encryption
 - ✅ Argon2id key derivation
-- ✅ LSB steganography with pseudo-random ordering
+- ✅ Dual steganography (PNG LSB + JPEG DCT)
+- ✅ Full vault mode with CRUD operations
+- ✅ TOTP/2FA authenticator
+- ✅ Gallery multi-vault management
+- ✅ Headless mode (JSON output, automation)
+- ✅ Application layer (UI-agnostic controllers)
 - ✅ CLI interface
-- ✅ 63+ unit tests
+- ✅ 614 unit tests with 92% coverage
 - ✅ Zero-knowledge architecture
 
 ## Coming Soon

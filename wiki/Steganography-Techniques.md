@@ -329,20 +329,48 @@ For developers:
 3. Test with steganalysis tools during development
 4. Document detectability limitations clearly
 
+## Implemented Techniques (v0.5.1+)
+
+### Dual Steganography
+
+StegVault now supports **two steganography methods** with automatic format detection:
+
+1. **PNG LSB** (Sequential): High capacity (~90KB for 400x600), lossless
+2. **JPEG DCT** (Coefficient modification): Lower capacity (~18KB), robust to recompression
+
+### JPEG DCT Steganography ✅
+
+**Implemented in v0.5.1**: Embeds data in DCT coefficients
+
+**Technique**:
+- ±1 modification of AC DCT coefficients
+- Avoids coefficients with |value| ≤ 1 (prevents shrinkage)
+- Processes 8x8 DCT blocks across Y, Cb, Cr channels
+
+**Benefits**:
+- ✅ Robust against mild JPEG recompression
+- ✅ Survives quality adjustments (within reason)
+- ✅ More reliable than LSB for JPEG images
+
+**Trade-offs**:
+- Lower capacity (~20% of PNG LSB)
+- Requires jpeglib library
+- Not 100% invisible to steganalysis
+
 ## Future Enhancements
 
-### Advanced Techniques
+### Advanced Techniques (Planned)
 
-1. **DCT-based embedding**: For JPEG reliability
-2. **Adaptive LSB**: Higher capacity in complex regions
-3. **Spread spectrum**: More robust to modifications
-4. **Model-based**: Using ML for better imperceptibility
+1. **Adaptive LSB**: Higher capacity in complex regions
+2. **Spread spectrum**: More robust to modifications
+3. **Model-based**: Using ML for better imperceptibility
+4. **GIF/BMP Support**: Additional image formats
 
 ### Research Areas
 
-- Post-processing resilience (JPEG compression, filtering)
+- Further post-processing resilience
 - Capacity vs. detectability trade-offs
-- Multi-format support (GIF, BMP, TIFF)
+- Encrypted container formats
 
 ## References
 

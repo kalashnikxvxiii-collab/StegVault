@@ -6,7 +6,10 @@ Common questions about StegVault.
 
 ### What is StegVault?
 
-StegVault is a password manager that uses steganography to hide encrypted credentials within images. It combines modern cryptography (XChaCha20-Poly1305 + Argon2id) with LSB steganography to create portable, secure password backups.
+StegVault is a full-featured password manager that uses steganography to hide encrypted credentials within images. It combines modern cryptography (XChaCha20-Poly1305 + Argon2id) with dual steganography (PNG LSB + JPEG DCT) to create portable, secure password vaults.
+
+**Current version**: 0.6.1 (Application Layer)
+**Features**: Full vault mode, TOTP/2FA, Gallery management, Headless mode, Application Layer for multi-interface support
 
 ---
 

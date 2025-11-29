@@ -255,7 +255,13 @@ Public Public Public Public  ENCRYPTED   MAC
 
 ### Current Status
 
-**Version 0.1.0**: No external security audit yet
+**Version 0.6.1**: No external security audit yet
+
+**Code Quality**:
+- 614 tests (100% pass rate)
+- 92% code coverage
+- Continuous Integration (Python 3.9-3.14)
+- Security scanning (CodeQL, Bandit)
 
 **Future Plans**:
 - External cryptographic review

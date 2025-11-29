@@ -3,14 +3,14 @@
 > Secure password manager using steganography to embed encrypted credentials within images
 
 [![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![Version](https://img.shields.io/badge/version-0.6.0--beta-blue.svg)](https://github.com/kalashnikxvxiii-collab/StegVault)
+[![Version](https://img.shields.io/badge/version-0.6.1--beta-blue.svg)](https://github.com/kalashnikxvxiii-collab/StegVault)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-585_passing-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-614_passing-brightgreen.svg)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-92%25-brightgreen.svg)](tests/)
 
 **StegVault** is a full-featured password manager that combines modern cryptography with steganography. It can store either a single password or an entire vault of credentials, all encrypted using battle-tested algorithms (XChaCha20-Poly1305 + Argon2id) and hidden within ordinary **PNG or JPEG** images.
 
-**Latest Features (v0.6.0-beta):** Headless Mode - Full automation support with JSON output, file/env passphrases, and standardized exit codes for CI/CD pipelines!
+**Latest Features (v0.6.1-beta):** Application Layer - Clean architecture with UI-agnostic controllers for CLI/TUI/GUI support!
 
 ## Features
 
@@ -20,7 +20,7 @@
 - 🎯 **Auto-Detection**: Automatically detects image format (PNG/JPEG)
 - 🔒 **Zero-Knowledge**: All operations performed locally, no cloud dependencies
 - ✅ **Authenticated**: AEAD tag ensures data integrity
-- 🧪 **Well-Tested**: 585 unit tests with 92% overall coverage (all passing)
+- 🧪 **Well-Tested**: 614 unit tests with 92% overall coverage (all passing)
 - ⏱️ **User-Friendly**: Progress indicators for long operations
 
 ### Vault Mode
@@ -52,6 +52,14 @@
 - 🔢 **Exit Codes**: Standardized codes (0=success, 1=error, 2=validation)
 - ⚙️ **Automation-Ready**: Perfect for scripts, backups, and deployments
 - 🔗 **Priority System**: Explicit > File > Env > Prompt fallback
+
+### Application Layer (v0.6.1)
+- 🏗️ **Clean Architecture**: Separation of business logic from UI layers
+- 🎯 **Multi-Interface**: Controllers work with CLI, TUI, and future GUI
+- 📦 **Structured Results**: All operations return typed result objects
+- 🧪 **Easy Testing**: No UI framework dependencies in business logic
+- 🔄 **Thread-Safe**: Designed for concurrent access in GUI applications
+- 🎨 **Consistent Logic**: Same business rules across all interfaces
 
 ## Quick Start
 
@@ -586,6 +594,110 @@ for block in [Y_blocks, Cb_blocks, Cr_blocks]:
 3. **PNG Format**: Always use PNG (lossless) not JPEG (lossy)
 4. **Verify Backups**: Test restore process after creating backup
 5. **Secure Storage**: Protect image files as you would protect passwords
+
+## Application Layer (v0.6.1)
+
+StegVault now includes a clean **Application Layer** that separates business logic from UI concerns. This architecture enables multiple user interfaces (CLI, TUI, GUI) to share the same underlying operations.
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────┐
+│          User Interfaces (UI)               │
+│  CLI (Click)  │  TUI (Textual)  │  GUI (Qt) │
+└──────────────┬──────────────────┬───────────┘
+               │                  │
+          ┌────▼──────────────────▼────┐
+          │   Application Controllers  │
+          │  • CryptoController        │
+          │  • VaultController         │
+          └────┬──────────────────┬────┘
+               │                  │
+          ┌────▼──────────────────▼────┐
+          │    Core Modules            │
+          │  • crypto  • vault  • stego│
+          └────────────────────────────┘
+```
+
+### Controllers
+
+#### CryptoController
+
+High-level encryption operations with structured results:
+
+```python
+from stegvault.app.controllers import CryptoController
+
+controller = CryptoController()
+
+# Encrypt data
+result = controller.encrypt(b"secret data", "passphrase")
+if result.success:
+    print(f"Salt: {result.salt.hex()}")
+    print(f"Nonce: {result.nonce.hex()}")
+else:
+    print(f"Error: {result.error}")
+
+# Decrypt data
+result = controller.decrypt(
+    ciphertext, salt, nonce, "passphrase"
+)
+if result.success:
+    print(f"Plaintext: {result.plaintext}")
+```
+
+#### VaultController
+
+Complete vault CRUD operations:
+
+```python
+from stegvault.app.controllers import VaultController
+
+controller = VaultController()
+
+# Create new vault
+vault, success, error = controller.create_new_vault(
+    key="gmail",
+    password="secret123",
+    username="user@gmail.com",
+    url="https://gmail.com",
+    tags=["email", "personal"]
+)
+
+# Save to image
+result = controller.save_vault(
+    vault, "vault.png", "passphrase",
+    cover_image="cover.png"
+)
+
+# Load from image
+result = controller.load_vault("vault.png", "passphrase")
+if result.success:
+    vault = result.vault
+
+# Get entry
+entry_result = controller.get_vault_entry(vault, "gmail")
+if entry_result.success:
+    print(f"Password: {entry_result.entry.password}")
+```
+
+### Benefits
+
+- **UI-Agnostic**: Controllers work with any interface (CLI/TUI/GUI)
+- **Easy Testing**: No need to mock UI frameworks
+- **Consistent Logic**: Same business rules across all interfaces
+- **Thread-Safe**: Designed for concurrent access (future GUI)
+- **Structured Results**: All operations return typed result objects
+
+### Result Data Classes
+
+All controller methods return structured results with success/error info:
+
+- `EncryptionResult` - Encryption operations (ciphertext, salt, nonce)
+- `DecryptionResult` - Decryption operations (plaintext)
+- `VaultLoadResult` - Vault loading (vault object, error)
+- `VaultSaveResult` - Vault saving (output path, error)
+- `EntryResult` - Entry retrieval (entry object, error)
 
 ## Development
 

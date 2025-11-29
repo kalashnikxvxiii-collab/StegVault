@@ -1,53 +1,142 @@
 # Architecture Overview
 
-This document provides a technical overview of StegVault's architecture.
+This document provides a technical overview of StegVault's architecture (v0.6.1).
 
 ## System Architecture
 
 ```
-┌────────────────────────────────────────────────────────────┐
-│                      StegVault System                      │
-├────────────────────────────────────────────────────────────┤
-│                                                            │
-│  ┌──────────────┐                                          │
-│  │   CLI Layer  │  ← User Interface (Click framework)      │
-│  └──────┬───────┘                                          │
-│         │                                                  │
-│  ┌──────▼───────────────────────────────────────┐          │
-│  │          StegVault Core API                  │          │
-│  ├──────────────────────────────────────────────┤          │
-│  │                                              │          │
-│  │  ┌─────────────┐  ┌─────────────┐            │          │
-│  │  │   Crypto    │  │    Stego    │            │          │
-│  │  │   Module    │  │   Module    │            │          │
-│  │  │             │  │             │            │          │
-│  │  │ • Argon2id  │  │ • LSB PNG   │            │          │
-│  │  │ • XChaCha20 │  │ • Pseudo-   │            │          │
-│  │  │ • Poly1305  │  │   random    │            │          │
-│  │  │             │  │   ordering  │            │          │
-│  │  └─────────────┘  └─────────────┘            │          │
-│  │                                              │          │
-│  │  ┌──────────────────────────────┐            │          │
-│  │  │      Utils Module            │            │          │
-│  │  │                              │            │          │
-│  │  │ • Payload serialization      │            │          │
-│  │  │ • Format parsing             │            │          │
-│  │  │ • Capacity validation        │            │          │
-│  │  └──────────────────────────────┘            │          │
-│  │                                              │          │
-│  └──────────────────────────────────────────────┘          │
-│         │              │             │                     │
-│  ┌──────▼──────┐ ┌────▼─────┐ ┌──────▼──────┐              │
-│  │   PyNaCl    │ │  Pillow  │ │   argon2    │              │
-│  │ (libsodium) │ │  (PIL)   │ │   -cffi     │              │
-│  └─────────────┘ └──────────┘ └─────────────┘              │
-│                                                            │
-└────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                       StegVault System (v0.6.1)                 │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │            User Interface Layer (UI)                     │   │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐      │   │
+│  │  │     CLI     │  │     TUI     │  │     GUI     │      │   │
+│  │  │   (Click)   │  │  (Textual)  │  │  (PySide6)  │      │   │
+│  │  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘      │   │
+│  └─────────┼─────────────────┼─────────────────┼───────────┘   │
+│            │                 │                 │               │
+│  ┌─────────▼─────────────────▼─────────────────▼───────────┐   │
+│  │           Application Layer (Controllers)               │   │
+│  │  ┌───────────────────┐  ┌───────────────────┐           │   │
+│  │  │ CryptoController  │  │  VaultController  │           │   │
+│  │  │                   │  │                   │           │   │
+│  │  │ • encrypt()       │  │ • load_vault()    │           │   │
+│  │  │ • decrypt()       │  │ • save_vault()    │           │   │
+│  │  │ • with_payload()  │  │ • create_new()    │           │   │
+│  │  │                   │  │ • CRUD ops        │           │   │
+│  │  └─────────┬─────────┘  └─────────┬─────────┘           │   │
+│  └────────────┼──────────────────────┼─────────────────────┘   │
+│               │                      │                         │
+│  ┌────────────▼──────────────────────▼─────────────────────┐   │
+│  │                  Core Modules                           │   │
+│  │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌──────────┐   │   │
+│  │  │ crypto/ │  │ vault/  │  │ stego/  │  │ gallery/ │   │   │
+│  │  │         │  │         │  │         │  │          │   │   │
+│  │  │ Argon2id│  │ Vault   │  │ PNG LSB │  │ SQLite   │   │   │
+│  │  │ XChaCha │  │ Entry   │  │ JPEG DCT│  │ Search   │   │   │
+│  │  │ Poly1305│  │ TOTP    │  │ Dispatch│  │ Metadata │   │   │
+│  │  │         │  │ Generator│  │         │  │          │   │   │
+│  │  └─────────┘  └─────────┘  └─────────┘  └──────────┘   │   │
+│  │                                                          │   │
+│  │  ┌───────────────────────────────────────────────────┐  │   │
+│  │  │               Utils Module                        │  │   │
+│  │  │                                                   │  │   │
+│  │  │ • Payload (serialize/parse)                      │  │   │
+│  │  │ • Image Format Detection                         │  │   │
+│  │  │ • JSON Output (headless mode)                    │  │   │
+│  │  │ • Passphrase Handling (file/env/prompt)          │  │   │
+│  │  │ • Config Management (TOML)                       │  │   │
+│  │  └───────────────────────────────────────────────────┘  │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│               │              │              │                   │
+│  ┌────────────▼──────┐ ┌────▼──────┐ ┌─────▼──────┐            │
+│  │     PyNaCl        │ │  Pillow   │ │  jpeglib   │            │
+│  │   (libsodium)     │ │   (PIL)   │ │  (DCT)     │            │
+│  └───────────────────┘ └───────────┘ └────────────┘            │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-## Module Breakdown
+## Architectural Layers
 
-### 1. Cryptography Module (`stegvault/crypto/`)
+### 1. User Interface Layer (UI)
+
+Multiple interfaces sharing the same business logic:
+
+- **CLI (Current)**: Click-based command-line interface
+- **TUI (Planned v0.7.0)**: Textual-based terminal UI
+- **GUI (Planned v0.8.0)**: PySide6-based desktop application
+
+**Benefits**: Users can choose the interface that fits their workflow.
+
+### 2. Application Layer (v0.6.1)
+
+The **Application Layer** provides UI-agnostic business logic through controllers:
+
+#### CryptoController
+
+High-level encryption/decryption operations:
+
+```python
+from stegvault.app.controllers import CryptoController
+
+controller = CryptoController()
+
+# Encrypt
+result = controller.encrypt(data, passphrase)
+# Returns: EncryptionResult(ciphertext, salt, nonce, success, error)
+
+# Decrypt
+result = controller.decrypt(ciphertext, salt, nonce, passphrase)
+# Returns: DecryptionResult(plaintext, success, error)
+```
+
+**Features**:
+- Structured result types (`@dataclass`)
+- Optional config injection
+- Thread-safe operations
+- No UI dependencies
+
+#### VaultController
+
+Complete vault CRUD operations:
+
+```python
+from stegvault.app.controllers import VaultController
+
+controller = VaultController()
+
+# Load vault
+result = controller.load_vault("vault.png", "pass")
+# Returns: VaultLoadResult(vault, success, error)
+
+# Create new vault
+vault, success, error = controller.create_new_vault(
+    key="gmail", password="secret", username="user@gmail.com"
+)
+
+# CRUD operations
+vault, success, error = controller.add_vault_entry(vault, ...)
+entry_result = controller.get_vault_entry(vault, key)
+vault, success, error = controller.update_vault_entry(vault, ...)
+vault, success, error = controller.delete_vault_entry(vault, key)
+
+# Save vault
+result = controller.save_vault(vault, "output.png", "pass")
+# Returns: VaultSaveResult(output_path, success, error)
+```
+
+**Benefits**:
+- Reusable from any UI (CLI/TUI/GUI)
+- Easy to test (no mocking UI frameworks)
+- Consistent error handling
+- Thread-safe for concurrent access
+
+### 3. Core Modules
+
+#### Cryptography Module (`stegvault/crypto/`)
 
 **Purpose**: Handle all cryptographic operations
 
@@ -58,359 +147,311 @@ This document provides a technical overview of StegVault's architecture.
 
 **Key Functions**:
 ```python
-def encrypt_data(plaintext: bytes, passphrase: str) -> Tuple[bytes, bytes, bytes]
-def decrypt_data(ciphertext: bytes, salt: bytes, nonce: bytes, passphrase: str) -> bytes
-def derive_key(passphrase: str, salt: bytes) -> bytes
+def encrypt_data(data: bytes, passphrase: str, ...) -> Tuple[bytes, bytes, bytes]:
+    """Encrypt data with passphrase using XChaCha20-Poly1305."""
+    # Returns (ciphertext, salt, nonce)
+
+def decrypt_data(ciphertext, salt, nonce, passphrase, ...) -> bytes:
+    """Decrypt data with passphrase."""
+    # Returns plaintext
 ```
 
-**Security Properties**:
-- Argon2id parameters: 3 iterations, 64MB memory, 4 threads
-- 256-bit keys for XChaCha20
-- 192-bit nonces (extended compared to ChaCha20)
-- 128-bit Poly1305 authentication tags
+**Security Features**:
+- **Authenticated Encryption**: Poly1305 MAC prevents tampering
+- **Memory-Hard KDF**: Argon2id resists GPU/ASIC attacks
+- **Fresh Nonces**: New nonce for every encryption
 
-### 2. Steganography Module (`stegvault/stego/`)
+#### Vault Module (`stegvault/vault/`)
 
-**Purpose**: Embed and extract payloads in images
+**Purpose**: Manage password vault data structures
 
 **Components**:
-- **LSB Embedding**: Modify least significant bits of pixels
-- **Pixel Ordering**: Pseudo-random sequence generation
-- **Capacity Calculation**: Determine available space
+- `core.py` - Vault and VaultEntry data classes
+- `operations.py` - CRUD operations (add, update, delete entries)
+- `generator.py` - Cryptographic password generation
+- `totp.py` - TOTP/2FA authenticator
+
+**Data Structures**:
+```python
+@dataclass
+class VaultEntry:
+    key: str
+    password: str
+    username: Optional[str] = None
+    url: Optional[str] = None
+    notes: Optional[str] = None
+    tags: List[str] = field(default_factory=list)
+    totp_secret: Optional[str] = None
+    created: str  # ISO 8601
+    modified: str
+    accessed: Optional[str] = None
+
+@dataclass
+class Vault:
+    version: str = "2.0"
+    entries: List[VaultEntry] = field(default_factory=list)
+    created: str
+    modified: str
+    metadata: dict = field(default_factory=dict)
+```
+
+#### Steganography Module (`stegvault/stego/`)
+
+**Purpose**: Embed/extract payloads in images
+
+**Components**:
+- `png_lsb.py` - PNG LSB steganography (sequential embedding)
+- `jpeg_dct.py` - JPEG DCT coefficient modification
+- `dispatcher.py` - Automatic format detection and routing
 
 **Key Functions**:
 ```python
-def embed_payload(image_path: str, payload: bytes, seed: int, output_path: str) -> Image
-def extract_payload(image_path: str, payload_size: int, seed: int) -> bytes
-def calculate_capacity(image: Image) -> int
+def embed_payload(image_path, payload, seed=0, output_path=None) -> str:
+    """Embed payload in image (auto-detects PNG/JPEG)."""
+
+def extract_payload(image_path, payload_size, seed=0) -> bytes:
+    """Extract payload from image (auto-detects PNG/JPEG)."""
+
+def calculate_capacity(image) -> int:
+    """Calculate max payload capacity (auto-detects format)."""
 ```
 
-**Steganography Details**:
-- Uses LSB of R, G, B channels
-- Capacity: `(width * height * 3) / 8` bytes
-- Seed derived from salt for reproducibility
-- Supports RGB and RGBA images
+**Techniques**:
+- **PNG LSB**: Sequential left-to-right, top-to-bottom bit modification
+- **JPEG DCT**: ±1 modification of DCT coefficients (avoids shrinkage)
+- **Auto-Detection**: Magic byte detection for format routing
 
-### 3. Utils Module (`stegvault/utils/`)
+**Capacity**:
+- PNG: ~90KB for 400x600 image (lossless)
+- JPEG: ~18KB for 400x600 Q85 image (robust to recompression)
 
-**Purpose**: Payload format handling and validation
+#### Gallery Module (`stegvault/gallery/`)
+
+**Purpose**: Multi-vault management
 
 **Components**:
-- **Serialization**: Convert components to binary format
-- **Parsing**: Extract components from binary payload
-- **Validation**: Check capacity and format integrity
+- `core.py` - Gallery data structure
+- `db.py` - SQLite database operations
+- `operations.py` - Vault management (add, remove, refresh)
+- `search.py` - Cross-vault search
 
-**Payload Structure**:
-```python
-class PayloadFormat:
-    magic: bytes     # 4 bytes: "SPW1"
-    salt: bytes      # 16 bytes
-    nonce: bytes     # 24 bytes
-    ciphertext: bytes  # Variable length (includes 16-byte tag)
-```
+**Features**:
+- Centralized metadata storage
+- Entry caching for fast search
+- Tag-based organization
+- Cross-vault search
 
-### 4. CLI Module (`stegvault/cli.py`)
+#### Utils Module (`stegvault/utils/`)
 
-**Purpose**: User interface for StegVault operations
+**Purpose**: Shared utility functions
 
-**Commands**:
-- `backup`: Create encrypted backup in image
-- `restore`: Recover password from image
-- `check`: Verify image capacity
+**Components**:
+- `payload.py` - Payload serialization/parsing
+- `image_format.py` - Magic byte detection (PNG/JPEG/GIF/BMP)
+- `json_output.py` - JSON formatting for headless mode
+- `passphrase.py` - Passphrase from file/env/prompt
 
 ## Data Flow
 
-### Backup Creation Flow
+### Backup Flow (Vault Creation)
 
 ```
-User Input
-   ├─ Master Password
-   ├─ Passphrase
-   └─ Cover Image
-       │
-       ▼
-┌──────────────────┐
-│ 1. Validation    │
-│  • Check image   │
-│  • Verify pass   │
-└────────┬─────────┘
-         ▼
-┌──────────────────┐
-│ 2. Encryption    │
-│  • Gen salt      │──┐
-│  • Gen nonce     │  │ CSPRNG
-│  • Derive key    │◄─┘ (os.urandom)
-│  • Encrypt data  │
-└────────┬─────────┘
-         ▼
-┌──────────────────┐
-│ 3. Serialization │
-│  • Add magic     │
-│  • Combine parts │
-│  • Create payload│
-└────────┬─────────┘
-         ▼
-┌──────────────────┐
-│ 4. Embedding     │
-│  • Seed from salt│
-│  • Shuffle pixels│
-│  • Modify LSBs   │
-└────────┬─────────┘
-         ▼
-   Stego Image
+User Input (CLI/TUI/GUI)
+    ↓
+VaultController.create_new_vault(...)
+    ↓
+Vault.add_entry() [validation]
+    ↓
+CryptoController.encrypt_with_payload()
+    ↓
+crypto.encrypt_data() [Argon2id + XChaCha20]
+    ↓
+utils.serialize_payload() [format: Magic|Salt|Nonce|Length|Ciphertext|Tag]
+    ↓
+VaultController.save_vault()
+    ↓
+stego.embed_payload() [PNG LSB or JPEG DCT]
+    ↓
+Output stego image
 ```
 
-### Password Recovery Flow
+### Restore Flow (Vault Loading)
 
 ```
-Stego Image + Passphrase
-       │
-       ▼
-┌──────────────────┐
-│ 1. Extraction    │
-│  • Read header   │
-│  • Get CT length │
-│  • Extract full  │
-└────────┬─────────┘
-         ▼
-┌──────────────────┐
-│ 2. Parsing       │
-│  • Verify magic  │
-│  • Extract salt  │
-│  • Extract nonce │
-│  • Extract CT    │
-└────────┬─────────┘
-         ▼
-┌──────────────────┐
-│ 3. Re-extraction │
-│  • Seed from salt│
-│  • Correct order │
-└────────┬─────────┘
-         ▼
-┌──────────────────┐
-│ 4. Decryption    │
-│  • Derive key    │
-│  • Decrypt       │
-│  • Verify tag    │
-└────────┬─────────┘
-         ▼
-   Master Password
+Input stego image
+    ↓
+VaultController.load_vault(image_path, passphrase)
+    ↓
+stego.extract_payload() [auto-detect PNG/JPEG]
+    ↓
+utils.parse_payload() [validate magic, extract components]
+    ↓
+CryptoController.decrypt_from_payload()
+    ↓
+crypto.decrypt_data() [verify Poly1305 MAC, decrypt]
+    ↓
+Vault.from_dict() [parse JSON to Vault object]
+    ↓
+VaultLoadResult(vault, success=True)
 ```
 
-## Security Architecture
-
-### Defense in Depth
-
-1. **Cryptographic Layer**
-   - Strong encryption (XChaCha20-Poly1305)
-   - Robust KDF (Argon2id)
-   - Authentication tags (AEAD)
-
-2. **Steganographic Layer**
-   - Invisible storage (LSB modification)
-   - Pseudo-random ordering (detection resistance)
-   - Minimal statistical signature
-
-3. **Format Layer**
-   - Versioned payload (forward compatibility)
-   - Integrity checks (length validation)
-   - Magic header (corruption detection)
+## Security Boundaries
 
 ### Trust Boundaries
 
-```
-┌─────────────────────────────────────────┐
-│         Trusted Environment             │
-│  ┌─────────────────────────────────┐    │
-│  │    StegVault Process            │    │
-│  │  • Encryption                   │    │
-│  │  • Decryption                   │    │
-│  │  • Key derivation               │    │
-│  └─────────────────────────────────┘    │
-│                                         │
-│  Secrets exist only in memory           │
-└─────────────────────────────────────────┘
-                  │
-                  │ Encrypted payload only
-                  ▼
-┌─────────────────────────────────────────┐
-│       Untrusted Environment             │
-│  • File system                          │
-│  • Network                              │
-│  • Cloud storage                        │
-│  • External media                       │
-│                                         │
-│  Only encrypted data exposed            │
-└─────────────────────────────────────────┘
-```
+1. **User Input → Application**: Validate all inputs (passphrases, file paths, entry data)
+2. **Application → Crypto**: Ensure proper parameter types and ranges
+3. **Crypto → Stego**: Validate payload size against capacity
+4. **Stego → File System**: Safe file operations, temp file cleanup
 
-## Performance Characteristics
+### Data Validation
 
-### Computational Costs
+- **Before Encryption**: Validate data size, check capacity
+- **After Decryption**: Verify magic header, AEAD tag
+- **During Entry Operations**: Key uniqueness, required fields
 
-| Operation | Primary Cost | Time (typical) |
-|-----------|--------------|----------------|
-| **Key Derivation** | Argon2id (64MB) | ~200-500ms |
-| **Encryption** | XChaCha20 | <10ms |
-| **Decryption** | XChaCha20 | <10ms |
-| **LSB Embed** | Image processing | 50-200ms |
-| **LSB Extract** | Image processing | 50-200ms |
+## Error Handling Strategy
 
-### Memory Requirements
+### Controller Layer
 
-| Component | Memory Usage |
-|-----------|--------------|
-| Argon2id | 64MB (configurable) |
-| Image buffer | Width × Height × 3-4 bytes |
-| Payload | Actual data size |
-| Total (typical) | ~100-200MB for large images |
+All controllers return structured results with success/error info:
 
-### Scalability
-
-**Image Size Impact**:
-- Small (100×100): ~10ms embedding
-- Medium (500×500): ~50ms embedding
-- Large (2000×2000): ~200ms embedding
-
-**Password Length Impact**:
-- Minimal (encryption is fast)
-- Linear with payload size for serialization
-
-## Error Handling
-
-### Error Hierarchy
-
-```
-Exception
-├─ CryptoError
-│  ├─ DecryptionError
-│  └─ KeyDerivationError
-├─ StegoError
-│  ├─ CapacityError
-│  └─ ExtractionError
-└─ PayloadError
-   └─ PayloadFormatError
+```python
+result = controller.load_vault(image_path, passphrase)
+if result.success:
+    vault = result.vault
+else:
+    print(f"Error: {result.error}")  # Human-readable message
 ```
 
-### Error Recovery
+### Core Layer
 
-| Error Type | Recovery Strategy |
-|------------|-------------------|
-| **Wrong Passphrase** | Prompt user to retry |
-| **Capacity Exceeded** | Suggest larger image |
-| **Corrupted Image** | Check file integrity, try backup |
-| **Format Error** | Incompatible version or corruption |
+Core modules raise specific exceptions:
+
+- `ValueError` - Invalid input parameters
+- `CapacityError` - Insufficient image capacity
+- `ExtractionError` - Steganography extraction failed
+- `PayloadFormatError` - Corrupted payload format
+
+### UI Layer
+
+Each UI handles errors appropriately:
+
+- **CLI**: Exit with error code (1=error, 2=validation)
+- **TUI**: Show error dialog
+- **GUI**: Show error message box
 
 ## Testing Architecture
 
-### Test Pyramid
+### Test Coverage (614 tests, 92%)
+
+- **Unit Tests**: Test individual functions/classes
+- **Integration Tests**: Test module interactions
+- **Controller Tests**: Test business logic without UI
+- **CLI Tests**: Test user-facing commands
+
+### Test Organization
 
 ```
-        ┌────────────┐
-        │    E2E     │  ← Roundtrip tests
-        │   Tests    │    (backup → restore)
-        └────────────┘
-              │
-        ┌─────▼──────┐
-        │Integration │  ← Module interaction
-        │   Tests    │
-        └─────┬──────┘
-              │
-        ┌─────▼──────┐
-        │    Unit    │  ← Individual functions
-        │   Tests    │    (63+ tests)
-        └────────────┘
+tests/unit/
+├── test_crypto.py              # Cryptography module
+├── test_crypto_controller.py   # CryptoController
+├── test_vault.py               # Vault data structures
+├── test_vault_controller.py    # VaultController
+├── test_stego.py               # PNG LSB steganography
+├── test_jpeg_stego.py          # JPEG DCT steganography
+├── test_gallery.py             # Gallery management
+├── test_json_output.py         # JSON formatting
+├── test_passphrase_utils.py    # Passphrase handling
+└── ...
 ```
 
-### Test Coverage
+## Configuration System
 
-- **Crypto Module**: 26 tests, 90% coverage
-- **Payload Module**: 22 tests, 100% coverage
-- **Stego Module**: 15 tests, 90% coverage
+### Config Sources (Priority Order)
 
-## Extensibility Points
+1. Explicit command-line arguments (`--arg value`)
+2. Configuration file (`~/.stegvault/config.toml`)
+3. Default values (hardcoded)
 
-### Plugin Architecture (Future)
+### Config Structure
 
-Potential extension points:
-1. **Stego Algorithms**: Support JPEG DCT, audio, video
-2. **Crypto Algorithms**: Post-quantum alternatives
-3. **Storage Backends**: Cloud providers, databases
-4. **UI Frontends**: GUI, web interface, mobile apps
-
-### Configuration
-
-Future configuration system:
-```python
-# ~/.stegvault/config.toml
+```toml
 [crypto]
 argon2_time_cost = 3
 argon2_memory_cost = 65536
 argon2_parallelism = 4
 
 [stego]
-default_algorithm = "lsb_png"
-embedding_strategy = "pseudo_random"
+default_seed = 12345
 
-[cli]
-default_output_format = "png"
-verbose = false
+[vault]
+default_tags = ["personal"]
 ```
 
-## Development Guidelines
+## Extensibility Points
 
-### Adding New Features
+### Adding New Steganography Methods
 
-1. **Design Phase**
-   - Document security implications
-   - Plan backward compatibility
+1. Create new module in `stegvault/stego/`
+2. Implement `embed_payload()`, `extract_payload()`, `calculate_capacity()`
+3. Update `dispatcher.py` to route new format
 
-2. **Implementation Phase**
-   - Write tests first (TDD)
-   - Implement feature
-   - Document in docstrings
+### Adding New UI
 
-3. **Review Phase**
-   - Security review for crypto changes
-   - Code review by maintainers
-   - Update CHANGELOG.md
+1. Create new package (e.g., `stegvault/tui/`)
+2. Import controllers from `stegvault/app/controllers/`
+3. Handle controller results and display to user
 
-### Code Organization
+### Adding New Controllers
 
-```
-stegvault/
-├── __init__.py          # Public API
-├── crypto/
-│   ├── __init__.py      # Exports
-│   └── core.py          # Implementation
-├── stego/
-│   ├── __init__.py
-│   └── png_lsb.py       # LSB implementation
-├── utils/
-│   ├── __init__.py
-│   └── payload.py       # Format handling
-└── cli.py               # CLI interface
-```
+1. Create controller in `stegvault/app/controllers/`
+2. Define result dataclasses
+3. Implement methods with structured returns
+4. Write comprehensive tests
 
-## Future Architecture Considerations
+## Performance Considerations
 
-### Planned Enhancements
+### Argon2id Parameters
 
-1. **Modular Stego**: Plugin system for algorithms
-2. **Hardware Acceleration**: GPU for Argon2id
-3. **Distributed Storage**: Shard across multiple images
-4. **Mobile Support**: Native iOS/Android libraries
+- **Time Cost**: 3 iterations (default) - ~100ms on modern CPU
+- **Memory Cost**: 64MB (default) - resistant to GPU attacks
+- **Parallelism**: 4 threads (default) - utilize multi-core CPUs
 
-### Scalability Plans
+### Capacity Calculations
 
-- Batch processing for multiple passwords
-- Asynchronous operations for GUI
-- Streaming for large images
-- Incremental backup updates
+- **PNG**: O(1) - width × height × channels / 8
+- **JPEG**: O(n) - iterate DCT blocks, count coefficients |value| > 1
 
----
+### Gallery Search
 
-For implementation details, see:
-- [Cryptography Details](Cryptography-Details.md)
-- [Steganography Techniques](Steganography-Techniques.md)
-- [Payload Format Specification](Payload-Format-Specification.md)
+- **Entry Cache**: SQLite FTS (Full-Text Search) for instant results
+- **Metadata**: Indexed by vault_id, key, tags
+- **Auto-Refresh**: Only when vault modified timestamp changes
+
+## Future Architecture (Roadmap)
+
+### v0.7.0: TUI (Textual)
+
+- Add `stegvault/tui/` package
+- Reuse `VaultController` and `CryptoController`
+- Implement reactive UI with Textual widgets
+
+### v0.8.0: GUI (PySide6)
+
+- Add `stegvault/gui/` package
+- Thread-safe controller usage (QThread)
+- Native desktop application
+
+### v0.9.0: Cloud Sync (Optional)
+
+- End-to-end encrypted cloud backup
+- Conflict resolution
+- Multi-device support
+
+## See Also
+
+- [Developer Guide](Developer-Guide.md) - Setting up development environment
+- [API Reference](API-Reference.md) - Complete API documentation
+- [Testing Guide](Testing-Guide.md) - Running and writing tests
+- [Security Model](Security-Model.md) - Security assumptions and guarantees

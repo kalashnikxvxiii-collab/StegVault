@@ -1,49 +1,512 @@
 # API Reference
 
-Complete API documentation for StegVault modules.
+Complete API documentation for StegVault v0.6.1.
 
-## stegvault.crypto
+## Table of Contents
+
+- [Application Layer](#application-layer) - **NEW in v0.6.1**
+  - [CryptoController](#cryptocontroller)
+  - [VaultController](#vaultcontroller)
+- [Core Modules](#core-modules)
+  - [stegvault.crypto](#stegvaultcrypto)
+  - [stegvault.vault](#stegvaultvault)
+  - [stegvault.stego](#stegvaultstego)
+  - [stegvault.gallery](#stegvaultgallery)
+  - [stegvault.utils](#stegvaultutils)
+
+---
+
+## Application Layer
+
+### CryptoController
+
+**NEW in v0.6.1**: High-level encryption controller with structured results.
+
+```python
+from stegvault.app.controllers import CryptoController
+```
+
+#### Constructor
+
+```python
+def __init__(self, config: Optional[Config] = None):
+    """Initialize CryptoController.
+
+    Args:
+        config: Optional configuration object. If None, uses default config.
+    """
+```
+
+#### encrypt()
+
+```python
+def encrypt(
+    self,
+    data: bytes,
+    passphrase: str
+) -> EncryptionResult:
+    """Encrypt data with passphrase.
+
+    Args:
+        data: Binary data to encrypt
+        passphrase: Encryption passphrase
+
+    Returns:
+        EncryptionResult with:
+        - ciphertext (bytes): Encrypted data
+        - salt (bytes): 16-byte Argon2id salt
+        - nonce (bytes): 24-byte XChaCha20 nonce
+        - success (bool): True if encryption succeeded
+        - error (Optional[str]): Error message if failed
+
+    Example:
+        >>> controller = CryptoController()
+        >>> result = controller.encrypt(b"secret data", "passphrase")
+        >>> if result.success:
+        ...     print(f"Encrypted: {result.ciphertext.hex()[:20]}...")
+    """
+```
+
+#### decrypt()
+
+```python
+def decrypt(
+    self,
+    ciphertext: bytes,
+    salt: bytes,
+    nonce: bytes,
+    passphrase: str
+) -> DecryptionResult:
+    """Decrypt data with passphrase.
+
+    Args:
+        ciphertext: Encrypted data
+        salt: 16-byte Argon2id salt
+        nonce: 24-byte XChaCha20 nonce
+        passphrase: Decryption passphrase
+
+    Returns:
+        DecryptionResult with:
+        - plaintext (bytes): Decrypted data
+        - success (bool): True if decryption succeeded
+        - error (Optional[str]): Error message if failed
+
+    Example:
+        >>> result = controller.decrypt(ciphertext, salt, nonce, "passphrase")
+        >>> if result.success:
+        ...     print(f"Decrypted: {result.plaintext}")
+    """
+```
+
+#### encrypt_with_payload()
+
+```python
+def encrypt_with_payload(
+    self,
+    data: bytes,
+    passphrase: str
+) -> Tuple[bytes, bool, Optional[str]]:
+    """Encrypt data and serialize to payload format.
+
+    Args:
+        data: Binary data to encrypt
+        passphrase: Encryption passphrase
+
+    Returns:
+        Tuple of (payload, success, error) where:
+        - payload (bytes): Serialized payload (Magic|Salt|Nonce|Length|Ciphertext|Tag)
+        - success (bool): True if succeeded
+        - error (Optional[str]): Error message if failed
+
+    Example:
+        >>> payload, success, error = controller.encrypt_with_payload(
+        ...     b"data", "pass"
+        ... )
+        >>> if success:
+        ...     print(f"Payload size: {len(payload)} bytes")
+    """
+```
+
+#### decrypt_from_payload()
+
+```python
+def decrypt_from_payload(
+    self,
+    payload: bytes,
+    passphrase: str
+) -> Tuple[bytes, bool, Optional[str]]:
+    """Parse payload and decrypt data.
+
+    Args:
+        payload: Serialized payload from encrypt_with_payload()
+        passphrase: Decryption passphrase
+
+    Returns:
+        Tuple of (plaintext, success, error) where:
+        - plaintext (bytes): Decrypted data
+        - success (bool): True if succeeded
+        - error (Optional[str]): Error message if failed
+
+    Example:
+        >>> data, success, error = controller.decrypt_from_payload(
+        ...     payload, "pass"
+        ... )
+        >>> if success:
+        ...     print(f"Decrypted: {data}")
+    """
+```
+
+---
+
+### VaultController
+
+**NEW in v0.6.1**: High-level vault management controller.
+
+```python
+from stegvault.app.controllers import VaultController
+```
+
+#### Constructor
+
+```python
+def __init__(self, config: Optional[Config] = None):
+    """Initialize VaultController.
+
+    Args:
+        config: Optional configuration object. If None, uses default config.
+    """
+```
+
+#### load_vault()
+
+```python
+def load_vault(
+    self,
+    image_path: str,
+    passphrase: str
+) -> VaultLoadResult:
+    """Load vault from image file.
+
+    Args:
+        image_path: Path to stego image containing vault
+        passphrase: Vault encryption passphrase
+
+    Returns:
+        VaultLoadResult with:
+        - vault (Optional[Vault]): Loaded vault object
+        - success (bool): True if load succeeded
+        - error (Optional[str]): Error message if failed
+
+    Example:
+        >>> controller = VaultController()
+        >>> result = controller.load_vault("vault.png", "passphrase")
+        >>> if result.success:
+        ...     vault = result.vault
+        ...     print(f"Loaded {len(vault.entries)} entries")
+    """
+```
+
+#### save_vault()
+
+```python
+def save_vault(
+    self,
+    vault: Vault,
+    output_path: str,
+    passphrase: str,
+    cover_image: Optional[str] = None
+) -> VaultSaveResult:
+    """Save vault to image file.
+
+    Args:
+        vault: Vault object to save
+        output_path: Path for output stego image
+        passphrase: Encryption passphrase
+        cover_image: Optional cover image path (generates default if None)
+
+    Returns:
+        VaultSaveResult with:
+        - output_path (str): Path to saved stego image
+        - success (bool): True if save succeeded
+        - error (Optional[str]): Error message if failed
+
+    Example:
+        >>> result = controller.save_vault(
+        ...     vault, "vault.png", "passphrase", cover_image="cover.png"
+        ... )
+        >>> if result.success:
+        ...     print(f"Saved to: {result.output_path}")
+    """
+```
+
+#### create_new_vault()
+
+```python
+def create_new_vault(
+    self,
+    key: str,
+    password: str,
+    username: Optional[str] = None,
+    url: Optional[str] = None,
+    notes: Optional[str] = None,
+    tags: Optional[List[str]] = None,
+    totp_secret: Optional[str] = None
+) -> Tuple[Vault, bool, Optional[str]]:
+    """Create new vault with first entry.
+
+    Args:
+        key: Entry key (e.g., "gmail")
+        password: Entry password
+        username: Optional username
+        url: Optional URL
+        notes: Optional notes
+        tags: Optional tags list
+        totp_secret: Optional TOTP secret
+
+    Returns:
+        Tuple of (vault, success, error) where:
+        - vault (Vault): New vault with first entry
+        - success (bool): True if creation succeeded
+        - error (Optional[str]): Error message if failed
+
+    Example:
+        >>> vault, success, error = controller.create_new_vault(
+        ...     key="gmail",
+        ...     password="secret123",
+        ...     username="user@gmail.com",
+        ...     tags=["email", "personal"]
+        ... )
+        >>> if success:
+        ...     print(f"Created vault with {len(vault.entries)} entry")
+    """
+```
+
+#### add_vault_entry()
+
+```python
+def add_vault_entry(
+    self,
+    vault: Vault,
+    key: str,
+    password: str,
+    username: Optional[str] = None,
+    url: Optional[str] = None,
+    notes: Optional[str] = None,
+    tags: Optional[List[str]] = None,
+    totp_secret: Optional[str] = None
+) -> Tuple[Vault, bool, Optional[str]]:
+    """Add entry to existing vault.
+
+    Args:
+        vault: Existing vault
+        key: Entry key
+        password: Entry password
+        username: Optional username
+        url: Optional URL
+        notes: Optional notes
+        tags: Optional tags list
+        totp_secret: Optional TOTP secret
+
+    Returns:
+        Tuple of (updated_vault, success, error)
+
+    Example:
+        >>> vault, success, error = controller.add_vault_entry(
+        ...     vault, key="github", password="pwd", username="user"
+        ... )
+    """
+```
+
+#### get_vault_entry()
+
+```python
+def get_vault_entry(
+    self,
+    vault: Vault,
+    key: str
+) -> EntryResult:
+    """Get entry from vault by key.
+
+    Args:
+        vault: Vault to search
+        key: Entry key to find
+
+    Returns:
+        EntryResult with:
+        - entry (Optional[VaultEntry]): Found entry
+        - success (bool): True if found
+        - error (Optional[str]): Error if not found
+
+    Example:
+        >>> result = controller.get_vault_entry(vault, "gmail")
+        >>> if result.success:
+        ...     print(f"Password: {result.entry.password}")
+    """
+```
+
+#### update_vault_entry()
+
+```python
+def update_vault_entry(
+    self,
+    vault: Vault,
+    key: str,
+    password: Optional[str] = None,
+    username: Optional[str] = None,
+    url: Optional[str] = None,
+    notes: Optional[str] = None,
+    tags: Optional[List[str]] = None,
+    totp_secret: Optional[str] = None
+) -> Tuple[Vault, bool, Optional[str]]:
+    """Update existing vault entry.
+
+    Args:
+        vault: Vault containing entry
+        key: Entry key to update
+        password: New password (optional)
+        username: New username (optional)
+        url: New URL (optional)
+        notes: New notes (optional)
+        tags: New tags (optional)
+        totp_secret: New TOTP secret (optional)
+
+    Returns:
+        Tuple of (updated_vault, success, error)
+
+    Example:
+        >>> vault, success, error = controller.update_vault_entry(
+        ...     vault, key="gmail", password="new_password"
+        ... )
+    """
+```
+
+#### delete_vault_entry()
+
+```python
+def delete_vault_entry(
+    self,
+    vault: Vault,
+    key: str
+) -> Tuple[Vault, bool, Optional[str]]:
+    """Delete entry from vault.
+
+    Args:
+        vault: Vault containing entry
+        key: Entry key to delete
+
+    Returns:
+        Tuple of (updated_vault, success, error)
+
+    Example:
+        >>> vault, success, error = controller.delete_vault_entry(
+        ...     vault, "old_entry"
+        ... )
+    """
+```
+
+#### list_vault_entries()
+
+```python
+def list_vault_entries(
+    self,
+    vault: Vault
+) -> List[str]:
+    """List all entry keys in vault.
+
+    Args:
+        vault: Vault to list
+
+    Returns:
+        List of entry keys
+
+    Example:
+        >>> keys = controller.list_vault_entries(vault)
+        >>> print(f"Entries: {', '.join(keys)}")
+    """
+```
+
+#### check_image_capacity()
+
+```python
+def check_image_capacity(
+    self,
+    image_path: str
+) -> Tuple[int, bool, Optional[str]]:
+    """Check image capacity for vault storage.
+
+    Args:
+        image_path: Path to image file
+
+    Returns:
+        Tuple of (capacity, success, error) where:
+        - capacity (int): Max payload size in bytes
+        - success (bool): True if check succeeded
+        - error (Optional[str]): Error message if failed
+
+    Example:
+        >>> capacity, success, error = controller.check_image_capacity(
+        ...     "image.png"
+        ... )
+        >>> if success:
+        ...     print(f"Capacity: {capacity} bytes")
+    """
+```
+
+---
+
+## Core Modules
+
+### stegvault.crypto
 
 Cryptographic operations module.
 
-### encrypt_data()
+#### encrypt_data()
 
 ```python
 def encrypt_data(
     plaintext: bytes,
-    passphrase: str
-) -> tuple[bytes, bytes, bytes]:
+    passphrase: str,
+    time_cost: int = 3,
+    memory_cost: int = 65536,
+    parallelism: int = 4
+) -> Tuple[bytes, bytes, bytes]:
     """Encrypt data using XChaCha20-Poly1305 AEAD.
 
     Args:
-        plaintext: Data to encrypt (typically password as bytes)
+        plaintext: Data to encrypt
         passphrase: Encryption passphrase for key derivation
+        time_cost: Argon2id time cost (iterations)
+        memory_cost: Argon2id memory cost (KB)
+        parallelism: Argon2id parallelism (threads)
 
     Returns:
-        Tuple of (salt, nonce, ciphertext) where:
+        Tuple of (ciphertext, salt, nonce) where:
+        - ciphertext (bytes): Encrypted data including AEAD tag
         - salt (bytes): 16-byte Argon2id salt
         - nonce (bytes): 24-byte XChaCha20 nonce
-        - ciphertext (bytes): Encrypted data including AEAD tag
 
     Raises:
-        CryptoError: If encryption fails
         ValueError: If inputs are invalid
 
     Example:
+        >>> from stegvault.crypto import encrypt_data
         >>> plaintext = b"my secret password"
         >>> passphrase = "strongpassphrase123"
-        >>> salt, nonce, ciphertext = encrypt_data(plaintext, passphrase)
+        >>> ciphertext, salt, nonce = encrypt_data(plaintext, passphrase)
     """
 ```
 
-### decrypt_data()
+#### decrypt_data()
 
 ```python
 def decrypt_data(
     ciphertext: bytes,
     passphrase: str,
     salt: bytes,
-    nonce: bytes
+    nonce: bytes,
+    time_cost: int = 3,
+    memory_cost: int = 65536,
+    parallelism: int = 4
 ) -> bytes:
     """Decrypt data encrypted with encrypt_data().
 
@@ -52,377 +515,358 @@ def decrypt_data(
         passphrase: Encryption passphrase
         salt: 16-byte Argon2id salt from encryption
         nonce: 24-byte nonce from encryption
+        time_cost: Argon2id time cost (must match encryption)
+        memory_cost: Argon2id memory cost (must match encryption)
+        parallelism: Argon2id parallelism (must match encryption)
 
     Returns:
         Decrypted plaintext as bytes
 
     Raises:
-        DecryptionError: If decryption/authentication fails
-        ValueError: If inputs have invalid sizes
+        ValueError: If decryption/authentication fails
 
     Example:
+        >>> from stegvault.crypto import decrypt_data
         >>> plaintext = decrypt_data(ciphertext, passphrase, salt, nonce)
     """
 ```
 
-### verify_passphrase_strength()
+---
+
+### stegvault.vault
+
+Vault data structures and operations.
+
+#### Vault (dataclass)
 
 ```python
-def verify_passphrase_strength(
-    passphrase: str
-) -> tuple[bool, str]:
-    """Check passphrase strength.
+@dataclass
+class Vault:
+    """Password vault containing multiple entries.
 
-    Args:
-        passphrase: Passphrase to check
-
-    Returns:
-        Tuple of (is_strong, message) where:
-        - is_strong (bool): True if passphrase meets criteria
-        - message (str): Description of strength or weakness
-
-    Example:
-        >>> is_strong, msg = verify_passphrase_strength("weak")
-        >>> print(msg)
-        "Passphrase too short (minimum 12 characters)"
+    Attributes:
+        version (str): Vault format version (default: "2.0")
+        entries (List[VaultEntry]): List of vault entries
+        created (str): Creation timestamp (ISO 8601)
+        modified (str): Last modification timestamp
+        metadata (dict): Additional metadata
     """
+
+    def add_entry(self, entry: VaultEntry) -> None:
+        """Add entry to vault (raises ValueError if key exists)."""
+
+    def get_entry(self, key: str) -> Optional[VaultEntry]:
+        """Get entry by key (returns None if not found)."""
+
+    def update_entry(self, key: str, **kwargs) -> bool:
+        """Update entry fields (returns False if not found)."""
+
+    def delete_entry(self, key: str) -> bool:
+        """Delete entry (returns False if not found)."""
+
+    def has_entry(self, key: str) -> bool:
+        """Check if entry exists."""
+
+    def list_keys(self) -> List[str]:
+        """Get list of all entry keys."""
+
+    def to_dict(self) -> dict:
+        """Convert vault to dictionary."""
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "Vault":
+        """Create vault from dictionary."""
 ```
 
-## stegvault.stego
+#### VaultEntry (dataclass)
 
-Steganography operations module.
+```python
+@dataclass
+class VaultEntry:
+    """Single entry in a password vault.
 
-### embed_payload()
+    Attributes:
+        key (str): Unique identifier (e.g., "gmail")
+        password (str): The actual password
+        username (Optional[str]): Username or email
+        url (Optional[str]): Website URL
+        notes (Optional[str]): Additional notes
+        tags (List[str]): Tags for organization
+        totp_secret (Optional[str]): TOTP/2FA secret key
+        created (str): Creation timestamp (ISO 8601)
+        modified (str): Last modification timestamp
+        accessed (Optional[str]): Last access timestamp
+    """
+
+    def to_dict(self) -> dict:
+        """Convert entry to dictionary."""
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "VaultEntry":
+        """Create entry from dictionary."""
+
+    def update_modified(self) -> None:
+        """Update modified timestamp to now."""
+
+    def update_accessed(self) -> None:
+        """Update accessed timestamp to now."""
+```
+
+---
+
+### stegvault.stego
+
+Steganography operations module (auto-detects PNG/JPEG).
+
+#### embed_payload()
 
 ```python
 def embed_payload(
-    image: PIL.Image.Image,
-    payload: bytes
-) -> PIL.Image.Image:
-    """Embed payload into image using LSB steganography.
+    image_path: str,
+    payload: bytes,
+    seed: int = 0,
+    output_path: Optional[str] = None
+) -> str:
+    """Embed payload in image (auto-detects PNG/JPEG).
 
     Args:
-        image: PIL Image object (RGB or RGBA)
+        image_path: Path to cover image
         payload: Binary payload to embed
+        seed: Deprecated parameter (ignored)
+        output_path: Optional output path (auto-generated if None)
 
     Returns:
-        New PIL Image with embedded payload
+        Path to output stego image
 
     Raises:
-        StegoError: If embedding fails
-        CapacityError: If image too small for payload
-        ValueError: If image format unsupported
+        CapacityError: If image capacity is insufficient
+        StegoError: If embedding fails or format is unsupported
 
     Example:
-        >>> from PIL import Image
-        >>> img = Image.open("cover.png")
-        >>> payload = b"secret data"
-        >>> stego_img = embed_payload(img, payload)
-        >>> stego_img.save("backup.png")
+        >>> from stegvault.stego import embed_payload
+        >>> output = embed_payload("cover.png", payload, output_path="stego.png")
     """
 ```
 
-### extract_payload()
+#### extract_payload()
 
 ```python
 def extract_payload(
-    image: PIL.Image.Image,
-    payload_size: int
+    image_path: str,
+    payload_size: int,
+    seed: int = 0
 ) -> bytes:
-    """Extract payload from stego image.
+    """Extract payload from stego image (auto-detects PNG/JPEG).
 
     Args:
-        image: PIL Image containing embedded payload
-        payload_size: Expected payload size in bytes
+        image_path: Path to stego image
+        payload_size: Size of payload in bytes
+        seed: Deprecated parameter (ignored)
 
     Returns:
-        Extracted payload as bytes
+        Extracted binary payload
 
     Raises:
-        StegoError: If extraction fails
-        ValueError: If payload_size invalid
+        ExtractionError: If extraction fails
+        StegoError: If format is unsupported
 
     Example:
-        >>> img = Image.open("backup.png")
-        >>> payload = extract_payload(img, 92)
+        >>> from stegvault.stego import extract_payload
+        >>> payload = extract_payload("stego.png", 1024)
     """
 ```
 
-### calculate_capacity()
+#### calculate_capacity()
 
 ```python
 def calculate_capacity(
-    image: PIL.Image.Image
+    image: Union[str, PIL.Image.Image]
 ) -> int:
-    """Calculate embedding capacity of image.
+    """Calculate maximum payload capacity (auto-detects format).
 
     Args:
-        image: PIL Image object
+        image: Path to image file OR PIL Image object
 
     Returns:
         Maximum payload size in bytes
 
+    Raises:
+        StegoError: If image format is unsupported
+
     Example:
-        >>> img = Image.open("cover.png")
-        >>> capacity = calculate_capacity(img)
-        >>> print(f"Can store {capacity} bytes")
+        >>> from stegvault.stego import calculate_capacity
+        >>> capacity = calculate_capacity("image.png")
+        >>> print(f"Capacity: {capacity} bytes")
     """
 ```
 
-## stegvault.utils
+---
 
-Utility functions module.
+### stegvault.gallery
 
-### serialize_payload()
+Multi-vault management (SQLite-based).
+
+#### Gallery (dataclass)
+
+```python
+@dataclass
+class Gallery:
+    """Gallery for managing multiple vaults.
+
+    Attributes:
+        db_path (str): Path to SQLite database
+        name (str): Gallery name
+        description (str): Gallery description
+        created (str): Creation timestamp
+    """
+
+    @classmethod
+    def init(cls, db_path: str, name: str, description: str = "") -> "Gallery":
+        """Initialize new gallery database."""
+
+    @classmethod
+    def load(cls, db_path: str) -> "Gallery":
+        """Load existing gallery from database."""
+```
+
+#### Gallery Operations
+
+```python
+def add_vault(
+    gallery: Gallery,
+    vault_path: str,
+    alias: str,
+    passphrase: str,
+    tags: List[str] = None
+) -> None:
+    """Add vault to gallery."""
+
+def remove_vault(gallery: Gallery, vault_id: int) -> None:
+    """Remove vault from gallery."""
+
+def refresh_vault(gallery: Gallery, vault_id: int, passphrase: str) -> None:
+    """Refresh vault cache (after vault modified)."""
+
+def list_vaults(gallery: Gallery) -> List[dict]:
+    """List all vaults in gallery."""
+
+def search_entries(
+    gallery: Gallery,
+    query: Optional[str] = None,
+    tag: Optional[str] = None,
+    url: Optional[str] = None
+) -> List[dict]:
+    """Search entries across all vaults."""
+```
+
+---
+
+### stegvault.utils
+
+Utility functions.
+
+#### Payload Operations
 
 ```python
 def serialize_payload(
     salt: bytes,
     nonce: bytes,
-    ciphertext: bytes,
-    tag: bytes
+    ciphertext: bytes
 ) -> bytes:
-    """Serialize payload components into binary format.
+    """Serialize payload components to binary format.
 
-    Args:
-        salt: 16-byte Argon2id salt
-        nonce: 24-byte XChaCha20 nonce
-        ciphertext: Encrypted data
-        tag: 16-byte AEAD authentication tag
+    Format: [Magic:4B][Salt:16B][Nonce:24B][Length:4B][Ciphertext][Tag:16B]
 
     Returns:
-        Complete binary payload (SPW1 format)
-
-    Example:
-        >>> payload = serialize_payload(salt, nonce, ciphertext, tag)
-        >>> len(payload)  # 64 + len(ciphertext)
+        Serialized payload bytes
     """
-```
 
-### parse_payload()
-
-```python
 def parse_payload(
     payload: bytes
-) -> dict:
-    """Parse binary payload into components.
-
-    Args:
-        payload: Binary payload in SPW1 format
+) -> Tuple[bytes, bytes, bytes]:
+    """Parse payload to extract components.
 
     Returns:
-        Dictionary with keys:
-        - 'salt' (bytes): 16-byte salt
-        - 'nonce' (bytes): 24-byte nonce
-        - 'ciphertext' (bytes): Encrypted data
-        - 'tag' (bytes): 16-byte authentication tag
+        Tuple of (salt, nonce, ciphertext)
 
     Raises:
-        PayloadFormatError: If payload format invalid
+        PayloadFormatError: If payload format is invalid
+    """
 
-    Example:
-        >>> components = parse_payload(payload)
-        >>> salt = components['salt']
+def extract_full_payload(
+    image_path: str
+) -> bytes:
+    """Extract full payload from image (handles magic header, salt derivation).
+
+    Returns:
+        Complete payload bytes
     """
 ```
 
-### validate_payload_capacity()
+#### JSON Output (Headless Mode)
 
 ```python
-def validate_payload_capacity(
-    image_capacity: int,
-    payload_size: int
-) -> None:
-    """Validate image has sufficient capacity.
+def success_json(data: dict) -> dict:
+    """Format success response as JSON."""
+
+def error_json(error_type: str, message: str) -> dict:
+    """Format error response as JSON."""
+
+def format_vault_entry_json(entry: VaultEntry) -> dict:
+    """Format vault entry as JSON."""
+```
+
+#### Passphrase Handling
+
+```python
+def get_passphrase(
+    passphrase: Optional[str] = None,
+    passphrase_file: Optional[str] = None,
+    allow_prompt: bool = True
+) -> str:
+    """Get passphrase from multiple sources (priority: explicit > file > env > prompt).
 
     Args:
-        image_capacity: Available capacity in bytes
-        payload_size: Required payload size in bytes
+        passphrase: Explicit passphrase
+        passphrase_file: Path to file containing passphrase
+        allow_prompt: Allow interactive prompt if no source
+
+    Returns:
+        Passphrase string
 
     Raises:
-        CapacityError: If capacity insufficient
-
-    Example:
-        >>> validate_payload_capacity(1000, 500)  # OK
-        >>> validate_payload_capacity(100, 500)   # Raises CapacityError
+        ValueError: If no passphrase source available
     """
 ```
 
-## Exception Classes
+---
 
-### CryptoError
+## Error Handling
 
-```python
-class CryptoError(Exception):
-    """Base exception for cryptographic errors."""
-```
+### Controller Exceptions
 
-### DecryptionError
+Controllers return structured results instead of raising exceptions:
 
 ```python
-class DecryptionError(CryptoError):
-    """Raised when decryption or authentication fails."""
+result = controller.load_vault("vault.png", "pass")
+if not result.success:
+    print(f"Error: {result.error}")
 ```
 
-### StegoError
+### Core Module Exceptions
 
-```python
-class StegoError(Exception):
-    """Base exception for steganography errors."""
-```
+Core modules raise specific exceptions:
 
-### CapacityError
+- `ValueError` - Invalid input parameters
+- `CapacityError` - Insufficient image capacity
+- `ExtractionError` - Steganography extraction failed
+- `PayloadFormatError` - Corrupted payload format
+- `GalleryDBError` - Gallery database error
 
-```python
-class CapacityError(StegoError):
-    """Raised when image capacity is insufficient."""
-```
+---
 
-### PayloadFormatError
+## See Also
 
-```python
-class PayloadFormatError(Exception):
-    """Raised when payload format is invalid."""
-```
-
-## Complete Usage Example
-
-```python
-from PIL import Image
-from stegvault import (
-    encrypt_data,
-    decrypt_data,
-    embed_payload,
-    extract_payload,
-    calculate_capacity,
-    serialize_payload,
-    parse_payload
-)
-
-# 1. Load cover image
-cover_img = Image.open("cover.png")
-
-# 2. Check capacity
-capacity = calculate_capacity(cover_img)
-print(f"Image can store {capacity} bytes")
-
-# 3. Encrypt password
-password = b"MySecretPassword123"
-passphrase = "StrongEncryptionPassphrase!@#"
-salt, nonce, ciphertext = encrypt_data(password, passphrase)
-
-# 4. Serialize payload
-# Note: encrypt_data already returns ciphertext with tag
-# For manual serialization:
-from stegvault.crypto import derive_key
-from nacl.secret import SecretBox
-
-key = derive_key(passphrase.encode(), salt)
-box = SecretBox(key)
-encrypted = box.encrypt(password, nonce)
-tag = encrypted[-16:]
-
-payload = serialize_payload(salt, nonce, ciphertext, tag)
-
-# 5. Embed in image
-stego_img = embed_payload(cover_img, payload)
-
-# 6. Save backup
-stego_img.save("backup.png")
-
-# --- Later: Recovery ---
-
-# 7. Load backup image
-backup_img = Image.open("backup.png")
-
-# 8. Extract payload
-extracted_payload = extract_payload(backup_img, len(payload))
-
-# 9. Parse payload
-components = parse_payload(extracted_payload)
-
-# 10. Decrypt password
-recovered_password = decrypt_data(
-    components['ciphertext'],
-    passphrase,
-    components['salt'],
-    components['nonce']
-)
-
-print(f"Recovered: {recovered_password.decode()}")
-```
-
-## Constants
-
-### Cryptography Constants
-
-```python
-ARGON2_TIME_COST = 3        # Argon2id iterations
-ARGON2_MEMORY_COST = 65536  # Argon2id memory (KB)
-ARGON2_PARALLELISM = 4      # Argon2id threads
-SALT_SIZE = 16              # Salt size (bytes)
-NONCE_SIZE = 24             # Nonce size (bytes)
-KEY_SIZE = 32               # Key size (bytes)
-TAG_SIZE = 16               # AEAD tag size (bytes)
-```
-
-### Payload Constants
-
-```python
-MAGIC_HEADER = b'SPW1'      # Format magic header
-HEADER_SIZE = 4             # Magic header size
-FIXED_OVERHEAD = 64         # Fixed payload overhead (bytes)
-```
-
-## Type Definitions
-
-```python
-from typing import Tuple
-
-# Encryption result
-EncryptionResult = Tuple[bytes, bytes, bytes]  # (salt, nonce, ciphertext)
-
-# Payload components
-PayloadDict = dict[str, bytes]  # {'salt': ..., 'nonce': ..., ...}
-
-# Passphrase strength check
-StrengthCheck = Tuple[bool, str]  # (is_strong, message)
-```
-
-## Internal APIs
-
-These are internal functions not meant for public use:
-
-```python
-# stegvault.crypto.kdf
-def derive_key(passphrase: bytes, salt: bytes) -> bytes:
-    """Derive encryption key (internal)."""
-
-# stegvault.stego.png_lsb
-def _get_pixel_sequence(seed: bytes, size: tuple) -> list:
-    """Generate pseudo-random pixel positions (internal)."""
-```
-
-## CLI Interface
-
-For command-line usage, see:
-
-```python
-# stegvault.cli
-def main():
-    """CLI entry point."""
-
-# Commands:
-# - backup
-# - restore
-# - check
-```
-
-See [Quick Start Tutorial](Quick-Start-Tutorial.md) for CLI examples.
-
-## Next Steps
-
-- Try [Basic Usage Examples](Basic-Usage-Examples.md)
-- Read [Developer Guide](Developer-Guide.md)
-- Review [Architecture Overview](Architecture-Overview.md)
-- Check [Testing Guide](Testing-Guide.md)
+- [Architecture Overview](Architecture-Overview.md) - System architecture
+- [Developer Guide](Developer-Guide.md) - Development setup
+- [Testing Guide](Testing-Guide.md) - Running tests

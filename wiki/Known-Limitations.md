@@ -146,27 +146,24 @@ Known limitations and constraints of StegVault.
 
 ---
 
-### No Password Vault Features
+### CLI-Only Interface (v0.6.1)
 
-**Limitation**: Stores only a single password per backup
-
-**Impact**: Not a full password manager replacement
-
-**Design**: Intentionally simple scope
-
-**Workaround**: Create multiple backups for multiple passwords
-
----
-
-### CLI-Only Interface
-
-**Limitation**: No graphical user interface (v0.1.0)
+**Limitation**: No graphical user interface yet
 
 **Impact**: Less accessible to non-technical users
 
-**Workaround**: None currently
+**Current Features** (v0.6.1):
+- ✅ Full vault mode (multiple passwords per image)
+- ✅ TOTP/2FA authenticator
+- ✅ Gallery mode (multi-vault management)
+- ✅ Headless mode (JSON output, automation)
+- ✅ Application Layer (ready for GUI)
 
-**Future**: GUI planned for v0.2.0+
+**Workaround**: CLI is feature-complete with headless mode for automation
+
+**Future**:
+- TUI (Terminal UI) planned for v0.7.0
+- GUI planned for v0.8.0
 
 ---
 

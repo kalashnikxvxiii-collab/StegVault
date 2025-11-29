@@ -10,7 +10,9 @@ This guide covers installing StegVault on various platforms.
 
 ## Installation Methods
 
-### Method 1: Install from Source (Recommended for v0.1.0)
+### Method 1: Install from Source (Recommended)
+
+**Current Version**: v0.6.1
 
 This is currently the primary installation method.
 
@@ -110,6 +112,11 @@ StegVault requires the following Python packages:
 | Pillow | ≥10.0.0 | Image processing |
 | click | ≥8.1.0 | CLI framework |
 | numpy | ≥1.20.0 | Array operations for steganography |
+| jpeglib | ≥1.0.0 | JPEG DCT steganography |
+| pyotp | ≥2.9.0 | TOTP/2FA code generation |
+| qrcode | ≥7.4.0 | QR code scanning |
+| pyperclip | ≥1.8.0 | Clipboard operations |
+| pyzbar | - | QR code reading (optional) |
 
 Development dependencies:
 - pytest ≥7.4.0
@@ -128,10 +135,12 @@ stegvault --version
 # View help
 stegvault --help
 
-# List available commands
-stegvault backup --help
-stegvault restore --help
-stegvault check --help
+# List available commands (v0.6.1)
+stegvault backup --help          # Single password mode
+stegvault restore --help         # Single password restore
+stegvault vault --help           # Vault mode (multi-password manager)
+stegvault gallery --help         # Multi-vault management
+stegvault check --help           # Image capacity check
 ```
 
 Expected output:

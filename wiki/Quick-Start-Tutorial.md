@@ -1,12 +1,115 @@
 # Quick Start Tutorial
 
-Get started with StegVault in 5 minutes! This tutorial walks you through creating your first encrypted backup and recovering it.
+Get started with StegVault in 5 minutes! This tutorial walks you through using StegVault's password management features.
+
+**Version**: 0.6.1 (Application Layer)
+
+## What You'll Learn
+
+This tutorial covers **both operation modes**:
+1. **Vault Mode** (recommended) - Full password manager with multiple credentials
+2. **Single Password Mode** - Quick backup of one master password
 
 ## Prerequisites
 
 - StegVault installed (see [Installation Guide](Installation-Guide.md))
 - A PNG or JPEG image file
 - Basic command-line familiarity
+
+## Choose Your Mode
+
+### Vault Mode (Recommended for v0.6.1+)
+
+Use vault mode if you want to:
+- Store multiple passwords in one image
+- Manage credentials like a password manager
+- Add TOTP/2FA codes
+- Search and filter entries
+
+[Skip to Vault Mode Tutorial](#vault-mode-tutorial)
+
+### Single Password Mode
+
+Use single password mode if you want to:
+- Quick backup of one critical password (e.g., master password)
+- Simplest possible workflow
+
+[Continue with Single Password Mode](#single-password-mode-tutorial)
+
+---
+
+# Vault Mode Tutorial
+
+## Step 1: Create Your First Vault
+
+Create a new vault with your first password entry:
+
+```bash
+$ stegvault vault create -i cover.png -o myvault.png \
+  -k gmail \
+  -p MyGmailPassword2024 \
+  -u user@gmail.com \
+  --url https://gmail.com \
+  --tags email,personal
+
+Enter vault passphrase: ****************
+Confirm passphrase: ****************
+
+✓ Created vault with 1 entry
+✓ Saved to: myvault.png
+```
+
+## Step 2: Add More Passwords
+
+Add additional entries to your vault:
+
+```bash
+$ stegvault vault add -i myvault.png \
+  -k github \
+  -p GitHubToken123 \
+  -u githubuser
+
+Enter passphrase: ****************
+✓ Added entry: github
+✓ Vault now has 2 entries
+```
+
+## Step 3: Retrieve a Password
+
+Get a password from your vault:
+
+```bash
+$ stegvault vault get -i myvault.png -k gmail
+Enter passphrase: ****************
+
+Key: gmail
+Password: MyGmailPassword2024
+Username: user@gmail.com
+URL: https://gmail.com
+Tags: email, personal
+```
+
+## Step 4: List All Entries
+
+View all passwords in your vault:
+
+```bash
+$ stegvault vault list -i myvault.png
+Enter passphrase: ****************
+
+Vault entries (2):
+1. gmail (email, personal)
+2. github
+```
+
+**Next Steps for Vault Mode**:
+- Try [Basic Usage Examples](Basic-Usage-Examples.md) for TOTP/2FA
+- Learn about [Gallery Mode](Basic-Usage-Examples.md#gallery-mode) for multi-vault management
+- See [Headless Mode](Basic-Usage-Examples.md#headless-mode) for automation
+
+---
+
+# Single Password Mode Tutorial
 
 ## Step 1: Prepare Your Cover Image
 
@@ -123,13 +226,38 @@ The password is permanently unrecoverable. There is no "password reset" by desig
 
 Now that you've mastered the basics:
 
+**For Vault Mode Users**:
+- Explore [Basic Usage Examples](Basic-Usage-Examples.md) (27 examples)
+- Learn about TOTP/2FA, Gallery mode, and Headless mode
+- See [API Reference](API-Reference.md) for Application Layer controllers
+
+**For All Users**:
 - Read [Security Best Practices](Security-Best-Practices.md)
 - Learn about [Choosing Cover Images](Choosing-Cover-Images.md)
-- Explore [Basic Usage Examples](Basic-Usage-Examples.md)
 - Understand the [Security Model](Security-Model.md)
+- Review [Architecture Overview](Architecture-Overview.md) for v0.6.1 features
 
 ## Quick Reference
 
+### Vault Mode Commands (v0.6.1)
+```bash
+# Create vault with first entry
+stegvault vault create -i cover.png -o vault.png -k mykey -p mypass
+
+# Add entry to vault
+stegvault vault add -i vault.png -k newkey -p newpass
+
+# Get password from vault
+stegvault vault get -i vault.png -k mykey
+
+# List all entries
+stegvault vault list -i vault.png
+
+# TOTP/2FA codes
+stegvault vault totp -i vault.png -k mykey
+```
+
+### Single Password Mode Commands
 ```bash
 # Create backup
 stegvault backup -i cover.png -o backup.png
@@ -139,10 +267,13 @@ stegvault restore -i backup.png
 
 # Check image capacity
 stegvault check -i cover.png
+```
 
-# Get help
+### Help Commands
+```bash
 stegvault --help
-stegvault backup --help
+stegvault vault --help
+stegvault gallery --help
 ```
 
 ## Troubleshooting

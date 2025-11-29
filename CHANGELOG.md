@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] - 2025-11-28
+
+### Added - Application Layer Architecture
+
+- **🏗️ Application Controllers**
+  - New `stegvault/app/` package for UI-agnostic business logic
+  - `CryptoController` - High-level encryption/decryption operations
+  - `VaultController` - Complete vault CRUD operations (load, save, create, add, update, delete)
+  - Thread-safe design suitable for CLI, TUI, and future GUI
+  - No UI framework dependencies - pure business logic
+
+- **📊 Result Data Classes**
+  - `EncryptionResult` - Structured encryption operation results
+  - `DecryptionResult` - Structured decryption operation results
+  - `VaultLoadResult` - Vault loading with error handling
+  - `VaultSaveResult` - Vault saving with capacity checks
+  - `EntryResult` - Entry retrieval with validation
+  - Consistent error reporting across all controllers
+
+- **🎯 Benefits**
+  - Reusable from any UI layer (CLI/TUI/GUI)
+  - Easy to test without mocking UI frameworks
+  - Consistent business logic and error handling
+  - Dependency injection support (optional Config)
+  - Centralized validation and capacity checks
+
+### New Modules
+- `stegvault/app/__init__.py` - Application layer entry point
+- `stegvault/app/controllers/__init__.py` - Controllers package
+- `stegvault/app/controllers/crypto_controller.py` (172 lines) - Encryption controller
+- `stegvault/app/controllers/vault_controller.py` (400 lines) - Vault management controller
+
+### New Tests
+- `tests/unit/test_crypto_controller.py` - 11 comprehensive tests (86% coverage)
+- `tests/unit/test_vault_controller.py` - 18 comprehensive tests (83% coverage)
+- +29 tests (585 → 614, all passing)
+
+### Technical Details
+- Controller coverage: 83-86% (missing lines are exception handlers)
+- All methods return structured results with success/error info
+- Thread-safe operations for future GUI implementation
+- Full roundtrip testing (encrypt→decrypt, save→load)
+- Integration with existing crypto and stego layers
+
 ## [0.6.0] - 2025-11-28
 
 ### Added - Headless Mode & Automation
