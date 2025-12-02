@@ -361,9 +361,12 @@ See [Troubleshooting](Troubleshooting.md) for more.
 
 ### Will there be a GUI?
 
-**Yes!** Desktop GUI is planned for v0.2.0+.
+**Yes!** Desktop GUI is planned for future releases:
 
-See [ROADMAP.md](../ROADMAP.md) for timeline.
+- **v0.7.0**: Terminal UI (TUI) with Textual
+- **v0.8.0**: Desktop GUI with PySide6
+
+**Current (v0.6.1)**: CLI with headless mode for automation
 
 ---
 

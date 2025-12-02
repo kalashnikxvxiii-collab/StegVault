@@ -12,7 +12,7 @@ pip install stegvault
 ERROR: Could not find a version that satisfies the requirement stegvault
 ```
 
-**Cause**: Package not yet on PyPI (v0.1.0 is source-only)
+**Cause**: Package not yet on PyPI (v0.6.1 is source-only)
 
 **Solution**:
 ```bash

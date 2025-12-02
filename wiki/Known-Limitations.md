@@ -334,7 +334,7 @@ Known limitations and constraints of StegVault.
 
 ### No Formal Security Audit
 
-**Status**: v0.1.0 has not undergone external security audit
+**Status**: v0.6.1 has not undergone external security audit
 
 **Impact**: Undiscovered vulnerabilities may exist
 

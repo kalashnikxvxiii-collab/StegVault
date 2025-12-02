@@ -410,9 +410,9 @@ KeyError: 'ciphertext'
 
 ### ConnectionError
 
-Not applicable to v0.1.0 (no network features)
+Not applicable to v0.6.1 (no network features yet)
 
-Future versions may have cloud sync.
+Cloud sync features may be added in future versions.
 
 ---
 
@@ -491,7 +491,7 @@ stegvault backup -i cover.png -o backup.png
 **System**:
 - OS: Ubuntu 22.04
 - Python: 3.11.0
-- StegVault: 0.1.0
+- StegVault: 0.6.1
 
 **Steps**:
 1. Created cover image
