@@ -15,7 +15,7 @@ from textual.binding import Binding
 from stegvault.vault import Vault, VaultEntry
 from stegvault.app.controllers import VaultController
 
-from .widgets import EntryListItem, EntryDetailPanel
+from .widgets import EntryListItem, EntryDetailPanel, EntryFormScreen, DeleteConfirmationScreen
 
 
 class VaultScreen(Screen):
@@ -100,17 +100,21 @@ class VaultScreen(Screen):
 
     BINDINGS = [
         Binding("escape", "back", "Back to Menu"),
+        Binding("a", "add_entry", "Add Entry"),
+        Binding("e", "edit_entry", "Edit Entry"),
+        Binding("d", "delete_entry", "Delete Entry"),
         Binding("c", "copy_password", "Copy Password"),
         Binding("v", "toggle_password", "Show/Hide Password"),
-        Binding("r", "refresh", "Refresh"),
+        Binding("s", "save_vault", "Save Changes"),
         Binding("q", "quit", "Quit"),
     ]
 
-    def __init__(self, vault: Vault, image_path: str, controller: VaultController):
+    def __init__(self, vault: Vault, image_path: str, passphrase: str, controller: VaultController):
         """Initialize vault screen."""
         super().__init__()
         self.vault = vault
         self.image_path = image_path
+        self.passphrase = passphrase
         self.controller = controller
         self.selected_entry: Optional[VaultEntry] = None
 
@@ -143,15 +147,16 @@ class VaultScreen(Screen):
 
             # Action bar
             with Horizontal(id="action-bar"):
+                yield Button("Add (a)", variant="success", id="btn-add", classes="action-button")
+                yield Button("Edit (e)", variant="warning", id="btn-edit", classes="action-button")
                 yield Button(
-                    "Copy Password", variant="primary", id="btn-copy", classes="action-button"
+                    "Delete (d)", variant="error", id="btn-delete", classes="action-button"
                 )
+                yield Button("Copy (c)", variant="primary", id="btn-copy", classes="action-button")
                 yield Button(
-                    "Show/Hide", variant="default", id="btn-toggle", classes="action-button"
+                    "Show/Hide (v)", variant="default", id="btn-toggle", classes="action-button"
                 )
-                yield Button(
-                    "Refresh", variant="default", id="btn-refresh", classes="action-button"
-                )
+                yield Button("Save (s)", variant="primary", id="btn-save", classes="action-button")
                 yield Button("Back", variant="default", id="btn-back", classes="action-button")
 
         yield Footer()
@@ -167,12 +172,18 @@ class VaultScreen(Screen):
         """Handle button press."""
         button_id = event.button.id
 
-        if button_id == "btn-copy":
+        if button_id == "btn-add":
+            self.action_add_entry()
+        elif button_id == "btn-edit":
+            self.action_edit_entry()
+        elif button_id == "btn-delete":
+            self.action_delete_entry()
+        elif button_id == "btn-copy":
             self.action_copy_password()
         elif button_id == "btn-toggle":
             self.action_toggle_password()
-        elif button_id == "btn-refresh":
-            self.action_refresh()
+        elif button_id == "btn-save":
+            self.action_save_vault()
         elif button_id == "btn-back":
             self.action_back()
 
@@ -199,6 +210,141 @@ class VaultScreen(Screen):
             detail_panel.toggle_password_visibility()
         else:
             self.notify("No entry selected", severity="warning")
+
+    async def action_add_entry(self) -> None:
+        """Add new entry to vault."""
+        # Show add entry form
+        form_data = await self.app.push_screen_wait(EntryFormScreen(mode="add"))
+
+        if not form_data:
+            return  # User cancelled
+
+        # Add entry using controller
+        updated_vault, success, error = self.controller.add_vault_entry(
+            self.vault,
+            key=form_data["key"],
+            password=form_data["password"],
+            username=form_data.get("username"),
+            url=form_data.get("url"),
+            notes=form_data.get("notes"),
+            tags=form_data.get("tags"),
+        )
+
+        if not success:
+            self.notify(f"Failed to add entry: {error}", severity="error")
+            return
+
+        # Update vault reference
+        self.vault = updated_vault
+
+        # Refresh entry list
+        self._refresh_entry_list()
+        self.notify(f"Entry '{form_data['key']}' added successfully", severity="information")
+
+    async def action_edit_entry(self) -> None:
+        """Edit selected entry."""
+        if not self.selected_entry:
+            self.notify("No entry selected", severity="warning")
+            return
+
+        # Show edit entry form
+        form_data = await self.app.push_screen_wait(
+            EntryFormScreen(mode="edit", entry=self.selected_entry)
+        )
+
+        if not form_data:
+            return  # User cancelled
+
+        # Update entry using controller
+        updated_vault, success, error = self.controller.update_vault_entry(
+            self.vault,
+            key=form_data["key"],
+            password=form_data.get("password"),
+            username=form_data.get("username"),
+            url=form_data.get("url"),
+            notes=form_data.get("notes"),
+            tags=form_data.get("tags"),
+        )
+
+        if not success:
+            self.notify(f"Failed to update entry: {error}", severity="error")
+            return
+
+        # Update vault reference and refresh
+        self.vault = updated_vault
+        self._refresh_entry_list()
+
+        # Update detail panel if same entry is still selected
+        if self.selected_entry and self.selected_entry.key == form_data["key"]:
+            updated_entry = next((e for e in self.vault.entries if e.key == form_data["key"]), None)
+            if updated_entry:
+                self.selected_entry = updated_entry
+                detail_panel = self.query_one(EntryDetailPanel)
+                detail_panel.show_entry(updated_entry)
+
+        self.notify(f"Entry '{form_data['key']}' updated successfully", severity="information")
+
+    async def action_delete_entry(self) -> None:
+        """Delete selected entry."""
+        if not self.selected_entry:
+            self.notify("No entry selected", severity="warning")
+            return
+
+        # Show delete confirmation
+        confirmed = await self.app.push_screen_wait(
+            DeleteConfirmationScreen(self.selected_entry.key)
+        )
+
+        if not confirmed:
+            return  # User cancelled
+
+        entry_key = self.selected_entry.key
+
+        # Delete entry using controller
+        updated_vault, success, error = self.controller.delete_vault_entry(self.vault, entry_key)
+
+        if not success:
+            self.notify(f"Failed to delete entry: {error}", severity="error")
+            return
+
+        # Update vault reference and refresh
+        self.vault = updated_vault
+        self.selected_entry = None
+
+        # Clear detail panel
+        detail_panel = self.query_one(EntryDetailPanel)
+        detail_panel.clear()
+
+        # Refresh entry list
+        self._refresh_entry_list()
+        self.notify(f"Entry '{entry_key}' deleted successfully", severity="information")
+
+    async def action_save_vault(self) -> None:
+        """Save vault changes to disk."""
+        self.notify("Saving vault...", severity="information")
+
+        # Save vault using controller
+        result = self.controller.save_vault(self.vault, self.image_path, self.passphrase)
+
+        if not result.success:
+            self.notify(f"Failed to save vault: {result.error}", severity="error")
+            return
+
+        self.notify("Vault saved successfully!", severity="information")
+
+    def _refresh_entry_list(self) -> None:
+        """Refresh the entry list view."""
+        # Get entry list and clear it
+        entry_list = self.query_one("#entry-list", ListView)
+        entry_list.clear()
+
+        # Re-populate with updated entries
+        for entry in self.vault.entries:
+            entry_list.append(EntryListItem(entry))
+
+        # Update entry count
+        entry_count_label = self.query_one("#entry-count", Label)
+        entry_count_label.update(f"({len(self.vault.entries)})")
 
     def action_refresh(self) -> None:
         """Refresh vault from disk."""

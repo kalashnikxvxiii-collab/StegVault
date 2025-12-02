@@ -136,7 +136,7 @@ class StegVaultTUI(App):
             self.current_vault = result.vault
             self.current_image_path = file_path
 
-            vault_screen = VaultScreen(result.vault, file_path, self.vault_controller)
+            vault_screen = VaultScreen(result.vault, file_path, passphrase, self.vault_controller)
             self.push_screen(vault_screen)
 
         except Exception as e:

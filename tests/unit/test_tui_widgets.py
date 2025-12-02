@@ -13,6 +13,8 @@ from stegvault.tui.widgets import (
     PassphraseInputScreen,
     EntryListItem,
     EntryDetailPanel,
+    EntryFormScreen,
+    DeleteConfirmationScreen,
 )
 from stegvault.vault import Vault, VaultEntry
 
@@ -406,3 +408,238 @@ class TestPassphraseInputScreen:
         screen.on_input_submitted(event)
 
         screen.dismiss.assert_not_called()
+
+
+class TestEntryFormScreen:
+    """Tests for EntryFormScreen widget."""
+
+    def test_entry_form_screen_creation_add_mode(self):
+        """Should create entry form in add mode."""
+        screen = EntryFormScreen(mode="add")
+
+        assert screen.mode == "add"
+        assert screen.entry is None
+        assert screen.title == "Add New Entry"
+
+    def test_entry_form_screen_creation_edit_mode(self):
+        """Should create entry form in edit mode."""
+        entry = VaultEntry(key="test", password="secret")
+        screen = EntryFormScreen(mode="edit", entry=entry)
+
+        assert screen.mode == "edit"
+        assert screen.entry == entry
+        assert screen.title == "Edit Entry"
+
+    def test_entry_form_screen_custom_title(self):
+        """Should create entry form with custom title."""
+        screen = EntryFormScreen(mode="add", title="Custom Title")
+
+        assert screen.title == "Custom Title"
+
+    def test_entry_form_screen_bindings(self):
+        """Should have escape binding."""
+        screen = EntryFormScreen()
+        binding_keys = [b.key for b in screen.BINDINGS]
+        assert "escape" in binding_keys
+
+    def test_action_cancel(self):
+        """Should dismiss with None on cancel."""
+        screen = EntryFormScreen()
+        screen.dismiss = Mock()
+
+        screen.action_cancel()
+
+        screen.dismiss.assert_called_once_with(None)
+
+    def test_on_button_pressed_save_valid_add(self):
+        """Should dismiss with form data on valid add."""
+        screen = EntryFormScreen(mode="add")
+        screen.dismiss = Mock()
+
+        # Mock input widgets
+        mock_key = Mock()
+        mock_key.value = "gmail"
+        mock_password = Mock()
+        mock_password.value = "secret123"
+        mock_username = Mock()
+        mock_username.value = "user@gmail.com"
+        mock_url = Mock()
+        mock_url.value = "https://gmail.com"
+        mock_notes = Mock()
+        mock_notes.value = "Personal email"
+        mock_tags = Mock()
+        mock_tags.value = "email, personal"
+
+        def mock_query_one(selector, widget_type):
+            if selector == "#input-key":
+                return mock_key
+            elif selector == "#input-password":
+                return mock_password
+            elif selector == "#input-username":
+                return mock_username
+            elif selector == "#input-url":
+                return mock_url
+            elif selector == "#input-notes":
+                return mock_notes
+            elif selector == "#input-tags":
+                return mock_tags
+
+        screen.query_one = mock_query_one
+
+        # Create button pressed event
+        button = Mock()
+        button.id = "btn-save"
+        event = Mock()
+        event.button = button
+
+        screen.on_button_pressed(event)
+
+        screen.dismiss.assert_called_once()
+        form_data = screen.dismiss.call_args[0][0]
+        assert form_data["key"] == "gmail"
+        assert form_data["password"] == "secret123"
+        assert form_data["username"] == "user@gmail.com"
+        assert form_data["url"] == "https://gmail.com"
+        assert form_data["notes"] == "Personal email"
+        assert form_data["tags"] == ["email", "personal"]
+
+    def test_on_button_pressed_save_empty_key(self):
+        """Should notify error for empty key."""
+        screen = EntryFormScreen()
+        screen.dismiss = Mock()
+
+        # Mock app
+        mock_app = Mock()
+        mock_app.notify = Mock()
+
+        # Mock input widgets with empty key
+        mock_key = Mock()
+        mock_key.value = "  "  # Whitespace only
+        mock_password = Mock()
+        mock_password.value = "secret"
+
+        def mock_query_one(selector, widget_type):
+            if selector == "#input-key":
+                return mock_key
+            elif selector == "#input-password":
+                return mock_password
+            return Mock(value="")
+
+        screen.query_one = mock_query_one
+
+        button = Mock()
+        button.id = "btn-save"
+        event = Mock()
+        event.button = button
+
+        with patch.object(type(screen), "app", property(lambda self: mock_app)):
+            screen.on_button_pressed(event)
+
+            mock_app.notify.assert_called_once()
+            call_args = mock_app.notify.call_args
+            assert "Key is required" in call_args[0][0]
+            screen.dismiss.assert_not_called()
+
+    def test_on_button_pressed_save_empty_password(self):
+        """Should notify error for empty password."""
+        screen = EntryFormScreen()
+        screen.dismiss = Mock()
+
+        # Mock app
+        mock_app = Mock()
+        mock_app.notify = Mock()
+
+        # Mock input widgets with empty password
+        mock_key = Mock()
+        mock_key.value = "test"
+        mock_password = Mock()
+        mock_password.value = ""
+
+        def mock_query_one(selector, widget_type):
+            if selector == "#input-key":
+                return mock_key
+            elif selector == "#input-password":
+                return mock_password
+            return Mock(value="")
+
+        screen.query_one = mock_query_one
+
+        button = Mock()
+        button.id = "btn-save"
+        event = Mock()
+        event.button = button
+
+        with patch.object(type(screen), "app", property(lambda self: mock_app)):
+            screen.on_button_pressed(event)
+
+            mock_app.notify.assert_called_once()
+            call_args = mock_app.notify.call_args
+            assert "Password is required" in call_args[0][0]
+            screen.dismiss.assert_not_called()
+
+    def test_on_button_pressed_cancel(self):
+        """Should dismiss with None on cancel button."""
+        screen = EntryFormScreen()
+        screen.dismiss = Mock()
+
+        button = Mock()
+        button.id = "btn-cancel"
+        event = Mock()
+        event.button = button
+
+        screen.on_button_pressed(event)
+
+        screen.dismiss.assert_called_once_with(None)
+
+
+class TestDeleteConfirmationScreen:
+    """Tests for DeleteConfirmationScreen widget."""
+
+    def test_delete_confirmation_screen_creation(self):
+        """Should create delete confirmation screen."""
+        screen = DeleteConfirmationScreen("test-entry")
+
+        assert screen.entry_key == "test-entry"
+
+    def test_delete_confirmation_screen_bindings(self):
+        """Should have escape binding."""
+        screen = DeleteConfirmationScreen("test")
+        binding_keys = [b.key for b in screen.BINDINGS]
+        assert "escape" in binding_keys
+
+    def test_action_cancel(self):
+        """Should dismiss with False on cancel."""
+        screen = DeleteConfirmationScreen("test")
+        screen.dismiss = Mock()
+
+        screen.action_cancel()
+
+        screen.dismiss.assert_called_once_with(False)
+
+    def test_on_button_pressed_delete(self):
+        """Should dismiss with True on delete button."""
+        screen = DeleteConfirmationScreen("test")
+        screen.dismiss = Mock()
+
+        button = Mock()
+        button.id = "btn-delete"
+        event = Mock()
+        event.button = button
+
+        screen.on_button_pressed(event)
+
+        screen.dismiss.assert_called_once_with(True)
+
+    def test_on_button_pressed_cancel(self):
+        """Should dismiss with False on cancel button."""
+        screen = DeleteConfirmationScreen("test")
+        screen.dismiss = Mock()
+
+        button = Mock()
+        button.id = "btn-cancel"
+        event = Mock()
+        event.button = button
+
+        screen.on_button_pressed(event)
+
+        screen.dismiss.assert_called_once_with(False)

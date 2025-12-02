@@ -372,3 +372,277 @@ class EntryDetailPanel(Container):
         self.current_entry = None
         self.password_visible = False
         self._update_display()
+
+
+class EntryFormScreen(ModalScreen[Optional[dict]]):
+    """Modal screen for adding/editing vault entries."""
+
+    CSS = """
+    EntryFormScreen {
+        align: center middle;
+    }
+
+    #form-dialog {
+        width: 80;
+        height: auto;
+        border: thick $primary;
+        background: $surface;
+        padding: 2;
+    }
+
+    #form-title {
+        text-align: center;
+        text-style: bold;
+        margin-bottom: 1;
+    }
+
+    .form-field {
+        margin-bottom: 1;
+    }
+
+    .field-label {
+        color: $text-muted;
+        margin-bottom: 0;
+    }
+
+    Input {
+        width: 100%;
+    }
+
+    #button-row {
+        height: 3;
+        align: center middle;
+        margin-top: 1;
+    }
+
+    .form-button {
+        margin: 0 1;
+    }
+    """
+
+    BINDINGS = [
+        Binding("escape", "cancel", "Cancel"),
+    ]
+
+    def __init__(
+        self,
+        mode: str = "add",
+        entry: Optional[VaultEntry] = None,
+        title: Optional[str] = None,
+    ):
+        """
+        Initialize entry form screen.
+
+        Args:
+            mode: "add" or "edit"
+            entry: Entry to edit (only for edit mode)
+            title: Optional custom title
+        """
+        super().__init__()
+        self.mode = mode
+        self.entry = entry
+        self.title = title or ("Edit Entry" if mode == "edit" else "Add New Entry")
+
+    def compose(self) -> ComposeResult:
+        """Compose entry form dialog."""
+        with Container(id="form-dialog"):
+            yield Label(self.title, id="form-title")
+
+            # Key field
+            with Vertical(classes="form-field"):
+                yield Label("Key (identifier):", classes="field-label")
+                key_input = Input(
+                    placeholder="e.g., gmail, github, aws",
+                    id="input-key",
+                )
+                if self.entry and self.mode == "edit":
+                    key_input.value = self.entry.key
+                    key_input.disabled = True  # Can't change key in edit mode
+                yield key_input
+
+            # Password field
+            with Vertical(classes="form-field"):
+                yield Label("Password:", classes="field-label")
+                password_input = Input(
+                    placeholder="Enter password",
+                    password=True,
+                    id="input-password",
+                )
+                if self.entry:
+                    password_input.value = self.entry.password
+                yield password_input
+
+            # Username field
+            with Vertical(classes="form-field"):
+                yield Label("Username (optional):", classes="field-label")
+                username_input = Input(
+                    placeholder="e.g., user@example.com",
+                    id="input-username",
+                )
+                if self.entry and self.entry.username:
+                    username_input.value = self.entry.username
+                yield username_input
+
+            # URL field
+            with Vertical(classes="form-field"):
+                yield Label("URL (optional):", classes="field-label")
+                url_input = Input(
+                    placeholder="e.g., https://example.com",
+                    id="input-url",
+                )
+                if self.entry and self.entry.url:
+                    url_input.value = self.entry.url
+                yield url_input
+
+            # Notes field
+            with Vertical(classes="form-field"):
+                yield Label("Notes (optional):", classes="field-label")
+                notes_input = Input(
+                    placeholder="Any additional notes",
+                    id="input-notes",
+                )
+                if self.entry and self.entry.notes:
+                    notes_input.value = self.entry.notes
+                yield notes_input
+
+            # Tags field
+            with Vertical(classes="form-field"):
+                yield Label("Tags (optional, comma-separated):", classes="field-label")
+                tags_input = Input(
+                    placeholder="e.g., work, email, important",
+                    id="input-tags",
+                )
+                if self.entry and self.entry.tags:
+                    tags_input.value = ", ".join(self.entry.tags)
+                yield tags_input
+
+            # Buttons
+            with Horizontal(id="button-row"):
+                yield Button(
+                    "Save" if self.mode == "edit" else "Add",
+                    variant="primary",
+                    id="btn-save",
+                    classes="form-button",
+                )
+                yield Button("Cancel", variant="default", id="btn-cancel", classes="form-button")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle button press."""
+        if event.button.id == "btn-save":
+            # Gather form data
+            key = self.query_one("#input-key", Input).value.strip()
+            password = self.query_one("#input-password", Input).value
+            username = self.query_one("#input-username", Input).value.strip() or None
+            url = self.query_one("#input-url", Input).value.strip() or None
+            notes = self.query_one("#input-notes", Input).value.strip() or None
+            tags_str = self.query_one("#input-tags", Input).value.strip()
+            tags = [t.strip() for t in tags_str.split(",") if t.strip()] if tags_str else None
+
+            # Validate required fields
+            if not key:
+                self.app.notify("Key is required", severity="error")
+                return
+            if not password:
+                self.app.notify("Password is required", severity="error")
+                return
+
+            # Return form data
+            form_data = {
+                "key": key,
+                "password": password,
+                "username": username,
+                "url": url,
+                "notes": notes,
+                "tags": tags,
+            }
+            self.dismiss(form_data)
+
+        elif event.button.id == "btn-cancel":
+            self.dismiss(None)
+
+    def action_cancel(self) -> None:
+        """Cancel and close dialog."""
+        self.dismiss(None)
+
+
+class DeleteConfirmationScreen(ModalScreen[bool]):
+    """Modal screen for confirming entry deletion."""
+
+    CSS = """
+    DeleteConfirmationScreen {
+        align: center middle;
+    }
+
+    #confirm-dialog {
+        width: 60;
+        height: 15;
+        border: thick $error;
+        background: $surface;
+        padding: 2;
+    }
+
+    #confirm-title {
+        text-align: center;
+        text-style: bold;
+        color: $error;
+        margin-bottom: 1;
+    }
+
+    #confirm-message {
+        text-align: center;
+        margin-bottom: 2;
+    }
+
+    #entry-key {
+        text-align: center;
+        text-style: bold;
+        color: $warning;
+        margin-bottom: 2;
+    }
+
+    #button-row {
+        height: 3;
+        align: center middle;
+    }
+
+    .confirm-button {
+        margin: 0 1;
+    }
+    """
+
+    BINDINGS = [
+        Binding("escape", "cancel", "Cancel"),
+    ]
+
+    def __init__(self, entry_key: str):
+        """
+        Initialize delete confirmation screen.
+
+        Args:
+            entry_key: Key of entry to delete
+        """
+        super().__init__()
+        self.entry_key = entry_key
+
+    def compose(self) -> ComposeResult:
+        """Compose confirmation dialog."""
+        with Container(id="confirm-dialog"):
+            yield Label("⚠️  Confirm Deletion", id="confirm-title")
+            yield Label("Are you sure you want to delete this entry?", id="confirm-message")
+            yield Label(f'"{self.entry_key}"', id="entry-key")
+            yield Label("This action cannot be undone.", id="confirm-message")
+
+            with Horizontal(id="button-row"):
+                yield Button("Delete", variant="error", id="btn-delete", classes="confirm-button")
+                yield Button("Cancel", variant="default", id="btn-cancel", classes="confirm-button")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle button press."""
+        if event.button.id == "btn-delete":
+            self.dismiss(True)  # Confirmed
+        elif event.button.id == "btn-cancel":
+            self.dismiss(False)  # Cancelled
+
+    def action_cancel(self) -> None:
+        """Cancel and close dialog."""
+        self.dismiss(False)

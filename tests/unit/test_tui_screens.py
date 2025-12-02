@@ -5,12 +5,12 @@ Tests the VaultScreen for StegVault TUI.
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch, MagicMock, AsyncMock
 from pathlib import Path
 
 from stegvault.tui.screens import VaultScreen
 from stegvault.vault import Vault, VaultEntry
-from stegvault.app.controllers import VaultController
+from stegvault.app.controllers import VaultController, VaultSaveResult
 
 
 class TestVaultScreen:
@@ -21,10 +21,11 @@ class TestVaultScreen:
         vault = Vault(entries=[])
         controller = VaultController()
 
-        screen = VaultScreen(vault, "test.png", controller)
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
 
         assert screen.vault == vault
         assert screen.image_path == "test.png"
+        assert screen.passphrase == "passphrase"
         assert screen.controller == controller
         assert screen.selected_entry is None
 
@@ -32,21 +33,24 @@ class TestVaultScreen:
         """Should have key bindings defined."""
         vault = Vault(entries=[])
         controller = VaultController()
-        screen = VaultScreen(vault, "test.png", controller)
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
 
         binding_keys = [b.key for b in screen.BINDINGS]
 
         assert "escape" in binding_keys  # back
+        assert "a" in binding_keys  # add entry
+        assert "e" in binding_keys  # edit entry
+        assert "d" in binding_keys  # delete entry
         assert "c" in binding_keys  # copy password
         assert "v" in binding_keys  # toggle password
-        assert "r" in binding_keys  # refresh
+        assert "s" in binding_keys  # save vault
         assert "q" in binding_keys  # quit
 
     def test_action_back(self):
         """Should call app.pop_screen."""
         vault = Vault(entries=[])
         controller = VaultController()
-        screen = VaultScreen(vault, "test.png", controller)
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
 
         # Create a mock parent with app
         mock_app = Mock()
@@ -63,7 +67,7 @@ class TestVaultScreen:
         """Should call app.exit."""
         vault = Vault(entries=[])
         controller = VaultController()
-        screen = VaultScreen(vault, "test.png", controller)
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
 
         # Create a mock parent with app
         mock_app = Mock()
@@ -80,7 +84,7 @@ class TestVaultScreen:
         """Should notify refresh feature."""
         vault = Vault(entries=[])
         controller = VaultController()
-        screen = VaultScreen(vault, "test.png", controller)
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
         screen.notify = Mock()
 
         screen.action_refresh()
@@ -93,7 +97,7 @@ class TestVaultScreen:
         """Should warn when no entry selected."""
         vault = Vault(entries=[])
         controller = VaultController()
-        screen = VaultScreen(vault, "test.png", controller)
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
         screen.notify = Mock()
 
         screen.action_copy_password()
@@ -108,7 +112,7 @@ class TestVaultScreen:
         entry = VaultEntry(key="test", password="secret123")
         vault = Vault(entries=[entry])
         controller = VaultController()
-        screen = VaultScreen(vault, "test.png", controller)
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
         screen.selected_entry = entry
         screen.notify = Mock()
 
@@ -127,7 +131,7 @@ class TestVaultScreen:
         entry = VaultEntry(key="test", password="secret")
         vault = Vault(entries=[entry])
         controller = VaultController()
-        screen = VaultScreen(vault, "test.png", controller)
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
         screen.selected_entry = entry
         screen.notify = Mock()
 
@@ -144,7 +148,7 @@ class TestVaultScreen:
         """Should warn when no entry selected."""
         vault = Vault(entries=[])
         controller = VaultController()
-        screen = VaultScreen(vault, "test.png", controller)
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
         screen.notify = Mock()
 
         screen.action_toggle_password()
@@ -159,7 +163,7 @@ class TestVaultScreen:
         entry = VaultEntry(key="test", password="secret")
         vault = Vault(entries=[entry])
         controller = VaultController()
-        screen = VaultScreen(vault, "test.png", controller)
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
         screen.selected_entry = entry
 
         # Mock detail panel
@@ -175,7 +179,7 @@ class TestVaultScreen:
         """Should handle copy button press."""
         vault = Vault(entries=[])
         controller = VaultController()
-        screen = VaultScreen(vault, "test.png", controller)
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
         screen.action_copy_password = Mock()
 
         button = Mock()
@@ -191,7 +195,7 @@ class TestVaultScreen:
         """Should handle toggle button press."""
         vault = Vault(entries=[])
         controller = VaultController()
-        screen = VaultScreen(vault, "test.png", controller)
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
         screen.action_toggle_password = Mock()
 
         button = Mock()
@@ -203,27 +207,11 @@ class TestVaultScreen:
 
         screen.action_toggle_password.assert_called_once()
 
-    def test_on_button_pressed_refresh(self):
-        """Should handle refresh button press."""
-        vault = Vault(entries=[])
-        controller = VaultController()
-        screen = VaultScreen(vault, "test.png", controller)
-        screen.action_refresh = Mock()
-
-        button = Mock()
-        button.id = "btn-refresh"
-        event = Mock()
-        event.button = button
-
-        screen.on_button_pressed(event)
-
-        screen.action_refresh.assert_called_once()
-
     def test_on_button_pressed_back(self):
         """Should handle back button press."""
         vault = Vault(entries=[])
         controller = VaultController()
-        screen = VaultScreen(vault, "test.png", controller)
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
         screen.action_back = Mock()
 
         button = Mock()
@@ -234,3 +222,327 @@ class TestVaultScreen:
         screen.on_button_pressed(event)
 
         screen.action_back.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_action_add_entry_success(self):
+        """Should add new entry successfully."""
+        vault = Vault(entries=[])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+        screen.notify = Mock()
+        screen._refresh_entry_list = Mock()
+
+        # Mock push_screen_wait to return form data
+        form_data = {
+            "key": "gmail",
+            "password": "secret123",
+            "username": "user@gmail.com",
+            "url": "https://gmail.com",
+            "notes": "Personal email",
+            "tags": ["email", "personal"],
+        }
+
+        # Mock controller to return success
+        updated_vault = Vault(entries=[VaultEntry(key="gmail", password="secret123")])
+        controller.add_vault_entry = Mock(return_value=(updated_vault, True, None))
+
+        # Mock app.push_screen_wait
+        mock_app = Mock()
+        mock_app.push_screen_wait = AsyncMock(return_value=form_data)
+
+        with patch.object(type(screen), "app", property(lambda self: mock_app)):
+            await screen.action_add_entry()
+
+            controller.add_vault_entry.assert_called_once()
+            screen._refresh_entry_list.assert_called_once()
+            screen.notify.assert_called_once()
+            assert "added successfully" in screen.notify.call_args[0][0]
+
+    @pytest.mark.asyncio
+    async def test_action_add_entry_cancel(self):
+        """Should handle add entry cancellation."""
+        vault = Vault(entries=[])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+        screen.notify = Mock()
+        screen._refresh_entry_list = Mock()
+
+        # Mock app.push_screen_wait to return None (cancelled)
+        mock_app = Mock()
+        mock_app.push_screen_wait = AsyncMock(return_value=None)
+
+        with patch.object(type(screen), "app", property(lambda self: mock_app)):
+            await screen.action_add_entry()
+
+            screen._refresh_entry_list.assert_not_called()
+            screen.notify.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_action_add_entry_failure(self):
+        """Should handle add entry failure."""
+        vault = Vault(entries=[])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+        screen.notify = Mock()
+
+        # Mock form data
+        form_data = {"key": "test", "password": "secret"}
+
+        # Mock controller to return failure
+        controller.add_vault_entry = Mock(return_value=(vault, False, "Entry already exists"))
+
+        # Mock app
+        mock_app = Mock()
+        mock_app.push_screen_wait = AsyncMock(return_value=form_data)
+
+        with patch.object(type(screen), "app", property(lambda self: mock_app)):
+            await screen.action_add_entry()
+
+            screen.notify.assert_called_once()
+            assert "Failed to add entry" in screen.notify.call_args[0][0]
+
+    @pytest.mark.asyncio
+    async def test_action_edit_entry_no_selection(self):
+        """Should warn when no entry selected for edit."""
+        vault = Vault(entries=[])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+        screen.notify = Mock()
+
+        await screen.action_edit_entry()
+
+        screen.notify.assert_called_once()
+        assert "No entry selected" in screen.notify.call_args[0][0]
+
+    @pytest.mark.asyncio
+    async def test_action_edit_entry_success(self):
+        """Should edit entry successfully."""
+        entry = VaultEntry(key="test", password="old_password")
+        vault = Vault(entries=[entry])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+        screen.selected_entry = entry
+        screen.notify = Mock()
+        screen._refresh_entry_list = Mock()
+
+        # Mock form data
+        form_data = {"key": "test", "password": "new_password"}
+
+        # Mock controller
+        updated_entry = VaultEntry(key="test", password="new_password")
+        updated_vault = Vault(entries=[updated_entry])
+        controller.update_vault_entry = Mock(return_value=(updated_vault, True, None))
+
+        # Mock app
+        mock_app = Mock()
+        mock_app.push_screen_wait = AsyncMock(return_value=form_data)
+
+        # Mock detail panel
+        mock_panel = Mock()
+        screen.query_one = Mock(return_value=mock_panel)
+
+        with patch.object(type(screen), "app", property(lambda self: mock_app)):
+            await screen.action_edit_entry()
+
+            controller.update_vault_entry.assert_called_once()
+            screen._refresh_entry_list.assert_called_once()
+            assert "updated successfully" in screen.notify.call_args[0][0]
+
+    @pytest.mark.asyncio
+    async def test_action_delete_entry_no_selection(self):
+        """Should warn when no entry selected for delete."""
+        vault = Vault(entries=[])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+        screen.notify = Mock()
+
+        await screen.action_delete_entry()
+
+        screen.notify.assert_called_once()
+        assert "No entry selected" in screen.notify.call_args[0][0]
+
+    @pytest.mark.asyncio
+    async def test_action_delete_entry_cancel(self):
+        """Should handle delete cancellation."""
+        entry = VaultEntry(key="test", password="secret")
+        vault = Vault(entries=[entry])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+        screen.selected_entry = entry
+        screen.notify = Mock()
+        screen._refresh_entry_list = Mock()
+
+        # Mock app to return False (cancelled)
+        mock_app = Mock()
+        mock_app.push_screen_wait = AsyncMock(return_value=False)
+
+        with patch.object(type(screen), "app", property(lambda self: mock_app)):
+            await screen.action_delete_entry()
+
+            screen._refresh_entry_list.assert_not_called()
+            screen.notify.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_action_delete_entry_success(self):
+        """Should delete entry successfully."""
+        entry = VaultEntry(key="test", password="secret")
+        vault = Vault(entries=[entry])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+        screen.selected_entry = entry
+        screen.notify = Mock()
+        screen._refresh_entry_list = Mock()
+
+        # Mock controller
+        updated_vault = Vault(entries=[])
+        controller.delete_vault_entry = Mock(return_value=(updated_vault, True, None))
+
+        # Mock app
+        mock_app = Mock()
+        mock_app.push_screen_wait = AsyncMock(return_value=True)
+
+        # Mock detail panel
+        mock_panel = Mock()
+        screen.query_one = Mock(return_value=mock_panel)
+
+        with patch.object(type(screen), "app", property(lambda self: mock_app)):
+            await screen.action_delete_entry()
+
+            controller.delete_vault_entry.assert_called_once()
+            screen._refresh_entry_list.assert_called_once()
+            assert "deleted successfully" in screen.notify.call_args[0][0]
+            assert screen.selected_entry is None
+
+    @pytest.mark.asyncio
+    async def test_action_save_vault_success(self):
+        """Should save vault successfully."""
+        vault = Vault(entries=[])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+        screen.notify = Mock()
+
+        # Mock controller
+        from stegvault.app.controllers.vault_controller import VaultSaveResult
+
+        result = VaultSaveResult(output_path="test.png", success=True)
+        controller.save_vault = Mock(return_value=result)
+
+        await screen.action_save_vault()
+
+        controller.save_vault.assert_called_once_with(vault, "test.png", "passphrase")
+        screen.notify.assert_called()
+        assert "saved successfully" in screen.notify.call_args[0][0]
+
+    @pytest.mark.asyncio
+    async def test_action_save_vault_failure(self):
+        """Should handle save vault failure."""
+        vault = Vault(entries=[])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+        screen.notify = Mock()
+
+        # Mock controller
+        from stegvault.app.controllers.vault_controller import VaultSaveResult
+
+        result = VaultSaveResult(output_path="test.png", success=False, error="Disk full")
+        controller.save_vault = Mock(return_value=result)
+
+        await screen.action_save_vault()
+
+        screen.notify.assert_called()
+        assert "Failed to save vault" in screen.notify.call_args[0][0]
+
+    def test_refresh_entry_list(self):
+        """Should refresh entry list."""
+        entry1 = VaultEntry(key="test1", password="pass1")
+        entry2 = VaultEntry(key="test2", password="pass2")
+        vault = Vault(entries=[entry1, entry2])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+
+        # Mock entry list
+        mock_list = Mock()
+        mock_list.clear = Mock()
+        mock_list.append = Mock()
+
+        # Mock entry count label
+        mock_label = Mock()
+
+        def mock_query_one(selector, widget_type=None):
+            if selector == "#entry-list":
+                return mock_list
+            elif selector == "#entry-count":
+                return mock_label
+            return Mock()
+
+        screen.query_one = mock_query_one
+
+        screen._refresh_entry_list()
+
+        mock_list.clear.assert_called_once()
+        assert mock_list.append.call_count == 2
+        mock_label.update.assert_called_once_with("(2)")
+
+    def test_on_button_pressed_add(self):
+        """Should handle add button press."""
+        vault = Vault(entries=[])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+        screen.action_add_entry = Mock()
+
+        button = Mock()
+        button.id = "btn-add"
+        event = Mock()
+        event.button = button
+
+        screen.on_button_pressed(event)
+
+        screen.action_add_entry.assert_called_once()
+
+    def test_on_button_pressed_edit(self):
+        """Should handle edit button press."""
+        vault = Vault(entries=[])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+        screen.action_edit_entry = Mock()
+
+        button = Mock()
+        button.id = "btn-edit"
+        event = Mock()
+        event.button = button
+
+        screen.on_button_pressed(event)
+
+        screen.action_edit_entry.assert_called_once()
+
+    def test_on_button_pressed_delete(self):
+        """Should handle delete button press."""
+        vault = Vault(entries=[])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+        screen.action_delete_entry = Mock()
+
+        button = Mock()
+        button.id = "btn-delete"
+        event = Mock()
+        event.button = button
+
+        screen.on_button_pressed(event)
+
+        screen.action_delete_entry.assert_called_once()
+
+    def test_on_button_pressed_save(self):
+        """Should handle save button press."""
+        vault = Vault(entries=[])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+        screen.action_save_vault = Mock()
+
+        button = Mock()
+        button.id = "btn-save"
+        event = Mock()
+        event.button = button
+
+        screen.on_button_pressed(event)
+
+        screen.action_save_vault.assert_called_once()
