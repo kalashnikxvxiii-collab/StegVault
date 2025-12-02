@@ -267,6 +267,33 @@ class TestJPEGDCT:
         with pytest.raises(StegoError, match="Extraction failed: Unexpected extraction error"):
             jpeg_dct.extract_payload(jpeg_image, 10)
 
+    def test_jpeg_embed_payload_too_large(self, tiny_jpeg_image):
+        """Should raise CapacityError when payload is too large for JPEG."""
+        # Create a very large payload that exceeds JPEG capacity
+        large_payload = b"X" * 50000  # 50KB payload for tiny image
+
+        with pytest.raises(CapacityError) as exc_info:
+            jpeg_dct.embed_payload(tiny_jpeg_image, large_payload)
+
+        # Check for capacity error (either preventive check or embed failure)
+        assert "exceeds image capacity" in str(
+            exc_info.value
+        ) or "Could not embed all payload bits" in str(exc_info.value)
+
+    @pytest.fixture
+    def tiny_jpeg_image(self):
+        """Create a tiny JPEG image with minimal capacity."""
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
+            # Create very small 50x50 image with minimal capacity
+            img_array = np.random.randint(0, 256, (50, 50, 3), dtype=np.uint8)
+            img = Image.fromarray(img_array, mode="RGB")
+            img.save(tmp.name, "JPEG", quality=85)
+            yield tmp.name
+            try:
+                os.unlink(tmp.name)
+            except Exception:
+                pass
+
 
 class TestDispatcher:
     """Tests for format dispatcher module."""
