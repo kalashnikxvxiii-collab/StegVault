@@ -6,5 +6,19 @@ using the Textual framework.
 """
 
 from .app import StegVaultTUI
+from .screens import VaultScreen
+from .widgets import (
+    FileSelectScreen,
+    PassphraseInputScreen,
+    EntryListItem,
+    EntryDetailPanel,
+)
 
-__all__ = ["StegVaultTUI"]
+__all__ = [
+    "StegVaultTUI",
+    "VaultScreen",
+    "FileSelectScreen",
+    "PassphraseInputScreen",
+    "EntryListItem",
+    "EntryDetailPanel",
+]

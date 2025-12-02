@@ -4,13 +4,18 @@ Main TUI application for StegVault.
 Provides a full-featured terminal interface for vault management.
 """
 
+from typing import Optional
+
 from textual.app import App, ComposeResult
 from textual.containers import Container, Vertical, Horizontal
-from textual.widgets import Header, Footer, Static, Input, Button
+from textual.widgets import Header, Footer, Static, Button
 from textual.binding import Binding
 
 from stegvault.app.controllers import VaultController, CryptoController
 from stegvault.vault import Vault
+
+from .widgets import FileSelectScreen, PassphraseInputScreen
+from .screens import VaultScreen
 
 
 class StegVaultTUI(App):
@@ -97,17 +102,53 @@ class StegVaultTUI(App):
         """Quit the application."""
         self.exit()
 
-    def action_open_vault(self) -> None:
+    async def action_open_vault(self) -> None:
         """Open existing vault."""
-        self.notify("Open Vault feature - Coming soon!", severity="information")
+        # Step 1: Select vault image file
+        file_path = await self.push_screen_wait(FileSelectScreen("Select Vault Image"))
+
+        if not file_path:
+            return  # User cancelled
+
+        # Step 2: Get passphrase
+        passphrase = await self.push_screen_wait(
+            PassphraseInputScreen(f"Unlock Vault: {file_path}")
+        )
+
+        if not passphrase:
+            return  # User cancelled
+
+        # Step 3: Load vault
+        self.notify("Loading vault...", severity="information")
+
+        try:
+            result = self.vault_controller.load_vault(file_path, passphrase)
+
+            if not result.success:
+                self.notify(f"Failed to load vault: {result.error}", severity="error")
+                return
+
+            if not result.vault:
+                self.notify("Vault loaded but contains no data", severity="warning")
+                return
+
+            # Success! Switch to vault screen
+            self.current_vault = result.vault
+            self.current_image_path = file_path
+
+            vault_screen = VaultScreen(result.vault, file_path, self.vault_controller)
+            self.push_screen(vault_screen)
+
+        except Exception as e:
+            self.notify(f"Error loading vault: {e}", severity="error")
 
     def action_new_vault(self) -> None:
         """Create new vault."""
-        self.notify("New Vault feature - Coming soon!", severity="information")
+        self.notify("New Vault feature - Coming in Phase 3!", severity="information")
 
     def action_show_help(self) -> None:
         """Show help screen."""
-        self.notify("Help screen - Coming soon!", severity="information")
+        self.notify("Help screen - Coming in Phase 3!", severity="information")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press events."""
