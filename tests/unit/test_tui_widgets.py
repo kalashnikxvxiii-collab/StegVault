@@ -90,6 +90,7 @@ class TestEntryDetailPanel:
         mock_content = Mock()
         panel.query_one = Mock(return_value=mock_content)
         panel.mount = Mock()
+        panel.set_interval = Mock()  # Mock timer
 
         panel.show_entry(entry)
 
@@ -116,10 +117,12 @@ class TestEntryDetailPanel:
         mock_content = Mock()
         panel.query_one = Mock(return_value=mock_content)
         panel.mount = Mock()
+        panel.set_interval = Mock()  # Mock timer
 
         panel.show_entry(entry)
 
         assert panel.current_entry == entry
+        panel.set_interval.assert_called_once()  # TOTP refresh started
 
     def test_toggle_password_visibility(self):
         """Should toggle password visibility."""
@@ -133,6 +136,7 @@ class TestEntryDetailPanel:
         mock_content = Mock()
         panel.query_one = Mock(return_value=mock_content)
         panel.mount = Mock()
+        panel.set_interval = Mock()  # Mock timer
 
         panel.show_entry(entry)
         assert panel.password_visible is False
@@ -163,6 +167,7 @@ class TestEntryDetailPanel:
         mock_content = Mock()
         panel.query_one = Mock(return_value=mock_content)
         panel.mount = Mock()
+        panel.set_interval = Mock()  # Mock timer
 
         panel.show_entry(entry)
         assert panel.current_entry is not None

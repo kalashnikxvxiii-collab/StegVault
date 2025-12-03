@@ -247,6 +247,7 @@ class EntryDetailPanel(Container):
         super().__init__()
         self.current_entry: Optional[VaultEntry] = None
         self.password_visible = False
+        self.totp_refresh_timer = None
 
     def compose(self) -> ComposeResult:
         """Compose detail panel."""
@@ -260,6 +261,7 @@ class EntryDetailPanel(Container):
         self.current_entry = entry
         self.password_visible = False
         self._update_display()
+        self._start_totp_refresh()
 
     def toggle_password_visibility(self) -> None:
         """Toggle password visibility."""
@@ -334,13 +336,31 @@ class EntryDetailPanel(Container):
 
             # TOTP
             if entry.totp_secret:
-                widgets.append(
-                    Vertical(
-                        Label("TOTP:", classes="field-label"),
-                        Label("✓ Configured", classes="field-value"),
-                        classes="detail-field",
+                from stegvault.vault.totp import generate_totp_code, get_totp_time_remaining
+
+                try:
+                    totp_code = generate_totp_code(entry.totp_secret)
+                    time_remaining = get_totp_time_remaining()
+                    widgets.append(
+                        Vertical(
+                            Label("TOTP Code:", classes="field-label"),
+                            Label(
+                                f"{totp_code}  ({time_remaining}s)",
+                                classes="field-value",
+                                id="totp-code-display",
+                            ),
+                            classes="detail-field",
+                        )
                     )
-                )
+                except Exception:
+                    # Invalid TOTP secret
+                    widgets.append(
+                        Vertical(
+                            Label("TOTP:", classes="field-label"),
+                            Label("✗ Invalid secret", classes="field-value"),
+                            classes="detail-field",
+                        )
+                    )
 
             # Timestamps
             widgets.append(
@@ -369,9 +389,44 @@ class EntryDetailPanel(Container):
 
     def clear(self) -> None:
         """Clear the detail panel."""
+        self._stop_totp_refresh()
         self.current_entry = None
         self.password_visible = False
         self._update_display()
+
+    def _start_totp_refresh(self) -> None:
+        """Start TOTP auto-refresh timer if entry has TOTP secret."""
+        self._stop_totp_refresh()  # Stop any existing timer
+        if self.current_entry and self.current_entry.totp_secret:
+            # Refresh every second
+            self.totp_refresh_timer = self.set_interval(1.0, self._refresh_totp_display)
+
+    def _stop_totp_refresh(self) -> None:
+        """Stop TOTP auto-refresh timer."""
+        if self.totp_refresh_timer:
+            self.totp_refresh_timer.stop()
+            self.totp_refresh_timer = None
+
+    def _refresh_totp_display(self) -> None:
+        """Refresh only the TOTP code display (called every second)."""
+        if not self.current_entry or not self.current_entry.totp_secret:
+            self._stop_totp_refresh()
+            return
+
+        try:
+            # Query the TOTP display label
+            totp_label = self.query_one("#totp-code-display", Label)
+
+            from stegvault.vault.totp import generate_totp_code, get_totp_time_remaining
+
+            totp_code = generate_totp_code(self.current_entry.totp_secret)
+            time_remaining = get_totp_time_remaining()
+
+            # Update label text
+            totp_label.update(f"{totp_code}  ({time_remaining}s)")
+        except Exception:
+            # TOTP label not found or invalid secret, stop refreshing
+            self._stop_totp_refresh()
 
 
 class EntryFormScreen(ModalScreen[Optional[dict]]):
