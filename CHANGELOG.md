@@ -7,6 +7,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0-alpha.3] - 2025-12-03
+
+### Added - TUI Phase 4: Advanced Features 🔐
+
+**Phase 4a - Create New Vault Workflow**:
+- 6-step guided workflow for vault creation
+- Automatic vault opening after creation
+- Complete error handling and cancellation support
+
+**Phase 4b - Password Generator Integration**:
+- `PasswordGeneratorScreen` with live preview
+- Length control (8-64 characters)
+- Integration in EntryFormScreen
+- Cryptographically secure generation
+
+**Phase 4c - TOTP Display with Auto-Refresh**:
+- Live TOTP codes with countdown timer
+- Auto-refresh every second
+- Invalid secret error handling
+
+### Fixed
+- Bandit B105 false positive for password initialization
+
+### Testing
+- 722 tests total (+19 from alpha.2)
+- 100% pass rate ✅
+- 89% coverage maintained
+
+## [0.7.0-alpha.2] - 2025-12-02
+
+### Added - TUI Phase 3: Entry CRUD Operations ✏️
+
+- **Complete Entry Management**
+  - `EntryFormScreen` - Modal form for add/edit
+  - `DeleteConfirmationScreen` - Safety confirmation
+  - Add, Edit, Delete, Save operations in VaultScreen
+  - Form validation (required: key, password)
+  - Tag parsing from comma-separated strings
+
+- **Keyboard Shortcuts**
+  - **a** - Add new entry
+  - **e** - Edit selected entry
+  - **d** - Delete entry (with confirmation)
+  - **s** - Save vault to disk
+
+- **Enhanced VaultScreen**
+  - 7-button action bar
+  - Entry list auto-refresh after mutations
+  - Detail panel updates after edits
+  - Passphrase caching for save operations
+
+### Changed
+- `EntryFormScreen.on_button_pressed()` changed to async
+
+### Testing
+- 703 tests total (+32 from alpha.1)
+- 100% pass rate ✅
+- 90% overall coverage
+
 ## [0.7.0-alpha.1] - 2025-12-02
 
 ### Added - TUI Phase 2: Vault Loading & Entry Display 🎨
