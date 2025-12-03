@@ -9,6 +9,7 @@ from unittest.mock import Mock, patch, MagicMock
 from pathlib import Path
 
 from stegvault.tui.widgets import (
+    HelpScreen,
     FileSelectScreen,
     PassphraseInputScreen,
     EntryListItem,
@@ -882,3 +883,46 @@ class TestPasswordGeneratorScreen:
         # Should update preview
         mock_preview.update.assert_called_once()
         assert len(screen.current_password) == 16
+
+
+class TestHelpScreen:
+    """Tests for HelpScreen widget."""
+
+    def test_help_screen_creation(self):
+        """Should create help screen."""
+        screen = HelpScreen()
+
+        assert screen is not None
+
+    def test_help_screen_bindings(self):
+        """Should have escape binding."""
+        screen = HelpScreen()
+
+        binding_keys = [b.key for b in screen.BINDINGS]
+        assert "escape" in binding_keys
+
+    def test_action_dismiss(self):
+        """Should dismiss screen."""
+        screen = HelpScreen()
+        screen.dismiss = Mock()
+
+        screen.action_dismiss()
+
+        screen.dismiss.assert_called_once_with(None)
+
+    def test_on_button_pressed_close(self):
+        """Should dismiss on close button."""
+        from textual.widgets import Button
+
+        screen = HelpScreen()
+        screen.action_dismiss = Mock()
+
+        # Create mock button event
+        mock_button = Mock(spec=Button)
+        mock_button.id = "btn-close"
+        mock_event = Mock()
+        mock_event.button = mock_button
+
+        screen.on_button_pressed(mock_event)
+
+        screen.action_dismiss.assert_called_once()

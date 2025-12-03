@@ -77,6 +77,33 @@ pip install -e .
 
 ### Usage
 
+StegVault offers **three interfaces** for managing your passwords:
+1. **Terminal UI (TUI)** - Full-featured visual interface in your terminal 🎨
+2. **Command Line (CLI)** - Scriptable commands for automation 🤖
+3. **Headless Mode** - JSON output for CI/CD and scripts 📊
+
+#### Terminal UI (TUI) - Recommended for Interactive Use
+
+Launch the full-featured terminal interface:
+```bash
+stegvault tui
+```
+
+**Features**:
+- 🖥️ Modern visual interface with keyboard shortcuts
+- 📂 File browser for selecting vaults
+- 📋 Entry list with live search/filter
+- 🔐 TOTP codes with auto-refresh countdown
+- 🎲 Built-in password generator
+- 📝 Full CRUD operations (Create, Read, Update, Delete)
+- ⌨️ Complete keyboard navigation
+
+**Keyboard Shortcuts**:
+- `o` - Open vault | `n` - New vault | `h` - Help
+- `a` - Add entry | `e` - Edit | `d` - Delete
+- `c` - Copy password | `v` - Toggle visibility
+- `s` - Save changes | `/` - Search entries
+
 #### Mode 1: Single Password (Simple Backup)
 
 **1. Check Image Capacity**

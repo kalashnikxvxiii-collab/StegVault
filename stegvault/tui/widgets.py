@@ -24,6 +24,129 @@ from textual.binding import Binding
 from stegvault.vault import Vault, VaultEntry
 
 
+class HelpScreen(ModalScreen[None]):
+    """Modal screen displaying help and keyboard shortcuts."""
+
+    CSS = """
+    HelpScreen {
+        align: center middle;
+    }
+
+    #help-dialog {
+        width: 80;
+        height: 30;
+        border: thick $primary;
+        background: $surface;
+        padding: 2;
+    }
+
+    #help-title {
+        text-style: bold;
+        text-align: center;
+        color: $primary;
+        margin-bottom: 1;
+    }
+
+    #help-content {
+        height: 22;
+        border: solid $accent;
+        padding: 1;
+    }
+
+    .help-section {
+        margin-bottom: 1;
+    }
+
+    .help-section-title {
+        text-style: bold;
+        color: $accent;
+    }
+
+    .help-item {
+        margin-left: 2;
+    }
+
+    .help-key {
+        text-style: bold;
+        color: $primary;
+    }
+
+    #help-footer {
+        text-align: center;
+        color: $text-muted;
+        margin-top: 1;
+    }
+    """
+
+    BINDINGS = [
+        Binding("escape", "dismiss", "Close", priority=True),
+    ]
+
+    def __init__(self):
+        """Initialize help screen."""
+        super().__init__()
+
+    def compose(self) -> ComposeResult:
+        """Compose help screen layout."""
+        with Container(id="help-dialog"):
+            yield Static("🔐 StegVault TUI - Help", id="help-title")
+
+            with ScrollableContainer(id="help-content"):
+                yield Static(
+                    "[bold cyan]Welcome Screen[/bold cyan]\n"
+                    "  [bold]o[/bold] / [bold]Ctrl+O[/bold] - Open existing vault\n"
+                    "  [bold]n[/bold] / [bold]Ctrl+N[/bold] - Create new vault\n"
+                    "  [bold]h[/bold] / [bold]F1[/bold] - Show this help\n"
+                    "  [bold]q[/bold] / [bold]Ctrl+Q[/bold] - Quit application\n\n"
+                    "[bold cyan]Vault Screen[/bold cyan]\n"
+                    "  [bold]a[/bold] - Add new entry\n"
+                    "  [bold]e[/bold] - Edit selected entry\n"
+                    "  [bold]d[/bold] - Delete selected entry\n"
+                    "  [bold]c[/bold] - Copy password to clipboard\n"
+                    "  [bold]v[/bold] - Toggle password visibility\n"
+                    "  [bold]s[/bold] - Save vault to disk\n"
+                    "  [bold]Escape[/bold] - Back to welcome screen\n"
+                    "  [bold]q[/bold] - Quit application\n\n"
+                    "[bold cyan]Entry Forms[/bold cyan]\n"
+                    "  [bold]Tab[/bold] / [bold]Shift+Tab[/bold] - Navigate fields\n"
+                    "  [bold]Enter[/bold] - Submit form\n"
+                    "  [bold]Escape[/bold] - Cancel and close\n\n"
+                    "[bold cyan]Password Generator[/bold cyan]\n"
+                    "  [bold]g[/bold] - Generate new password\n"
+                    "  [bold]+[/bold] / [bold]-[/bold] - Adjust password length\n"
+                    "  [bold]Enter[/bold] - Use generated password\n"
+                    "  [bold]Escape[/bold] - Cancel\n\n"
+                    "[bold cyan]Navigation[/bold cyan]\n"
+                    "  [bold]↑[/bold] / [bold]↓[/bold] - Navigate entry list\n"
+                    "  [bold]Enter[/bold] - Select entry\n"
+                    "  [bold]Mouse[/bold] - Click to interact\n\n"
+                    "[bold cyan]About[/bold cyan]\n"
+                    "  StegVault v0.7.0 - Password Manager with Steganography\n"
+                    "  Embeds encrypted credentials in images (PNG/JPEG)\n"
+                    "  Uses XChaCha20-Poly1305 encryption + Argon2id KDF\n\n"
+                    "[bold cyan]Security Notes[/bold cyan]\n"
+                    "  • Strong passphrase is critical for security\n"
+                    "  • Keep multiple backup copies of vault images\n"
+                    "  • Losing image OR passphrase = permanent data loss\n"
+                    "  • JPEG: Robust but smaller capacity (~18KB)\n"
+                    "  • PNG: Larger capacity (~90KB) but requires lossless format",
+                    markup=True,
+                    classes="help-section",
+                )
+
+            yield Static("Press [bold]Escape[/bold] or click Close to return", id="help-footer")
+            yield Button("Close", variant="primary", id="btn-close")
+
+    def action_dismiss(self) -> None:
+        """Dismiss help screen."""
+        self.dismiss(None)
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle button press."""
+        if event.button.id == "btn-close":
+            self.action_dismiss()
+
+
 class FileSelectScreen(ModalScreen[Optional[str]]):
     """Modal screen for selecting a vault image file."""
 

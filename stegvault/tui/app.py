@@ -14,7 +14,7 @@ from textual.binding import Binding
 from stegvault.app.controllers import VaultController, CryptoController
 from stegvault.vault import Vault
 
-from .widgets import FileSelectScreen, PassphraseInputScreen
+from .widgets import FileSelectScreen, PassphraseInputScreen, HelpScreen
 from .screens import VaultScreen
 
 
@@ -211,7 +211,7 @@ class StegVaultTUI(App):
 
     def action_show_help(self) -> None:
         """Show help screen."""
-        self.notify("Help screen - Coming in Phase 3!", severity="information")
+        self.push_screen(HelpScreen())
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press events."""

@@ -8,6 +8,7 @@ using the Textual framework.
 from .app import StegVaultTUI
 from .screens import VaultScreen
 from .widgets import (
+    HelpScreen,
     FileSelectScreen,
     PassphraseInputScreen,
     EntryListItem,
@@ -20,6 +21,7 @@ from .widgets import (
 __all__ = [
     "StegVaultTUI",
     "VaultScreen",
+    "HelpScreen",
     "FileSelectScreen",
     "PassphraseInputScreen",
     "EntryListItem",

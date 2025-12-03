@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2025-12-03
+
+### Added - TUI Phase 5: Polish & Completion 🎉
+
+**Help System**:
+- `HelpScreen` - Comprehensive keyboard shortcuts reference
+- Displays all TUI features and security notes
+- Accessible via `h` key or Help button
+- Scrollable content with full feature documentation
+
+**Search & Filter**:
+- Live search input in entry list (`/` to focus)
+- Searches across: key, username, URL, notes, tags
+- Real-time filtering as you type
+- Entry count shows "X/Y" when filtering
+- Auto-clears detail panel when selected entry is filtered
+
+**UI Improvements**:
+- Search box with visual placeholder
+- Entry count badge in header
+- Smooth keyboard focus navigation
+
+**Production Ready**:
+- 726 tests total (100% pass rate) ✅
+- 89% overall code coverage
+- All core TUI features implemented
+- Complete keyboard-driven workflow
+
+### Changed
+- `action_show_help()` now displays HelpScreen (was placeholder)
+- Entry list refresh now respects search filter
+- Entry count label shows filtered/total when searching
+
+### Testing
+- 726 tests total (+4 from alpha.3)
+- 100% pass rate ✅
+- 89% coverage (maintained)
+
 ## [0.7.0-alpha.3] - 2025-12-03
 
 ### Added - TUI Phase 4: Advanced Features 🔐

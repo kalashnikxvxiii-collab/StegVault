@@ -199,15 +199,18 @@ class TestStegVaultTUI:
         assert len(error_calls) > 0
 
     def test_action_show_help(self):
-        """Should notify help screen feature."""
+        """Should push help screen."""
         app = StegVaultTUI()
-        app.notify = Mock()
+        app.push_screen = Mock()
 
         app.action_show_help()
 
-        app.notify.assert_called_once()
-        call_args = app.notify.call_args
-        assert "Phase 3" in call_args[0][0]
+        app.push_screen.assert_called_once()
+        # Verify HelpScreen was passed
+        from stegvault.tui.widgets import HelpScreen
+
+        call_args = app.push_screen.call_args
+        assert isinstance(call_args[0][0], HelpScreen)
 
     @pytest.mark.asyncio
     async def test_action_open_vault_cancel_file(self):

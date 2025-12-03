@@ -8,7 +8,7 @@ from typing import Optional
 
 from textual.app import ComposeResult
 from textual.containers import Container, Vertical, Horizontal
-from textual.widgets import Header, Footer, Static, ListView, Button, Label
+from textual.widgets import Header, Footer, Static, ListView, Button, Label, Input
 from textual.screen import Screen
 from textual.binding import Binding
 
@@ -66,6 +66,16 @@ class VaultScreen(Screen):
         color: $text-muted;
     }
 
+    #search-container {
+        height: 3;
+        background: $panel;
+        padding: 0 1;
+    }
+
+    #search-input {
+        width: 100%;
+    }
+
     #entry-list {
         height: 1fr;
     }
@@ -106,6 +116,7 @@ class VaultScreen(Screen):
         Binding("c", "copy_password", "Copy Password"),
         Binding("v", "toggle_password", "Show/Hide Password"),
         Binding("s", "save_vault", "Save Changes"),
+        Binding("/", "focus_search", "Search"),
         Binding("q", "quit", "Quit"),
     ]
 
@@ -117,6 +128,7 @@ class VaultScreen(Screen):
         self.passphrase = passphrase
         self.controller = controller
         self.selected_entry: Optional[VaultEntry] = None
+        self.search_query: str = ""
 
     def compose(self) -> ComposeResult:
         """Compose vault screen layout."""
@@ -135,6 +147,13 @@ class VaultScreen(Screen):
                     with Horizontal(id="entry-list-header"):
                         yield Label("Entries", id="entry-list-title")
                         yield Label(f"({len(self.vault.entries)})", id="entry-count")
+
+                    # Search box
+                    with Horizontal(id="search-container"):
+                        yield Input(
+                            placeholder="🔍 Search entries... (press / to focus)",
+                            id="search-input",
+                        )
 
                     entry_list = ListView(id="entry-list")
                     for entry in self.vault.entries:
@@ -332,19 +351,61 @@ class VaultScreen(Screen):
 
         self.notify("Vault saved successfully!", severity="information")
 
+    def _get_filtered_entries(self) -> list[VaultEntry]:
+        """Get entries filtered by search query."""
+        if not self.search_query:
+            return self.vault.entries
+
+        query = self.search_query.lower()
+        filtered = []
+
+        for entry in self.vault.entries:
+            # Search in key, username, URL, notes, and tags
+            if (
+                query in entry.key.lower()
+                or (entry.username and query in entry.username.lower())
+                or (entry.url and query in entry.url.lower())
+                or (entry.notes and query in entry.notes.lower())
+                or any(query in tag.lower() for tag in entry.tags)
+            ):
+                filtered.append(entry)
+
+        return filtered
+
     def _refresh_entry_list(self) -> None:
-        """Refresh the entry list view."""
+        """Refresh the entry list view with current search filter."""
         # Get entry list and clear it
         entry_list = self.query_one("#entry-list", ListView)
         entry_list.clear()
 
-        # Re-populate with updated entries
-        for entry in self.vault.entries:
+        # Re-populate with filtered entries
+        filtered_entries = self._get_filtered_entries()
+        for entry in filtered_entries:
             entry_list.append(EntryListItem(entry))
 
         # Update entry count
         entry_count_label = self.query_one("#entry-count", Label)
-        entry_count_label.update(f"({len(self.vault.entries)})")
+        if self.search_query:
+            entry_count_label.update(f"({len(filtered_entries)}/{len(self.vault.entries)})")
+        else:
+            entry_count_label.update(f"({len(self.vault.entries)})")
+
+    def action_focus_search(self) -> None:
+        """Focus the search input."""
+        search_input = self.query_one("#search-input", Input)
+        search_input.focus()
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        """Handle search input changes."""
+        if event.input.id == "search-input":
+            self.search_query = event.value
+            self._refresh_entry_list()
+
+            # Clear detail panel if selected entry is filtered out
+            if self.selected_entry and self.selected_entry not in self._get_filtered_entries():
+                self.selected_entry = None
+                detail_panel = self.query_one(EntryDetailPanel)
+                detail_panel.clear()
 
     def action_refresh(self) -> None:
         """Refresh vault from disk."""
