@@ -2041,11 +2041,11 @@ class PasswordGeneratorScreen(ModalScreen[Optional[str]]):
                 # Show notification
                 try:
                     self.app.notify("Press ESC to close this modal", severity="warning", timeout=2)
-                except Exception:
+                except Exception:  # nosec B110
                     pass
                 # Don't call parent - completely stop processing
                 return
-        except Exception:
+        except Exception:  # nosec B110
             pass
         # For other keys, call parent
         await super().key(event)
@@ -2064,10 +2064,10 @@ class PasswordGeneratorScreen(ModalScreen[Optional[str]]):
                         severity="warning",
                         timeout=3,
                     )
-                except Exception:
+                except Exception:  # nosec B110
                     pass
                 return
-        except Exception:
+        except Exception:  # nosec B110
             # Catch any exception to prevent crash
             pass
 
@@ -2076,7 +2076,7 @@ class PasswordGeneratorScreen(ModalScreen[Optional[str]]):
         # Don't exit, don't dismiss, don't do anything
         try:
             self.app.notify("Use ESC to close this modal", severity="warning", timeout=2)
-        except Exception:
+        except Exception:  # nosec B110
             pass
 
     def action_cancel(self) -> None:

@@ -306,7 +306,7 @@ class StegVaultTUI(App):
             if isinstance(self.screen, PasswordGeneratorScreen):
                 self.notify("Press ESC to close this modal first", severity="warning", timeout=2)
                 return
-        except Exception:
+        except Exception:  # nosec B110
             pass
         self.exit()
 
