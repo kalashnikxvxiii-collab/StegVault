@@ -76,6 +76,70 @@ cd stegvault
 pip install -e .
 ```
 
+### Updating to Latest Version
+
+Keep StegVault up-to-date to get the latest features, bug fixes, and security improvements.
+
+#### Update from PyPI
+
+```bash
+# Standard update
+pip install --upgrade stegvault
+
+# Verify new version
+stegvault --version
+```
+
+#### Update Portable Package (Windows)
+
+If you're using the Windows portable package:
+
+1. **Download latest release** from [GitHub Releases](https://github.com/kalashnikxvxiii-collab/StegVault/releases/latest)
+2. **Extract new files** to your StegVault folder (overwrite old files)
+3. **Run setup again** (updates dependencies):
+   ```batch
+   setup_portable.bat
+   ```
+4. **Verify update**:
+   ```batch
+   launch_tui.bat
+   ```
+   Check version in TUI home screen
+
+#### Update from Source
+
+```bash
+# Navigate to repository
+cd StegVault
+
+# Pull latest changes
+git pull origin main
+
+# Reinstall with latest code
+pip install -e . --force-reinstall
+
+# Verify update
+stegvault --version
+```
+
+#### Check Current Version
+
+```bash
+# Command line
+stegvault --version
+
+# Python
+python -c "import stegvault; print(stegvault.__version__)"
+
+# TUI home screen displays version automatically
+```
+
+#### Migration Notes
+
+**Breaking Changes**: StegVault follows semantic versioning. Major version updates (e.g., 1.0 → 2.0) may include breaking changes. Always check the [CHANGELOG.md](CHANGELOG.md) before updating.
+
+**Vault Compatibility**: Vaults created with v0.4.0+ are forward-compatible. Older vaults (v0.1.0-v0.3.x) may need migration - see [Migration Guide](CHANGELOG.md).
+
 ### Usage
 
 StegVault offers **three interfaces** for managing your passwords:
