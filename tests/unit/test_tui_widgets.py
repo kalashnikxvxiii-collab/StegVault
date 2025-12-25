@@ -1,11 +1,11 @@
 """
-import sys
 Tests for TUI widgets.
 
 Tests custom Textual widgets for StegVault TUI.
 """
 
 import pytest
+import sys
 from unittest.mock import Mock, patch, MagicMock, AsyncMock
 from pathlib import Path
 
