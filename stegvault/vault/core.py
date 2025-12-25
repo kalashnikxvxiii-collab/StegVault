@@ -4,7 +4,7 @@ Core vault data structures and types.
 
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from enum import Enum
 
 
@@ -33,12 +33,12 @@ class PasswordHistoryEntry:
     )
     reason: Optional[str] = None
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Convert history entry to dictionary."""
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict) -> "PasswordHistoryEntry":
+    def from_dict(cls, data: Dict[str, Any]) -> "PasswordHistoryEntry":
         """Create history entry from dictionary."""
         return cls(**data)
 
@@ -80,12 +80,12 @@ class VaultEntry:
     )
     accessed: Optional[str] = None
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Convert entry to dictionary."""
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict) -> "VaultEntry":
+    def from_dict(cls, data: Dict[str, Any]) -> "VaultEntry":
         """Create entry from dictionary."""
         return cls(**data)
 
@@ -156,9 +156,9 @@ class Vault:
     modified: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     )
-    metadata: dict = field(default_factory=dict)
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize metadata with default values."""
         if "total_entries" not in self.metadata:
             self.metadata["total_entries"] = len(self.entries)
@@ -274,7 +274,7 @@ class Vault:
         self.modified = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         self.metadata["total_entries"] = len(self.entries)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> Dict[str, Any]:
         """
         Convert vault to dictionary.
 
@@ -290,7 +290,7 @@ class Vault:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "Vault":
+    def from_dict(cls, data: Dict[str, Any]) -> "Vault":
         """
         Create vault from dictionary.
 

@@ -25,6 +25,7 @@ class TestSettingsScreen:
         mock_config = Mock()
         mock_config.updates.auto_check = False
         mock_config.updates.auto_upgrade = True
+        mock_config.totp.enabled = True
         mock_load_config.return_value = mock_config
 
         screen = SettingsScreen()
@@ -32,12 +33,15 @@ class TestSettingsScreen:
         # Mock query_one to return mock switches
         mock_auto_check_switch = Mock()
         mock_auto_upgrade_switch = Mock()
+        mock_totp_enabled_switch = Mock()
 
         def query_one_side_effect(selector, widget_type=None):
             if "auto-check" in selector:
                 return mock_auto_check_switch
             elif "auto-upgrade" in selector:
                 return mock_auto_upgrade_switch
+            elif "totp-enabled" in selector:
+                return mock_totp_enabled_switch
 
         screen.query_one = Mock(side_effect=query_one_side_effect)
 
@@ -47,10 +51,12 @@ class TestSettingsScreen:
         # Verify switches were set
         assert mock_auto_check_switch.value is False
         assert mock_auto_upgrade_switch.value is True
+        assert mock_totp_enabled_switch.value is True
 
         # Verify initial values were stored
         assert screen._initial_auto_check is False
         assert screen._initial_auto_upgrade is True
+        assert screen._initial_totp_enabled is True
 
     def test_has_unsaved_changes_no_changes(self):
         """Should return False when no changes."""
@@ -102,6 +108,7 @@ class TestSettingsScreen:
         """Should save settings to config."""
         mock_config = Mock()
         mock_config.updates = Mock()
+        mock_config.totp = Mock()
         mock_load_config.return_value = mock_config
 
         screen = SettingsScreen()
@@ -112,12 +119,16 @@ class TestSettingsScreen:
         mock_auto_check_switch.value = False
         mock_auto_upgrade_switch = Mock()
         mock_auto_upgrade_switch.value = True
+        mock_totp_enabled_switch = Mock()
+        mock_totp_enabled_switch.value = True
 
         def query_one_side_effect(selector, widget_type=None):
             if "auto-check" in selector:
                 return mock_auto_check_switch
             elif "auto-upgrade" in selector:
                 return mock_auto_upgrade_switch
+            elif "totp-enabled" in selector:
+                return mock_totp_enabled_switch
 
         screen.query_one = Mock(side_effect=query_one_side_effect)
 
@@ -129,6 +140,7 @@ class TestSettingsScreen:
             # Verify config was updated and saved
             assert mock_config.updates.auto_check is False
             assert mock_config.updates.auto_upgrade is True
+            assert mock_config.totp.enabled is True
             mock_save_config.assert_called_once_with(mock_config)
             mock_app.notify.assert_called_once()
 

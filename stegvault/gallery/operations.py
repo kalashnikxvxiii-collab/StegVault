@@ -58,6 +58,8 @@ def add_vault(
             # Refresh vault metadata after caching
             vault = db.get_vault(name)
 
+        if vault is None:
+            raise GalleryOperationError(f"Failed to retrieve vault '{name}' after adding")
         return vault
 
     except GalleryDBError as e:
@@ -146,13 +148,16 @@ def refresh_vault(db: GalleryDB, name: str, passphrase: str) -> VaultMetadata:
         db.update_last_accessed(name)
 
         # Get updated vault
-        return db.get_vault(name)
+        updated_vault = db.get_vault(name)
+        if updated_vault is None:
+            raise GalleryOperationError(f"Failed to retrieve vault '{name}' after refresh")
+        return updated_vault
 
     except GalleryDBError as e:
         raise GalleryOperationError(str(e))
 
 
-def _cache_vault_entries(db: GalleryDB, vault: VaultMetadata, passphrase: str):
+def _cache_vault_entries(db: GalleryDB, vault: VaultMetadata, passphrase: str) -> None:
     """
     Cache vault entries for search.
 
@@ -182,6 +187,8 @@ def _cache_vault_entries(db: GalleryDB, vault: VaultMetadata, passphrase: str):
             return
 
         # Clear existing cache
+        if vault.vault_id is None:
+            raise GalleryOperationError(f"Vault '{vault.name}' has no vault_id")
         db.clear_vault_cache(vault.vault_id)
 
         # Cache each entry

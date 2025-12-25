@@ -9,6 +9,7 @@ from typing import Optional
 
 from textual.app import ComposeResult
 from textual.containers import Container, Vertical, Horizontal
+from textual.events import Click
 from textual.widgets import Header, Footer, Static, ListView, Button, Label, Input
 from textual.screen import Screen
 from textual.binding import Binding
@@ -39,6 +40,8 @@ class VaultScreen(Screen):
         width: 100%;
         height: 100%;
         overflow-y: auto;  /* Enable vertical scrolling on resize */
+        scrollbar-gutter: stable;  /* Reserve space for scrollbar to prevent layout shifts */
+        scrollbar-size-vertical: 1;  /* Explicit scrollbar width */
     }
 
     #vault-header {
@@ -65,6 +68,8 @@ class VaultScreen(Screen):
         width: 100%;
         height: 1fr;
         overflow-y: auto;  /* Enable vertical scrolling on resize */
+        scrollbar-gutter: stable;  /* Reserve space for scrollbar to prevent layout shifts */
+        scrollbar-size-vertical: 1;  /* Explicit scrollbar width */
     }
 
     /* Entry List - Neon cyan theme */
@@ -73,6 +78,8 @@ class VaultScreen(Screen):
         border-right: heavy #00ffff;
         background: #0a0a0a;
         overflow-y: auto;  /* Enable vertical scrolling on resize */
+        scrollbar-gutter: stable;  /* Reserve space for scrollbar to prevent layout shifts */
+        scrollbar-size-vertical: 1;  /* Explicit scrollbar width */
     }
 
     #entry-list-header {
@@ -89,6 +96,38 @@ class VaultScreen(Screen):
 
     #entry-count {
         color: #ff00ff;
+        text-style: bold;
+    }
+
+    .spacer {
+        width: 1fr;
+    }
+
+    .sort-toggle {
+        width: 3;
+        height: 1;
+        min-width: 3;
+        max-width: 3;
+        min-height: 1;
+        max-height: 1;
+        margin: 0 0 0 1;
+        padding: 0;
+        text-align: center;
+        content-align: center middle;
+        background: transparent;
+        color: #ff00ff;
+        text-style: bold;
+    }
+
+    .sort-toggle:hover {
+        background: transparent;
+        color: #00ffff;
+        text-style: bold;
+    }
+
+    .sort-toggle:focus {
+        background: transparent;
+        color: #ffff00;
         text-style: bold;
     }
 
@@ -116,6 +155,8 @@ class VaultScreen(Screen):
         height: 1fr;
         background: #0a0a0a;
         overflow-y: auto;  /* Enable vertical scrolling on resize */
+        scrollbar-gutter: stable;  /* Reserve space for scrollbar to prevent layout shifts */
+        scrollbar-size-vertical: 1;  /* Explicit scrollbar width */
     }
 
     /* Detail Panel - Magenta accent */
@@ -123,6 +164,8 @@ class VaultScreen(Screen):
         width: 70%;
         background: #0a0a0a;
         overflow-y: auto;  /* Enable vertical scrolling on resize */
+        scrollbar-gutter: stable;  /* Reserve space for scrollbar to prevent layout shifts */
+        scrollbar-size-vertical: 1;  /* Explicit scrollbar width */
     }
 
     .entry-item {
@@ -227,6 +270,10 @@ class VaultScreen(Screen):
         self.selected_entry: Optional[VaultEntry] = None
         self.search_query: str = ""
         self.has_unsaved_changes: bool = False
+        # Sorting state: "alpha", "chrono", "edited"
+        self.sort_type: str = "alpha"
+        # Sorting direction: "asc", "desc"
+        self.sort_direction: str = "asc"
 
     def compose(self) -> ComposeResult:
         """Compose vault screen layout."""
@@ -246,6 +293,9 @@ class VaultScreen(Screen):
                     with Horizontal(id="entry-list-header"):
                         yield Label(">> CREDENTIALS", id="entry-list-title")
                         yield Label(f"[{len(self.vault.entries)}]", id="entry-count")
+                        yield Static(" ", classes="spacer")  # Spacer
+                        yield Static("A", id="btn-sort-type", classes="sort-toggle")
+                        yield Static("▲", id="btn-sort-direction", classes="sort-toggle")
 
                     # Search box
                     with Horizontal(id="search-container"):
@@ -310,6 +360,46 @@ class VaultScreen(Screen):
         elif button_id == "btn-back":
             self.action_back()
 
+    def on_click(self, event: Click) -> None:
+        """Handle click on Static widgets (sort toggles)."""
+        widget_id = getattr(event.widget, "id", None)
+        if widget_id is not None:
+            if widget_id == "btn-sort-type":
+                self._toggle_sort_type()
+            elif widget_id == "btn-sort-direction":
+                self._toggle_sort_direction()
+
+    def _toggle_sort_type(self) -> None:
+        """Toggle sort type: alpha -> chrono -> edited -> alpha."""
+        sort_btn = self.query_one("#btn-sort-type", Static)
+
+        if self.sort_type == "alpha":
+            self.sort_type = "chrono"
+            sort_btn.update("⏰")
+        elif self.sort_type == "chrono":
+            self.sort_type = "edited"
+            sort_btn.update("E")
+        else:  # edited
+            self.sort_type = "alpha"
+            sort_btn.update("A")
+
+        # Refresh entry list with new sort
+        self._refresh_entry_list()
+
+    def _toggle_sort_direction(self) -> None:
+        """Toggle sort direction: asc -> desc -> asc."""
+        direction_btn = self.query_one("#btn-sort-direction", Static)
+
+        if self.sort_direction == "asc":
+            self.sort_direction = "desc"
+            direction_btn.update("▼")
+        else:  # desc
+            self.sort_direction = "asc"
+            direction_btn.update("▲")
+
+        # Refresh entry list with new sort
+        self._refresh_entry_list()
+
     def action_copy_password(self) -> None:
         """Copy selected entry password to clipboard."""
         if self.selected_entry:
@@ -331,8 +421,19 @@ class VaultScreen(Screen):
         if self.selected_entry:
             detail_panel = self.query_one(EntryDetailPanel)
             detail_panel.toggle_password_visibility()
+            # Update button label to reflect new state
+            self._update_toggle_button_label()
         else:
             self.notify("No entry selected", severity="warning")
+
+    def _update_toggle_button_label(self) -> None:
+        """Update toggle button label based on password visibility state."""
+        try:
+            detail_panel = self.query_one(EntryDetailPanel)
+            toggle_btn = self.query_one("#btn-toggle", Button)
+            toggle_btn.label = "HIDE" if detail_panel.password_visible else "SHOW"
+        except Exception:  # nosec B110
+            pass
 
     def action_view_history(self) -> None:
         """View password history (wrapper for async)."""
@@ -489,25 +590,38 @@ class VaultScreen(Screen):
         self.notify("Vault saved successfully!", severity="information")
 
     def _get_filtered_entries(self) -> list[VaultEntry]:
-        """Get entries filtered by search query."""
+        """Get entries filtered by search query and sorted."""
         if not self.search_query:
-            return self.vault.entries
+            entries = self.vault.entries.copy()
+        else:
+            query = self.search_query.lower()
+            entries = []
 
-        query = self.search_query.lower()
-        filtered = []
+            for entry in self.vault.entries:
+                # Search in key, username, URL, notes, and tags
+                if (
+                    query in entry.key.lower()
+                    or (entry.username and query in entry.username.lower())
+                    or (entry.url and query in entry.url.lower())
+                    or (entry.notes and query in entry.notes.lower())
+                    or any(query in tag.lower() for tag in entry.tags)
+                ):
+                    entries.append(entry)
 
-        for entry in self.vault.entries:
-            # Search in key, username, URL, notes, and tags
-            if (
-                query in entry.key.lower()
-                or (entry.username and query in entry.username.lower())
-                or (entry.url and query in entry.url.lower())
-                or (entry.notes and query in entry.notes.lower())
-                or any(query in tag.lower() for tag in entry.tags)
-            ):
-                filtered.append(entry)
+        # Apply sorting
+        reverse = self.sort_direction == "desc"
 
-        return filtered
+        if self.sort_type == "alpha":
+            # Sort alphabetically by key
+            entries.sort(key=lambda e: e.key.lower(), reverse=reverse)
+        elif self.sort_type == "chrono":
+            # Sort chronologically by created timestamp
+            entries.sort(key=lambda e: e.created, reverse=reverse)
+        elif self.sort_type == "edited":
+            # Sort by last modified timestamp
+            entries.sort(key=lambda e: e.modified, reverse=reverse)
+
+        return entries
 
     def _refresh_entry_list(self) -> None:
         """Refresh the entry list view with current search filter."""

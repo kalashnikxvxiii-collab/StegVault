@@ -3,7 +3,7 @@ TOTP (Time-based One-Time Password) support for vault entries.
 """
 
 import pyotp
-import qrcode
+import qrcode  # type: ignore[import-untyped]
 from typing import Optional
 import io
 
@@ -85,7 +85,7 @@ def generate_qr_code_ascii(provisioning_uri: str) -> str:
     # Use larger QR code with higher error correction for better scanning
     qr = qrcode.QRCode(
         version=1,  # Auto-adjust size
-        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,  # type: ignore[attr-defined]
         box_size=1,
         border=2,
     )

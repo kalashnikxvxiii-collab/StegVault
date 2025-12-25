@@ -32,12 +32,15 @@ def calculate_capacity(image: Union[str, "PIL.Image.Image"]) -> int:  # type: ig
         import tempfile
         import os
 
+        # Type narrowing: image is PIL.Image.Image here
+        pil_image = image  # type: ignore[assignment]
+
         # Save to temp file to detect format
-        suffix = ".png" if image.format == "PNG" else ".jpg"
+        suffix = ".png" if pil_image.format == "PNG" else ".jpg"  # type: ignore[attr-defined]
         with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
             temp_path = tmp.name
         try:
-            image.save(temp_path)
+            pil_image.save(temp_path)  # type: ignore[attr-defined]
             fmt = detect_format(temp_path)
 
             if fmt == ImageFormat.PNG:
@@ -46,7 +49,7 @@ def calculate_capacity(image: Union[str, "PIL.Image.Image"]) -> int:  # type: ig
                 capacity = jpeg_dct.calculate_capacity(temp_path)
                 return capacity
             else:
-                raise StegoError(f"Unsupported image format: {image.format}")
+                raise StegoError(f"Unsupported image format: {pil_image.format}")  # type: ignore[attr-defined]
         finally:
             if os.path.exists(temp_path):
                 os.unlink(temp_path)

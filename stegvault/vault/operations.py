@@ -3,7 +3,7 @@ Vault operations and serialization.
 """
 
 import json
-from typing import Optional, Union
+from typing import Optional, Union, List
 from .core import Vault, VaultEntry, VaultFormat
 
 
@@ -126,7 +126,7 @@ def add_entry(
     username: Optional[str] = None,
     url: Optional[str] = None,
     notes: Optional[str] = None,
-    tags: Optional[list] = None,
+    tags: Optional[List[str]] = None,
     totp_secret: Optional[str] = None,
 ) -> VaultEntry:
     """
@@ -175,7 +175,7 @@ def get_entry(vault: Vault, key: str) -> Optional[VaultEntry]:
     return vault.get_entry(key)
 
 
-def list_entries(vault: Vault) -> list[str]:
+def list_entries(vault: Vault) -> List[str]:
     """
     List all entry keys in the vault.
 
@@ -263,8 +263,8 @@ def search_entries(
     vault: Vault,
     query: str,
     case_sensitive: bool = False,
-    fields: Optional[list[str]] = None,
-) -> list[VaultEntry]:
+    fields: Optional[List[str]] = None,
+) -> List[VaultEntry]:
     """
     Search vault entries by query string.
 
@@ -299,7 +299,7 @@ def search_entries(
     return results
 
 
-def filter_by_tags(vault: Vault, tags: list[str], match_all: bool = False) -> list[VaultEntry]:
+def filter_by_tags(vault: Vault, tags: List[str], match_all: bool = False) -> List[VaultEntry]:
     """
     Filter vault entries by tags.
 
@@ -332,7 +332,7 @@ def filter_by_tags(vault: Vault, tags: list[str], match_all: bool = False) -> li
     return results
 
 
-def filter_by_url(vault: Vault, url_pattern: str, exact: bool = False) -> list[VaultEntry]:
+def filter_by_url(vault: Vault, url_pattern: str, exact: bool = False) -> List[VaultEntry]:
     """
     Filter vault entries by URL pattern.
 

@@ -61,12 +61,22 @@ class UpdatesConfig:
 
 
 @dataclass
+class TOTPConfig:
+    """TOTP/2FA configuration."""
+
+    enabled: bool = False  # Enable TOTP authentication for StegVault access
+    secret: str = ""  # Base32-encoded TOTP secret
+    backup_code: str = ""  # 6-digit backup code for emergency access and reset
+
+
+@dataclass
 class Config:
     """Complete StegVault configuration."""
 
     crypto: CryptoConfig
     cli: CLIConfig
     updates: UpdatesConfig
+    totp: TOTPConfig
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert config to dictionary for serialization."""
@@ -74,6 +84,7 @@ class Config:
             "crypto": asdict(self.crypto),
             "cli": asdict(self.cli),
             "updates": asdict(self.updates),
+            "totp": asdict(self.totp),
         }
 
     @classmethod
@@ -82,7 +93,8 @@ class Config:
         crypto = CryptoConfig(**data.get("crypto", {}))
         cli = CLIConfig(**data.get("cli", {}))
         updates = UpdatesConfig(**data.get("updates", {}))
-        return cls(crypto=crypto, cli=cli, updates=updates)
+        totp = TOTPConfig(**data.get("totp", {}))
+        return cls(crypto=crypto, cli=cli, updates=updates, totp=totp)
 
 
 def get_config_dir() -> Path:
@@ -116,6 +128,7 @@ def get_default_config() -> Config:
         crypto=CryptoConfig(),
         cli=CLIConfig(),
         updates=UpdatesConfig(),
+        totp=TOTPConfig(),
     )
 
 

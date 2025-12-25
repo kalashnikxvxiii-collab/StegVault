@@ -7,6 +7,99 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.7] - 2025-12-25
+
+### Added - TOTP/2FA Protection & UI Enhancements 🔐
+
+**TOTP/2FA Application Lock**:
+- `stegvault/config/core.py`: New `TOTPConfig` dataclass for TOTP settings
+  - `enabled: bool` - Enable/disable TOTP protection for StegVault access
+  - `secret: str` - Base32-encoded TOTP secret for authentication
+  - `backup_code: str` - 6-digit emergency backup code for reset
+- `stegvault/tui/widgets.py`: `TOTPConfigScreen` modal for TOTP setup
+  - QR code generation for authenticator apps (Google Authenticator, Authy, etc.)
+  - Automatic backup code generation (6-digit random code)
+  - Visual setup wizard with step-by-step instructions
+  - Copy-to-clipboard for secret and backup code
+- `stegvault/tui/widgets.py`: `TOTPAuthScreen` modal for startup authentication
+  - Prompts TOTP code on application launch when enabled
+  - Backup code support for emergency access
+  - Invalid code rejection with retry mechanism
+  - Blocks application access without valid authentication
+- Settings screen integration: Toggle TOTP protection on/off
+- Persistent TOTP configuration saved to `~/.stegvault/config.toml`
+
+**TUI UI/UX Improvements**:
+- **Entry Sorting Controls** (`stegvault/tui/screens.py`):
+  - New sort toggle buttons in VaultScreen header
+  - Sort by: Name (A-Z) / Date (Newest First)
+  - Sort direction: Ascending / Descending
+  - Visual indicators with up/down arrows (↑↓)
+  - Live sorting updates on entry list
+  - State persistence during session
+- **Notification System Enhancements** (`stegvault/tui/app.py`):
+  - Limited to 3 concurrent notifications (FIFO queue)
+  - Prevents notification spam and screen clutter
+  - Automatic oldest notification removal
+  - Improved notification positioning and styling
+- **Scrollbar Improvements**:
+  - Stable gutter space reservation (prevents layout shifts)
+  - Explicit scrollbar width (1 unit) for consistency
+  - Applied to welcome screen, content areas, and modals
+  - Better visual consistency across all screens
+
+**Configuration Schema Updates**:
+- TOTP settings now part of default config structure
+- Backward compatible with existing config files
+- Automatic migration to include TOTP section
+
+### Fixed - Type Safety & Code Quality 🔧
+
+**Type Annotations & IDE Compatibility**:
+- Fixed 70+ type checking errors across all production modules
+- Added comprehensive type hints for better IDE support and static analysis
+- Improved mypy and Pylance compatibility with strict type checking
+
+**Gallery Module Fixes** (`stegvault/gallery/`):
+- `db.py`: Added return type annotations (`-> None`, `-> int`) for all methods
+- `db.py`: Fixed `Optional[Connection]` handling with assertion checks
+- `db.py`: Fixed `cursor.lastrowid` Optional[int] handling
+- `operations.py`: Fixed VaultMetadata return type handling with None checks
+- `operations.py`: Fixed `vault.vault_id` Optional[int] type issues
+- `core.py`: Changed `dict` to `Dict[str, Any]` for proper type hints
+- `core.py`: Added type hints for `__enter__` and `__exit__` methods
+- `search.py`: Added connection assertion for database operations
+
+**Stego Module Fixes** (`stegvault/stego/`):
+- `dispatcher.py`: Fixed PIL.Image duck typing with proper type narrowing
+- `dispatcher.py`: Added type ignore comments for PIL attributes
+- `jpeg_dct.py`: Added jpeglib availability assertions before usage
+
+**Vault Module Fixes** (`stegvault/vault/`):
+- `core.py`: Migrated `dict` to `Dict[str, Any]` throughout
+- `core.py`: Added `__post_init__() -> None` type hint
+- `operations.py`: Fixed Python 3.9 compatibility (`list[T]` → `List[T]`)
+- `operations.py`: Added proper type hints for all function parameters
+- `totp.py`: Added type ignore comments for untyped qrcode library
+
+**TUI Type Fixes** (`stegvault/tui/`):
+- `app.py`: Fixed Union syntax for Python 3.9 (`Vault | None` → `Optional[Vault]`)
+- `app.py`: Added return type hints for `__init__` and other methods
+- `widgets.py`: Added event type hints (`Click`, etc.)
+- `screens.py`: Added proper type annotations for new methods
+
+**Code Quality Improvements**:
+- All production modules now pass strict type checking
+- Improved Python 3.9+ compatibility
+- Better IDE autocomplete and error detection
+- Enhanced code maintainability and readability
+
+**Testing**:
+- All 970 unit tests passing (100% success rate)
+- Maintained 79% overall code coverage
+- 16 modules at 100% coverage (gallery, stego, vault, crypto, utils)
+- Added tests for TOTP configuration and authentication flows
+
 ## [0.7.6] - 2025-12-16
 
 ### Added - Auto-Update System 🔄

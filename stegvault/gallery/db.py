@@ -6,7 +6,7 @@ import sqlite3
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Any
 from stegvault.gallery.core import VaultMetadata, VaultEntryCache
 
 
@@ -33,7 +33,7 @@ class GalleryDB:
         self._connect()
         self._initialize_schema()
 
-    def _connect(self):
+    def _connect(self) -> None:
         """Establish database connection."""
         try:
             self.conn = sqlite3.connect(self.db_path)
@@ -43,9 +43,10 @@ class GalleryDB:
         except sqlite3.Error as e:
             raise GalleryDBError(f"Failed to connect to database: {e}")
 
-    def _initialize_schema(self):
+    def _initialize_schema(self) -> None:
         """Create database schema if not exists."""
         try:
+            assert self.conn is not None
             cursor = self.conn.cursor()
 
             # Vaults table
@@ -134,6 +135,7 @@ class GalleryDB:
             GalleryDBError: If vault already exists or database error
         """
         try:
+            assert self.conn is not None
             cursor = self.conn.cursor()
             tags_json = json.dumps(tags or [])
             now = datetime.now()
@@ -147,7 +149,7 @@ class GalleryDB:
             )
 
             self.conn.commit()
-            return cursor.lastrowid
+            return cursor.lastrowid or 0
 
         except sqlite3.IntegrityError:
             raise GalleryDBError(f"Vault '{name}' already exists")
@@ -165,6 +167,7 @@ class GalleryDB:
             True if removed, False if not found
         """
         try:
+            assert self.conn is not None
             cursor = self.conn.cursor()
             cursor.execute("DELETE FROM vaults WHERE name = ?", (name,))
             self.conn.commit()
@@ -184,6 +187,7 @@ class GalleryDB:
             VaultMetadata or None if not found
         """
         try:
+            assert self.conn is not None
             cursor = self.conn.cursor()
             cursor.execute("SELECT * FROM vaults WHERE name = ?", (name,))
             row = cursor.fetchone()
@@ -207,6 +211,7 @@ class GalleryDB:
             VaultMetadata or None if not found
         """
         try:
+            assert self.conn is not None
             cursor = self.conn.cursor()
             cursor.execute("SELECT * FROM vaults WHERE id = ?", (vault_id,))
             row = cursor.fetchone()
@@ -230,6 +235,7 @@ class GalleryDB:
             List of VaultMetadata
         """
         try:
+            assert self.conn is not None
             cursor = self.conn.cursor()
 
             if tag:
@@ -271,9 +277,10 @@ class GalleryDB:
             True if updated, False if not found
         """
         try:
+            assert self.conn is not None
             cursor = self.conn.cursor()
-            updates = []
-            params = []
+            updates: List[str] = []
+            params: List[Any] = []
 
             if description is not None:
                 updates.append("description = ?")
@@ -304,7 +311,7 @@ class GalleryDB:
         except sqlite3.Error as e:
             raise GalleryDBError(f"Failed to update vault: {e}")
 
-    def update_last_accessed(self, name: str):
+    def update_last_accessed(self, name: str) -> None:
         """
         Update vault's last accessed timestamp.
 
@@ -312,6 +319,7 @@ class GalleryDB:
             name: Vault name
         """
         try:
+            assert self.conn is not None
             cursor = self.conn.cursor()
             cursor.execute(
                 "UPDATE vaults SET last_accessed = ? WHERE name = ?",
@@ -333,6 +341,7 @@ class GalleryDB:
             Cache entry ID
         """
         try:
+            assert self.conn is not None
             cursor = self.conn.cursor()
             tags_json = json.dumps(entry.tags)
 
@@ -355,12 +364,12 @@ class GalleryDB:
             )
 
             self.conn.commit()
-            return cursor.lastrowid
+            return cursor.lastrowid or 0
 
         except sqlite3.Error as e:
             raise GalleryDBError(f"Failed to add entry cache: {e}")
 
-    def clear_vault_cache(self, vault_id: int):
+    def clear_vault_cache(self, vault_id: int) -> None:
         """
         Clear all cached entries for a vault.
 
@@ -368,6 +377,7 @@ class GalleryDB:
             vault_id: Vault ID
         """
         try:
+            assert self.conn is not None
             cursor = self.conn.cursor()
             cursor.execute("DELETE FROM vault_entries_cache WHERE vault_id = ?", (vault_id,))
             self.conn.commit()
@@ -393,6 +403,7 @@ class GalleryDB:
             List of (VaultEntryCache, VaultMetadata) tuples
         """
         try:
+            assert self.conn is not None
             cursor = self.conn.cursor()
             query_lower = query.lower()
 
@@ -480,7 +491,7 @@ class GalleryDB:
             ),
         )
 
-    def close(self):
+    def close(self) -> None:
         """Close database connection."""
         if self.conn:
             self.conn.close()

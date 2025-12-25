@@ -4,11 +4,14 @@ Main TUI application for StegVault.
 Provides a full-featured terminal interface for vault management.
 """
 
-from typing import Optional
+from typing import Any, Optional
 
 from textual.app import App, ComposeResult
+from textual.events import Click
+from textual.notifications import SeverityLevel
 from textual.containers import Container, Vertical, Horizontal
 from textual.widgets import Header, Footer, Static, Button
+from textual.widgets._toast import ToastRack, Toast
 from textual.binding import Binding
 
 from stegvault import __version__
@@ -26,6 +29,7 @@ from .widgets import (
     VaultOverwriteWarningScreen,
     SettingsScreen,
     ChangelogViewerScreen,
+    TOTPAuthScreen,
 )
 from .screens import VaultScreen
 
@@ -59,6 +63,8 @@ class StegVaultTUI(App):
         width: 100%;
         overflow-x: auto;
         overflow-y: auto;
+        scrollbar-gutter: stable;  /* Reserve space for scrollbar to prevent layout shifts */
+        scrollbar-size-vertical: 1;  /* Explicit scrollbar width */
     }
 
     Footer .footer--key {
@@ -86,6 +92,8 @@ class StegVaultTUI(App):
         background: #000000;
         align: center middle;
         overflow-y: auto;  /* Enable vertical scrolling on resize */
+        scrollbar-gutter: stable;  /* Reserve space for scrollbar to prevent layout shifts */
+        scrollbar-size-vertical: 1;  /* Explicit scrollbar width */
     }
 
     #content-box {
@@ -96,6 +104,8 @@ class StegVaultTUI(App):
         padding: 3 2 2 6;  /* top=3, right=2, bottom=2, left=6 */
         align: center middle;
         overflow-y: auto;  /* Enable vertical scrolling on resize */
+        scrollbar-gutter: stable;  /* Reserve space for scrollbar to prevent layout shifts */
+        scrollbar-size-vertical: 1;  /* Explicit scrollbar width */
     }
 
     #welcome-text {
@@ -321,13 +331,13 @@ class StegVaultTUI(App):
         Binding("s", "show_settings", "Settings"),
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize TUI application."""
         super().__init__()
         self.vault_controller = VaultController()
         self.crypto_controller = CryptoController()
-        self.current_vault: Vault | None = None
-        self.current_image_path: str | None = None
+        self.current_vault: Optional[Vault] = None
+        self.current_image_path: Optional[str] = None
 
     def compose(self) -> ComposeResult:
         """Compose the TUI layout."""
@@ -372,14 +382,88 @@ class StegVaultTUI(App):
                     yield Static("\n━━━\n━━━", id="btn-settings")
         yield Footer()
 
+    def notify(
+        self,
+        message: str,
+        *,
+        title: str = "",
+        severity: SeverityLevel = "information",
+        timeout: Optional[float] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Override notify to limit notifications to 3 max (FIFO).
+
+        Args:
+            message: Notification message
+            title: Optional notification title
+            severity: Notification severity level
+            timeout: Notification timeout in seconds (None uses default)
+            **kwargs: Additional keyword arguments passed to parent notify
+        """
+        # Call parent first to create the notification
+        super().notify(message, title=title, severity=severity, timeout=timeout, **kwargs)
+
+        # Then limit to 3 by removing oldest
+        try:
+            # Access the ToastRack from the screen
+            toast_rack = self.screen.query_one(ToastRack)
+
+            # Get all current toasts
+            toasts = list(toast_rack.query(Toast))
+
+            # Remove oldest if we have more than 3
+            while len(toasts) > 3:
+                oldest_toast = toasts.pop(0)
+                oldest_toast.remove()
+
+        except Exception:  # nosec B110
+            # Fail silently if ToastRack not available
+            pass
+
     def on_mount(self) -> None:
         """Called when app is mounted. Set focus on first button and check for updates."""
+        # Check for TOTP authentication requirement
+        self.run_worker(self._check_totp_auth(), exclusive=True)
+
         # Focus on the first button for keyboard navigation
         first_button = self.query_one("#btn-open", Button)
         first_button.focus()
 
         # Check for updates in background (respects config settings)
         self.run_worker(self._check_for_updates_async(), exclusive=False)
+
+    async def _check_totp_auth(self) -> None:
+        """Check if TOTP authentication is required and verify."""
+        try:
+            from stegvault.config.core import load_config
+            from .widgets import TOTPAuthScreen
+
+            # Load config to check if TOTP is enabled
+            try:
+                config = load_config()
+                if not config.totp.enabled or not config.totp.secret:
+                    return  # TOTP not enabled or not configured
+            except Exception:
+                # If config fails to load, continue without TOTP
+                return
+
+            # Show TOTP authentication screen
+            authenticated = await self.push_screen_wait(
+                TOTPAuthScreen(
+                    totp_secret=config.totp.secret,
+                    backup_code=config.totp.backup_code,
+                    max_attempts=3,
+                )
+            )
+
+            if not authenticated:
+                # Authentication failed - exit app
+                self.exit()
+
+        except Exception:  # nosec B110
+            # If TOTP check fails, continue without authentication
+            # (graceful degradation - don't lock users out due to errors)
+            pass
 
     async def _check_for_updates_async(self) -> None:
         """Check for updates in background and show banner if available."""
@@ -423,7 +507,7 @@ class StegVaultTUI(App):
             # Silently fail if update check fails (don't interrupt user experience)
             pass
 
-    def action_quit(self) -> None:
+    def action_quit(self) -> None:  # type: ignore[override]
         """Quit the application (wrapper for async)."""
         self.run_worker(self._async_quit())
 
@@ -636,10 +720,10 @@ class StegVaultTUI(App):
         elif button_id == "btn-help":
             self.action_show_help()
 
-    def on_click(self, event) -> None:
+    def on_click(self, event: Click) -> None:
         """Handle click events on widgets."""
         # Check if click is on settings Static widget
-        if hasattr(event.widget, "id") and event.widget.id == "btn-settings":
+        if getattr(event.widget, "id", None) == "btn-settings":
             self.action_show_settings()
 
 

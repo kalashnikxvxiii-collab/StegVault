@@ -13,6 +13,7 @@ from stegvault.config.core import (
     CryptoConfig,
     CLIConfig,
     UpdatesConfig,
+    TOTPConfig,
     ConfigError,
     get_config_dir,
     get_config_path,
@@ -64,15 +65,17 @@ class TestDataclasses:
         assert config.verbose is True
 
     def test_config_creation(self):
-        """Should create Config with crypto, cli, and updates configs."""
+        """Should create Config with crypto, cli, updates, and totp configs."""
         crypto = CryptoConfig(argon2_time_cost=5)
         cli = CLIConfig(verbose=True)
         updates = UpdatesConfig()
-        config = Config(crypto=crypto, cli=cli, updates=updates)
+        totp = TOTPConfig()
+        config = Config(crypto=crypto, cli=cli, updates=updates, totp=totp)
 
         assert config.crypto.argon2_time_cost == 5
         assert config.cli.verbose is True
         assert config.updates.auto_check is True
+        assert config.totp.enabled is False
 
     def test_config_to_dict(self):
         """Should convert Config to dictionary."""
@@ -80,6 +83,7 @@ class TestDataclasses:
             crypto=CryptoConfig(argon2_time_cost=5),
             cli=CLIConfig(verbose=True),
             updates=UpdatesConfig(),
+            totp=TOTPConfig(),
         )
 
         data = config.to_dict()
@@ -335,6 +339,7 @@ class TestSaveConfig:
             crypto=CryptoConfig(argon2_time_cost=5, argon2_memory_cost=131072),
             cli=CLIConfig(verbose=True, default_image_dir="/tmp"),
             updates=UpdatesConfig(),
+            totp=TOTPConfig(),
         )
 
         save_config(config)
@@ -356,6 +361,7 @@ class TestSaveConfig:
             crypto=CryptoConfig(argon2_time_cost=3),
             cli=CLIConfig(verbose=False),
             updates=UpdatesConfig(),
+            totp=TOTPConfig(),
         )
         save_config(config1)
 
@@ -364,6 +370,7 @@ class TestSaveConfig:
             crypto=CryptoConfig(argon2_time_cost=7),
             cli=CLIConfig(verbose=True),
             updates=UpdatesConfig(),
+            totp=TOTPConfig(),
         )
         save_config(config2)
 
@@ -432,6 +439,7 @@ class TestEnsureConfigExists:
             crypto=CryptoConfig(argon2_time_cost=9),
             cli=CLIConfig(verbose=True),
             updates=UpdatesConfig(),
+            totp=TOTPConfig(),
         )
         save_config(custom_config)
 
@@ -468,6 +476,7 @@ class TestConfigRoundtrip:
             ),
             cli=CLIConfig(check_strength=False, default_image_dir="/custom/path", verbose=True),
             updates=UpdatesConfig(),
+            totp=TOTPConfig(),
         )
 
         # Save

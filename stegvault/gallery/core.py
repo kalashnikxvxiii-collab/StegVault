@@ -4,7 +4,7 @@ Core data structures for Gallery management.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import json
 
 
@@ -22,7 +22,7 @@ class VaultMetadata:
     last_accessed: Optional[datetime] = None
     vault_id: Optional[int] = None  # Database ID
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
             "name": self.name,
@@ -72,7 +72,7 @@ class VaultEntryCache:
     updated_at: Optional[datetime] = None
     cache_id: Optional[int] = None  # Database ID
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
             "vault_id": self.vault_id,
@@ -206,14 +206,14 @@ class Gallery:
 
         return search_gallery(self.db, query, vault_name, fields)
 
-    def close(self):
+    def close(self) -> None:
         """Close database connection."""
         self.db.close()
 
-    def __enter__(self):
+    def __enter__(self) -> "Gallery":
         """Context manager entry."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Context manager exit."""
         self.close()

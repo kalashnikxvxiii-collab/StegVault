@@ -8,6 +8,9 @@ from pathlib import Path
 from typing import Optional, Callable
 
 from textual.app import ComposeResult
+from textual import events
+from textual.widget import Widget
+from textual.timer import Timer
 from textual.containers import Container, Vertical, Horizontal, ScrollableContainer
 from textual.widgets import (
     Static,
@@ -34,7 +37,7 @@ class FilteredDirectoryTree(DirectoryTree):
 
     COMPATIBLE_EXTENSIONS = {".png", ".jpg", ".jpeg"}
 
-    def filter_paths(self, paths: list[Path]) -> list[Path]:
+    def filter_paths(self, paths: list[Path]) -> list[Path]:  # type: ignore[override]
         """Filter paths to show only directories and compatible image files."""
         filtered = []
         for path in paths:
@@ -44,14 +47,14 @@ class FilteredDirectoryTree(DirectoryTree):
                 filtered.append(path)
         return filtered
 
-    def render_label(self, node: DirEntry, base_style: str, style: str) -> Text:
+    def render_label(self, node: DirEntry, base_style: str, style: str) -> Text:  # type: ignore[override]
         """Render label with color coding for file types."""
-        label = super().render_label(node, base_style, style)
+        label = super().render_label(node, base_style, style)  # type: ignore[arg-type]
 
         # Add file coloring based on extension
         # node.data contains the DirEntry, which has .path attribute
-        if hasattr(node, "data") and node.data is not None:
-            path = node.data.path
+        if hasattr(node, "data") and node.data is not None:  # type: ignore[attr-defined]
+            path = node.data.path  # type: ignore[attr-defined]
             if not path.is_dir():
                 ext = path.suffix.lower()
                 if ext == ".png":
@@ -80,6 +83,8 @@ class HelpScreen(ModalScreen[None]):
         background: #0a0a0a;
         padding: 0;
         overflow-y: auto;  /* Enable vertical scrolling on resize */
+        scrollbar-gutter: stable;  /* Reserve space for scrollbar to prevent layout shifts */
+        scrollbar-size-vertical: 1;  /* Explicit scrollbar width */
     }
 
     #help-title {
@@ -98,6 +103,8 @@ class HelpScreen(ModalScreen[None]):
         margin-bottom: 1;
         background: #000000;
         overflow-y: auto;  /* Enable vertical scrolling on resize */
+        scrollbar-gutter: stable;  /* Reserve space for scrollbar to prevent layout shifts */
+        scrollbar-size-vertical: 1;  /* Explicit scrollbar width */
     }
 
     .help-section {
@@ -194,7 +201,7 @@ class HelpScreen(ModalScreen[None]):
         Binding("escape", "dismiss", "Close"),
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize help screen."""
         super().__init__()
 
@@ -223,6 +230,13 @@ class HelpScreen(ModalScreen[None]):
                     "  [bold yellow]Tab[/bold yellow] / [bold yellow]Shift+Tab[/bold yellow] - Navigate fields\n"
                     "  [bold yellow]Enter[/bold yellow] - Submit form\n"
                     "  [bold yellow]Escape[/bold yellow] - Cancel and close\n\n"
+                    "[bold cyan]Text Input & Paste[/bold cyan]\n"
+                    "  [bold yellow]Ctrl+V[/bold yellow] / [bold yellow]Cmd+V[/bold yellow] (macOS) - Paste from clipboard\n"
+                    "  [bold yellow]Ctrl+C[/bold yellow] / [bold yellow]Cmd+C[/bold yellow] (macOS) - Copy to clipboard\n"
+                    "  [bold yellow]Shift+Insert[/bold yellow] - Alternative paste (some terminals)\n"
+                    "  [bold yellow]Ctrl+Shift+V[/bold yellow] - Alternative paste (some terminals)\n"
+                    "  • All input fields support clipboard operations\n"
+                    "  • Paste shortcut depends on your terminal emulator\n\n"
                     "[bold cyan]Password Generator[/bold cyan]\n"
                     "  [bold yellow]g[/bold yellow] - Generate new password\n"
                     "  [bold yellow]+[/bold yellow] / [bold yellow]-[/bold yellow] - Adjust password length\n"
@@ -250,20 +264,20 @@ class HelpScreen(ModalScreen[None]):
             with Horizontal(id="button-row"):
                 yield Button("Close", variant="primary", id="btn-close", classes="help-button")
 
-    def action_dismiss(self) -> None:
+    async def action_dismiss(self, result: None = None) -> None:
         """Dismiss help screen."""
-        self.dismiss(None)
+        self.dismiss(result)
 
-    def on_key(self, event) -> None:
+    def on_key(self, event: events.Key) -> None:
         """Handle key press - allow 'q' to trigger quit confirmation."""
         if event.key == "q":
             event.stop()
-            self.app.action_quit()
+            self.app.action_quit()  # type: ignore[unused-coroutine]
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
         if event.button.id == "btn-close":
-            self.action_dismiss()
+            self.app.run_worker(self.action_dismiss())
 
 
 class QuitConfirmationScreen(ModalScreen[bool]):
@@ -285,6 +299,8 @@ class QuitConfirmationScreen(ModalScreen[bool]):
         background: #0a0a0a;
         padding: 1;
         overflow-y: auto;  /* Enable vertical scrolling on resize */
+        scrollbar-gutter: stable;  /* Reserve space for scrollbar to prevent layout shifts */
+        scrollbar-size-vertical: 1;  /* Explicit scrollbar width */
     }
 
     #quit-title {
@@ -343,7 +359,7 @@ class QuitConfirmationScreen(ModalScreen[bool]):
         Binding("escape", "cancel", "Cancel"),
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize quit confirmation screen."""
         super().__init__()
 
@@ -376,7 +392,7 @@ class FileSelectScreen(ModalScreen[Optional[str]]):
     /* Cyberpunk File Select Dialog */
     FileSelectScreen {
         align: center middle;
-        background: #00000099;
+        background: #000000cc;  /* Increased opacity to reduce transparency artifacts */
     }
 
     #file-dialog {
@@ -384,10 +400,13 @@ class FileSelectScreen(ModalScreen[Optional[str]]):
         max-width: 90;
         height: 48;
         max-height: 95%;
-        border: heavy #00ffff;
+        border: solid #00ffff;  /* Changed from heavy to solid to reduce rendering artifacts */
         background: #0a0a0a;
         padding: 2;
         overflow-y: auto;  /* Enable internal scrolling when content exceeds available space */
+        scrollbar-gutter: stable;  /* Reserve space for scrollbar to prevent layout shifts */
+        scrollbar-size-vertical: 1;  /* Explicit scrollbar width */
+        layer: overlay;  /* Force proper layering to prevent border duplication */
     }
 
     #file-title {
@@ -487,6 +506,8 @@ class FileSelectScreen(ModalScreen[Optional[str]]):
         background: #000000;     /* Pure black background */
         padding: 0;
         overflow-y: auto;  /* Enable scrolling for overflow */
+        scrollbar-gutter: stable;  /* Reserve space for scrollbar to prevent layout shifts */
+        scrollbar-size-vertical: 1;  /* Explicit scrollbar width */
     }
 
     #favorites-dropdown.visible {
@@ -519,6 +540,8 @@ class FileSelectScreen(ModalScreen[Optional[str]]):
         margin-bottom: 1;
         background: #000000;
         overflow-y: auto;
+        scrollbar-gutter: stable;  /* Reserve space for scrollbar to prevent layout shifts */
+        scrollbar-size-vertical: 1;  /* Explicit scrollbar width */
     }
 
     #file-tree TreeNode {
@@ -626,7 +649,7 @@ class FileSelectScreen(ModalScreen[Optional[str]]):
         Binding("f", "toggle_favorite", "Add/Remove Favorite", show=True),
     ]
 
-    def __init__(self, title: str = "Select Vault Image"):
+    def __init__(self, title: str = "Select Vault Image") -> None:
         """Initialize file selection screen."""
         super().__init__()
         self.title = title
@@ -637,7 +660,7 @@ class FileSelectScreen(ModalScreen[Optional[str]]):
         self.current_directory: Optional[str] = None
         self.favorites_button_text: str = "⚡ Favorites"  # Current button text
 
-    def on_resize(self, event) -> None:
+    def on_resize(self, event: events.Resize) -> None:
         """Handle screen resize - schedule dropdown update for next event loop cycle."""
         # Use call_later to update dropdown after layout has been fully recalculated
         self.call_later(self._update_dropdown_on_resize)
@@ -660,7 +683,7 @@ class FileSelectScreen(ModalScreen[Optional[str]]):
         except Exception:  # nosec B110
             pass
 
-    def _get_available_drives(self):
+    def _get_available_drives(self) -> list[str]:
         """Get list of available drives on the system.
 
         Returns:
@@ -694,7 +717,7 @@ class FileSelectScreen(ModalScreen[Optional[str]]):
         import time
 
         with Container(id="file-dialog"):
-            yield Label(f">> {self.title.upper()}", id="file-title")
+            yield Label(f">> {(self.title or '').upper()}", id="file-title")
 
             # Favorite Folders Dropdown Row
             with Horizontal(id="favorites-row"):
@@ -887,7 +910,7 @@ class FileSelectScreen(ModalScreen[Optional[str]]):
         dropdown = self.query_one("#favorites-dropdown", ListView)
         selected_index = dropdown.index
 
-        if 0 <= selected_index < len(favorites):
+        if selected_index is not None and 0 <= selected_index < len(favorites):
             selected_fav = favorites[selected_index]
             selected_path = selected_fav["path"]
 
@@ -982,7 +1005,7 @@ class FileSelectScreen(ModalScreen[Optional[str]]):
         try:
             tree = self.query_one("#file-tree", FilteredDirectoryTree)
             # First try to get the currently selected/highlighted node
-            if tree.cursor_node and hasattr(tree.cursor_node, "data"):
+            if tree.cursor_node and hasattr(tree.cursor_node, "data") and tree.cursor_node.data:
                 cursor_path = tree.cursor_node.data.path
                 # If it's a directory, use it; if file, use parent
                 if cursor_path.is_dir():
@@ -991,7 +1014,7 @@ class FileSelectScreen(ModalScreen[Optional[str]]):
                     current_dir = str(cursor_path.parent.resolve())
             # Fallback to tree root path
             elif tree.path:
-                current_dir = str(tree.path.resolve())
+                current_dir = str(Path(tree.path).resolve())
         except Exception:  # nosec B110
             pass
 
@@ -1057,7 +1080,7 @@ class FileSelectScreen(ModalScreen[Optional[str]]):
         """Cancel and close dialog."""
         self.dismiss(None)
 
-    def on_key(self, event) -> None:
+    def on_key(self, event: events.Key) -> None:
         """Handle key press - allow 'q' to trigger quit confirmation."""
         if event.key == "q":
             # Check if input field has focus (user is typing)
@@ -1071,7 +1094,7 @@ class FileSelectScreen(ModalScreen[Optional[str]]):
 
             # Input doesn't have focus, trigger app quit confirmation
             event.stop()
-            self.app.action_quit()
+            self.app.action_quit()  # type: ignore[unused-coroutine]
 
 
 class PassphraseInputScreen(ModalScreen[Optional[str]]):
@@ -1094,6 +1117,8 @@ class PassphraseInputScreen(ModalScreen[Optional[str]]):
         background: #0a0a0a;
         padding: 2;
         overflow-y: auto;  /* Enable vertical scrolling on resize */
+        scrollbar-gutter: stable;  /* Reserve space for scrollbar to prevent layout shifts */
+        scrollbar-size-vertical: 1;  /* Explicit scrollbar width */
     }
 
     #passphrase-title {
@@ -1232,7 +1257,7 @@ class PassphraseInputScreen(ModalScreen[Optional[str]]):
         Binding("escape", "cancel", "Cancel"),
     ]
 
-    def __init__(self, title: str = "Enter Passphrase", mode: str = "unlock"):
+    def __init__(self, title: str = "Enter Passphrase", mode: str = "unlock") -> None:
         """Initialize passphrase input screen.
 
         Args:
@@ -1244,13 +1269,13 @@ class PassphraseInputScreen(ModalScreen[Optional[str]]):
         self.mode = mode
         self.password_visible = False
         self.confirm_visible = False
-        self.strength_score = 0
+        self.strength_score = 0.0
         self.strength_label = "Very Weak"
 
     def compose(self) -> ComposeResult:
         """Compose passphrase dialog."""
         with Container(id="passphrase-dialog"):
-            yield Label(self.title, id="passphrase-title")
+            yield Label(self.title or "Enter Passphrase", id="passphrase-title")
 
             # Main passphrase field with eye button
             if self.mode == "set":
@@ -1370,8 +1395,8 @@ class PassphraseInputScreen(ModalScreen[Optional[str]]):
                     4: "#66ff00",  # Very Strong - bright green
                 }
 
-                percentage = percentages.get(self.strength_score, 0.20)
-                color = colors.get(self.strength_score, "red")
+                percentage = percentages.get(int(self.strength_score), 0.20)
+                color = colors.get(int(self.strength_score), "red")
 
                 # Create visual bar with fixed total width (60 blocks to fill container)
                 total_blocks = 60
@@ -1390,7 +1415,7 @@ class PassphraseInputScreen(ModalScreen[Optional[str]]):
                 strength_widget.update("Strength: Very Weak")
                 bar_widget = self.query_one("#strength-bar", Static)
                 bar_widget.update("")
-                self.strength_score = 0
+                self.strength_score = 0.0
                 self.strength_label = "Very Weak"
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
@@ -1435,7 +1460,7 @@ class PassphraseInputScreen(ModalScreen[Optional[str]]):
         """Cancel and close dialog."""
         self.dismiss(None)
 
-    def on_key(self, event) -> None:
+    def on_key(self, event: events.Key) -> None:
         """Handle key press - allow 'q' to trigger quit confirmation."""
         if event.key == "q":
             # Check if passphrase input has focus (user is typing)
@@ -1449,7 +1474,7 @@ class PassphraseInputScreen(ModalScreen[Optional[str]]):
 
             # Input doesn't have focus, trigger app quit confirmation
             event.stop()
-            self.app.action_quit()
+            self.app.action_quit()  # type: ignore[unused-coroutine]
 
 
 class GenericConfirmationScreen(ModalScreen[bool]):
@@ -1527,7 +1552,7 @@ class GenericConfirmationScreen(ModalScreen[bool]):
     }
     """
 
-    def __init__(self, title: str, message: str):
+    def __init__(self, title: str, message: str) -> None:
         """Initialize confirmation dialog."""
         super().__init__()
         self.title_text = title
@@ -1571,6 +1596,8 @@ class PasswordHistoryModal(ModalScreen[None]):
         background: #0a0a0a;
         padding: 2;
         overflow-y: auto;  /* Enable vertical scrolling on resize */
+        scrollbar-gutter: stable;  /* Reserve space for scrollbar to prevent layout shifts */
+        scrollbar-size-vertical: 1;  /* Explicit scrollbar width */
     }
 
     #history-title {
@@ -1678,7 +1705,7 @@ class PasswordHistoryModal(ModalScreen[None]):
         Binding("escape", "close", "Close"),
     ]
 
-    def __init__(self, entry: VaultEntry):
+    def __init__(self, entry: VaultEntry) -> None:
         """Initialize password history modal."""
         super().__init__()
         self.entry = entry
@@ -1754,26 +1781,35 @@ class PasswordHistoryModal(ModalScreen[None]):
         """Close dialog."""
         self.dismiss(None)
 
-    def on_key(self, event) -> None:
+    def on_key(self, event: events.Key) -> None:
         """Handle key press - allow 'q' to trigger quit confirmation."""
         if event.key == "q":
             event.stop()
-            self.app.action_quit()
+            self.app.action_quit()  # type: ignore[unused-coroutine]
 
 
 class EntryListItem(ListItem):
     """List item for a vault entry."""
 
-    def __init__(self, entry: VaultEntry):
+    def __init__(self, entry: VaultEntry) -> None:
         """Initialize entry list item."""
         super().__init__()
         self.entry = entry
         self.add_class("entry-item")
 
     def render(self) -> str:
-        """Render entry list item."""
-        tags_str = f" [{', '.join(self.entry.tags)}]" if self.entry.tags else ""
-        return f"{self.entry.key}{tags_str}"
+        """Render entry list item with tags aligned right."""
+        # Format: "key                    [tags]"
+        # Use padding to push tags to the right
+        if self.entry.tags:
+            tags_str = f"[{', '.join(self.entry.tags)}]"
+            # Calculate available width (approximation for terminal)
+            max_width = 28  # Adjust based on entry list width (30% of screen)
+            key_len = len(self.entry.key)
+            tags_len = len(tags_str)
+            padding = max(1, max_width - key_len - tags_len)
+            return f"{self.entry.key}{' ' * padding}{tags_str}"
+        return self.entry.key
 
 
 class EntryDetailPanel(Container):
@@ -1816,13 +1852,13 @@ class EntryDetailPanel(Container):
     }
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize entry detail panel."""
         super().__init__()
         self.current_entry: Optional[VaultEntry] = None
         self.password_visible = False
-        self.totp_refresh_timer = None
-        self.password_hide_timer = None
+        self.totp_refresh_timer: Optional[Timer] = None
+        self.password_hide_timer: Optional[Timer] = None
 
     def compose(self) -> ComposeResult:
         """Compose detail panel."""
@@ -1854,9 +1890,9 @@ class EntryDetailPanel(Container):
                 self.password_hide_timer.stop()
                 self.password_hide_timer = None
 
-            # Start auto-hide timer if password is now visible (10 seconds)
+            # Start auto-hide timer if password is now visible (5 seconds)
             if self.password_visible:
-                self.password_hide_timer = self.set_timer(10.0, self._auto_hide_password)
+                self.password_hide_timer = self.set_timer(5.0, self._auto_hide_password)
 
     def _auto_hide_password(self) -> None:
         """Auto-hide password after timer expires."""
@@ -1864,6 +1900,13 @@ class EntryDetailPanel(Container):
             self.password_visible = False
             self._update_display()
             self.password_hide_timer = None
+
+            # Update toggle button label in parent screen
+            try:
+                if hasattr(self.screen, "_update_toggle_button_label"):
+                    self.screen._update_toggle_button_label()  # type: ignore[attr-defined]
+            except Exception:  # nosec B110
+                pass
 
     def _update_display(self) -> None:
         """Update the display with current entry details."""
@@ -1874,7 +1917,7 @@ class EntryDetailPanel(Container):
             )
         else:
             entry = self.current_entry
-            widgets = [
+            widgets: list[Widget] = [
                 Label(f"Entry: {entry.key}", classes="detail-title"),
             ]
 
@@ -2069,6 +2112,8 @@ class EntryFormScreen(ModalScreen[Optional[dict]]):
         background: #0a0a0a;
         padding: 2;
         overflow-y: auto;  /* Enable internal scrolling when content exceeds available space */
+        scrollbar-gutter: stable;  /* Reserve space for scrollbar to prevent layout shifts */
+        scrollbar-size-vertical: 1;  /* Explicit scrollbar width */
     }
 
     #form-title {
@@ -2112,6 +2157,21 @@ class EntryFormScreen(ModalScreen[Optional[dict]]):
 
     .password-row Input {
         width: 1fr;
+    }
+
+    .toggle-visibility {
+        width: 8;
+        height: 3;
+        margin-left: 1;
+        min-width: 8;
+        border: solid #ffff00;
+        background: #000000;
+        color: #ffff00;
+    }
+
+    .toggle-visibility:hover {
+        background: #ffff0020;
+        border: heavy #ffff00;
     }
 
     .gen-btn {
@@ -2190,7 +2250,7 @@ class EntryFormScreen(ModalScreen[Optional[dict]]):
         mode: str = "add",
         entry: Optional[VaultEntry] = None,
         title: Optional[str] = None,
-    ):
+    ) -> None:
         """
         Initialize entry form screen.
 
@@ -2203,11 +2263,13 @@ class EntryFormScreen(ModalScreen[Optional[dict]]):
         self.mode = mode
         self.entry = entry
         self.title = title or ("Edit Entry" if mode == "edit" else "Add New Entry")
+        self.password_visible = False
+        self.password_hide_timer: Optional[Timer] = None
 
     def compose(self) -> ComposeResult:
         """Compose entry form dialog."""
         with Container(id="form-dialog"):
-            yield Label(self.title, id="form-title")
+            yield Label(self.title or "Entry Form", id="form-title")
 
             # Key field
             with Vertical(classes="form-field"):
@@ -2221,7 +2283,7 @@ class EntryFormScreen(ModalScreen[Optional[dict]]):
                     key_input.disabled = True  # Can't change key in edit mode
                 yield key_input
 
-            # Password field with generate button
+            # Password field with show/hide toggle and generate button
             with Vertical(classes="form-field"):
                 yield Label("Password:", classes="field-label")
                 with Horizontal(classes="password-row"):
@@ -2233,6 +2295,7 @@ class EntryFormScreen(ModalScreen[Optional[dict]]):
                     if self.entry:
                         password_input.value = self.entry.password
                     yield password_input
+                    yield Button("SHOW", id="btn-toggle-password", classes="toggle-visibility")
                     yield Button(
                         "GEN",
                         variant="warning",
@@ -2284,6 +2347,17 @@ class EntryFormScreen(ModalScreen[Optional[dict]]):
                     tags_input.value = ", ".join(self.entry.tags)
                 yield tags_input
 
+            # TOTP/2FA field
+            with Vertical(classes="form-field"):
+                yield Label("TOTP/2FA Secret (optional, base32):", classes="field-label")
+                totp_input = Input(
+                    placeholder="e.g., JBSWY3DPEHPK3PXP",
+                    id="input-totp",
+                )
+                if self.entry and self.entry.totp_secret:
+                    totp_input.value = self.entry.totp_secret
+                yield totp_input
+
             # Buttons
             with Horizontal(id="button-row"):
                 yield Button(
@@ -2296,6 +2370,23 @@ class EntryFormScreen(ModalScreen[Optional[dict]]):
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
+        if event.button.id == "btn-toggle-password":
+            # Toggle password visibility
+            password_input = self.query_one("#input-password", Input)
+            self.password_visible = not self.password_visible
+            password_input.password = not self.password_visible
+            event.button.label = "HIDE" if self.password_visible else "SHOW"
+
+            # Cancel existing timer if any
+            if self.password_hide_timer:
+                self.password_hide_timer.stop()
+                self.password_hide_timer = None
+
+            # Start auto-hide timer if password is now visible (5 seconds)
+            if self.password_visible:
+                self.password_hide_timer = self.set_timer(5.0, self._auto_hide_password)
+            return
+
         if event.button.id == "btn-generate-password":
             # Show password generator dialog
             generated_password = await self.app.push_screen_wait(PasswordGeneratorScreen())
@@ -2316,6 +2407,7 @@ class EntryFormScreen(ModalScreen[Optional[dict]]):
             notes = self.query_one("#input-notes", Input).value.strip() or None
             tags_str = self.query_one("#input-tags", Input).value.strip()
             tags = [t.strip() for t in tags_str.split(",") if t.strip()] if tags_str else None
+            totp_secret = self.query_one("#input-totp", Input).value.strip() or None
 
             # Validate required fields
             if not key:
@@ -2333,6 +2425,7 @@ class EntryFormScreen(ModalScreen[Optional[dict]]):
                 "url": url,
                 "notes": notes,
                 "tags": tags,
+                "totp_secret": totp_secret,
             }
             self.dismiss(form_data)
 
@@ -2343,7 +2436,21 @@ class EntryFormScreen(ModalScreen[Optional[dict]]):
         """Cancel and close dialog."""
         self.dismiss(None)
 
-    def on_key(self, event) -> None:
+    def _auto_hide_password(self) -> None:
+        """Auto-hide password after timer expires."""
+        if self.password_visible:
+            password_input = self.query_one("#input-password", Input)
+            self.password_visible = False
+            password_input.password = True
+            # Update button label
+            try:
+                toggle_btn = self.query_one("#btn-toggle-password", Button)
+                toggle_btn.label = "SHOW"
+            except Exception:  # nosec B110
+                pass
+            self.password_hide_timer = None
+
+    def on_key(self, event: events.Key) -> None:
         """Handle key press - allow 'q' to trigger quit confirmation."""
         if event.key == "q":
             # Check if any input field has focus (user is typing)
@@ -2355,6 +2462,7 @@ class EntryFormScreen(ModalScreen[Optional[dict]]):
                     "input-url",
                     "input-notes",
                     "input-tags",
+                    "input-totp",
                 ]
                 for input_id in input_ids:
                     try:
@@ -2369,7 +2477,7 @@ class EntryFormScreen(ModalScreen[Optional[dict]]):
 
             # No input has focus, trigger app quit confirmation
             event.stop()
-            self.app.action_quit()
+            self.app.action_quit()  # type: ignore[unused-coroutine]
 
 
 class DeleteConfirmationScreen(ModalScreen[bool]):
@@ -2391,6 +2499,8 @@ class DeleteConfirmationScreen(ModalScreen[bool]):
         background: #0a0a0a;
         padding: 1;
         overflow-y: auto;  /* Enable vertical scrolling on resize */
+        scrollbar-gutter: stable;  /* Reserve space for scrollbar to prevent layout shifts */
+        scrollbar-size-vertical: 1;  /* Explicit scrollbar width */
     }
 
     #confirm-title {
@@ -2491,7 +2601,7 @@ class DeleteConfirmationScreen(ModalScreen[bool]):
         Binding("escape", "cancel", "Cancel"),
     ]
 
-    def __init__(self, entry_key: str):
+    def __init__(self, entry_key: str) -> None:
         """
         Initialize delete confirmation screen.
 
@@ -2524,11 +2634,11 @@ class DeleteConfirmationScreen(ModalScreen[bool]):
         """Cancel and close dialog."""
         self.dismiss(False)
 
-    def on_key(self, event) -> None:
+    def on_key(self, event: events.Key) -> None:
         """Handle key press - allow 'q' to trigger quit confirmation."""
         if event.key == "q":
             event.stop()
-            self.app.action_quit()
+            self.app.action_quit()  # type: ignore[unused-coroutine]
 
 
 class VaultOverwriteWarningScreen(ModalScreen[bool]):
@@ -2550,6 +2660,8 @@ class VaultOverwriteWarningScreen(ModalScreen[bool]):
         background: #0a0a0a;
         padding: 1;
         overflow-y: auto;  /* Enable vertical scrolling on resize */
+        scrollbar-gutter: stable;  /* Reserve space for scrollbar to prevent layout shifts */
+        scrollbar-size-vertical: 1;  /* Explicit scrollbar width */
     }
 
     #warning-title {
@@ -2597,6 +2709,35 @@ class VaultOverwriteWarningScreen(ModalScreen[bool]):
         min-width: 16;
         height: 3;
     }
+
+    /* Cyberpunk Button Overrides */
+    Button {
+        border: solid #00ffff;
+        background: #000000;
+    }
+
+    Button:hover {
+        background: #00ffff20;
+        border: heavy #00ffff;
+    }
+
+    Button.-error {
+        border: solid #ff0080;
+    }
+
+    Button.-error:hover {
+        background: #ff008020;
+        border: heavy #ff0080;
+    }
+
+    Button.-default {
+        border: solid #00ffff;
+    }
+
+    Button.-default:hover {
+        background: #00ffff20;
+        border: heavy #00ffff;
+    }
     """
 
     BINDINGS = [
@@ -2642,11 +2783,11 @@ class VaultOverwriteWarningScreen(ModalScreen[bool]):
         """Cancel and close dialog."""
         self.dismiss(False)
 
-    def on_key(self, event) -> None:
+    def on_key(self, event: events.Key) -> None:
         """Handle key press - allow 'q' to trigger quit confirmation."""
         if event.key == "q":
             event.stop()
-            self.app.action_quit()
+            self.app.action_quit()  # type: ignore[unused-coroutine]
 
 
 class UnsavedChangesScreen(ModalScreen[str]):
@@ -2667,6 +2808,8 @@ class UnsavedChangesScreen(ModalScreen[str]):
         background: #0a0a0a;
         padding: 1 1 0 1;
         overflow-y: auto;  /* Enable vertical scrolling on resize */
+        scrollbar-gutter: stable;  /* Reserve space for scrollbar to prevent layout shifts */
+        scrollbar-size-vertical: 1;  /* Explicit scrollbar width */
     }
 
     #unsaved-title {
@@ -2802,11 +2945,11 @@ class UnsavedChangesScreen(ModalScreen[str]):
         """Cancel and close dialog."""
         self.dismiss("cancel")
 
-    def on_key(self, event) -> None:
+    def on_key(self, event: events.Key) -> None:
         """Handle key press - allow 'q' to trigger quit confirmation."""
         if event.key == "q":
             event.stop()
-            self.app.action_quit()
+            self.app.action_quit()  # type: ignore[unused-coroutine]
 
 
 class PasswordGeneratorScreen(ModalScreen[Optional[str]]):
@@ -2828,6 +2971,8 @@ class PasswordGeneratorScreen(ModalScreen[Optional[str]]):
         background: #0a0a0a;
         padding: 1;
         overflow-y: auto;  /* Enable vertical scrolling on resize */
+        scrollbar-gutter: stable;  /* Reserve space for scrollbar to prevent layout shifts */
+        scrollbar-size-vertical: 1;  /* Explicit scrollbar width */
     }
 
     #generator-title {
@@ -2981,7 +3126,7 @@ class PasswordGeneratorScreen(ModalScreen[Optional[str]]):
         Binding("g", "generate", "Generate"),
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize password generator screen."""
         super().__init__()
         self.length = 16
@@ -3146,7 +3291,7 @@ class PasswordGeneratorScreen(ModalScreen[Optional[str]]):
             "btn-opt-symbols": ("✓ Symbols (!@#$)", "✗ Symbols (!@#$)"),
         }
 
-        enabled_label, disabled_label = label_map.get(button.id, ("", ""))
+        enabled_label, disabled_label = label_map.get(button.id or "", ("", ""))
         button.label = enabled_label if enabled else disabled_label
         button.variant = "success" if enabled else "error"
 
@@ -3160,11 +3305,11 @@ class PasswordGeneratorScreen(ModalScreen[Optional[str]]):
         """Cancel and close dialog."""
         self.dismiss(None)
 
-    def on_key(self, event) -> None:
+    def on_key(self, event: events.Key) -> None:
         """Handle key press - allow 'q' to trigger quit confirmation."""
         if event.key == "q":
             event.stop()
-            self.app.action_quit()
+            self.app.action_quit()  # type: ignore[unused-coroutine]
 
 
 class ChangelogViewerScreen(ModalScreen[None]):
@@ -3203,6 +3348,8 @@ class ChangelogViewerScreen(ModalScreen[None]):
         background: #000000;
         padding: 1;
         overflow-y: auto;
+        scrollbar-gutter: stable;  /* Reserve space for scrollbar to prevent layout shifts */
+        scrollbar-size-vertical: 1;  /* Explicit scrollbar width */
     }
 
     #changelog-loading {
@@ -3239,7 +3386,7 @@ class ChangelogViewerScreen(ModalScreen[None]):
         Binding("escape", "close", "Close"),
     ]
 
-    def __init__(self, version: str):
+    def __init__(self, version: str) -> None:
         """Initialize changelog viewer."""
         super().__init__()
         self.version = version
@@ -3271,6 +3418,7 @@ class ChangelogViewerScreen(ModalScreen[None]):
             loading.remove()
 
             # Create scrollable content
+            content: Widget
             if changelog:
                 content = ScrollableContainer(
                     Static(changelog, markup=False), id="changelog-content"
@@ -3300,22 +3448,23 @@ class ChangelogViewerScreen(ModalScreen[None]):
         """Close dialog."""
         self.dismiss(None)
 
-    def on_key(self, event) -> None:
+    def on_key(self, event: events.Key) -> None:
         """Handle key press - allow 'q' to trigger quit confirmation."""
         if event.key == "q":
             event.stop()
-            self.app.action_quit()
+            self.app.action_quit()  # type: ignore[unused-coroutine]
 
 
 class SettingsScreen(ModalScreen[None]):
     """Modal screen for TUI settings."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize settings screen."""
         super().__init__()
         # Track initial values to detect unsaved changes
         self._initial_auto_check = True
         self._initial_auto_upgrade = False
+        self._initial_totp_enabled = False
 
     CSS = """
     /* Cyberpunk Settings Screen */
@@ -3333,6 +3482,8 @@ class SettingsScreen(ModalScreen[None]):
         background: #0a0a0a;
         padding: 2;
         overflow-y: auto;
+        scrollbar-gutter: stable;  /* Reserve space for scrollbar to prevent layout shifts */
+        scrollbar-size-vertical: 1;  /* Explicit scrollbar width */
     }
 
     #settings-title {
@@ -3480,6 +3631,22 @@ class SettingsScreen(ModalScreen[None]):
                         classes="settings-button",
                     )
 
+            # TOTP/2FA Settings Section
+            with Vertical(classes="settings-section"):
+                yield Label("◈ TOTP/2FA Settings", classes="section-title")
+
+                with Horizontal(classes="setting-row"):
+                    yield Label("Enable TOTP authentication:", classes="setting-label")
+                    yield Switch(id="switch-totp-enabled", value=False)
+
+                with Horizontal(classes="setting-row"):
+                    yield Button(
+                        "Reset TOTP",
+                        id="btn-reset-totp",
+                        variant="error",
+                        classes="settings-button",
+                    )
+
             # Close Buttons
             with Horizontal(id="button-row"):
                 yield Button(
@@ -3506,9 +3673,13 @@ class SettingsScreen(ModalScreen[None]):
             auto_upgrade_switch = self.query_one("#switch-auto-upgrade", Switch)
             auto_upgrade_switch.value = config.updates.auto_upgrade
 
+            totp_enabled_switch = self.query_one("#switch-totp-enabled", Switch)
+            totp_enabled_switch.value = config.totp.enabled
+
             # Store initial values for unsaved changes detection
             self._initial_auto_check = config.updates.auto_check
             self._initial_auto_upgrade = config.updates.auto_upgrade
+            self._initial_totp_enabled = config.totp.enabled
 
         except Exception:  # nosec B110
             # If config fails to load, use defaults
@@ -3523,10 +3694,12 @@ class SettingsScreen(ModalScreen[None]):
         try:
             auto_check_switch = self.query_one("#switch-auto-check", Switch)
             auto_upgrade_switch = self.query_one("#switch-auto-upgrade", Switch)
+            totp_enabled_switch = self.query_one("#switch-totp-enabled", Switch)
 
             return (
                 auto_check_switch.value != self._initial_auto_check
                 or auto_upgrade_switch.value != self._initial_auto_upgrade
+                or totp_enabled_switch.value != self._initial_totp_enabled
             )
         except Exception:
             # If query fails, assume no changes
@@ -3543,6 +3716,17 @@ class SettingsScreen(ModalScreen[None]):
             self.run_worker(self._force_update_check())
         elif event.button.id == "btn-view-changelog":
             self._show_changelog()
+        elif event.button.id == "btn-reset-totp":
+            self.run_worker(self._reset_totp())
+
+    def on_switch_changed(self, event: Switch.Changed) -> None:
+        """Handle TOTP toggle switch changes."""
+        from textual.widgets import Switch
+
+        if event.switch.id == "switch-totp-enabled":
+            if event.value and not self._initial_totp_enabled:
+                # User is enabling TOTP for the first time
+                self.run_worker(self._configure_totp_first_time(event.switch))
 
     def _save_settings(self) -> None:
         """Save settings to config file."""
@@ -3554,9 +3738,11 @@ class SettingsScreen(ModalScreen[None]):
             # Get switch values
             auto_check_switch = self.query_one("#switch-auto-check", Switch)
             auto_upgrade_switch = self.query_one("#switch-auto-upgrade", Switch)
+            totp_enabled_switch = self.query_one("#switch-totp-enabled", Switch)
 
             config.updates.auto_check = auto_check_switch.value
             config.updates.auto_upgrade = auto_upgrade_switch.value
+            config.totp.enabled = totp_enabled_switch.value
 
             save_config(config)
             self.app.notify("Settings saved successfully", severity="information")
@@ -3588,7 +3774,7 @@ class SettingsScreen(ModalScreen[None]):
             # No changes
             if quit_on_no_changes:
                 # User pressed 'q' - show quit confirmation to exit app
-                self.app.action_quit()
+                self.app.action_quit()  # type: ignore[unused-coroutine]
             else:
                 # User pressed Escape or Cancel - just close settings
                 self.dismiss(None)
@@ -3626,13 +3812,735 @@ class SettingsScreen(ModalScreen[None]):
 
         self.app.push_screen(ChangelogViewerScreen(__version__))
 
+    async def _configure_totp_first_time(self, switch: Switch) -> None:
+        """Configure TOTP when user enables it for the first time."""
+        try:
+            from stegvault.config.core import load_config, save_config
+
+            # Launch TOTP configuration screen
+            result = await self.app.push_screen_wait(TOTPConfigScreen())
+
+            if result:
+                # Unpack secret and backup code
+                totp_secret, backup_code = result
+
+                # Save to config
+                config = load_config()
+                config.totp.secret = totp_secret
+                config.totp.backup_code = backup_code
+                config.totp.enabled = True
+                save_config(config)
+
+                # Update initial state
+                self._initial_totp_enabled = True
+
+                self.app.notify(
+                    "TOTP configured successfully! Authentication will be required on next startup.",
+                    severity="information",
+                    timeout=8,
+                )
+            else:
+                # User cancelled - revert switch
+                switch.value = False
+                self.app.notify("TOTP configuration cancelled", severity="warning")
+
+        except Exception as e:
+            # Error - revert switch
+            switch.value = False
+            self.app.notify(f"Failed to configure TOTP: {str(e)}", severity="error")
+
+    async def _reset_totp(self) -> None:
+        """Reset TOTP configuration (requires backup code)."""
+        try:
+            from stegvault.config.core import load_config, save_config
+
+            config = load_config()
+
+            # Check if TOTP is configured
+            if not config.totp.secret or not config.totp.backup_code:
+                self.app.notify("TOTP is not configured", severity="warning")
+                return
+
+            # Ask for backup code verification
+            backup_code = await self.app.push_screen_wait(BackupCodeInputScreen())
+
+            if not backup_code:
+                self.app.notify("Reset cancelled", severity="warning")
+                return
+
+            # Verify backup code
+            if backup_code != config.totp.backup_code:
+                self.app.notify("Invalid backup code! Reset cancelled", severity="error")
+                return
+
+            # Backup code verified - launch new TOTP configuration
+            result = await self.app.push_screen_wait(TOTPConfigScreen())
+
+            if result:
+                # Unpack new secret and backup code
+                totp_secret, new_backup_code = result
+
+                # Save new configuration
+                config.totp.secret = totp_secret
+                config.totp.backup_code = new_backup_code
+                config.totp.enabled = True
+                save_config(config)
+
+                # Update switch
+                totp_enabled_switch = self.query_one("#switch-totp-enabled", Switch)
+                totp_enabled_switch.value = True
+                self._initial_totp_enabled = True
+
+                self.app.notify(
+                    "TOTP reset successful! Use your new secret and backup code.",
+                    severity="information",
+                    timeout=8,
+                )
+            else:
+                self.app.notify("Reset cancelled", severity="warning")
+
+        except Exception as e:
+            self.app.notify(f"Failed to reset TOTP: {str(e)}", severity="error")
+
     def action_close(self) -> None:
         """Close dialog with unsaved changes check."""
         self.run_worker(self._handle_close_with_check())
 
-    def on_key(self, event) -> None:
+    def on_key(self, event: events.Key) -> None:
         """Handle key press - check for unsaved changes before closing."""
         if event.key == "q":
             event.stop()
             # 'q' shows quit confirmation if no changes
             self.run_worker(self._handle_close_with_check(quit_on_no_changes=True))
+
+
+class BackupCodeInputScreen(ModalScreen[Optional[str]]):
+    """Modal screen for inputting backup code for TOTP reset."""
+
+    CSS = """
+    BackupCodeInputScreen {
+        align: center middle;
+        background: #000000cc;
+    }
+
+    #backup-dialog {
+        width: 60;
+        height: auto;
+        border: heavy #ff0080;
+        background: #0a0a0a;
+        padding: 2;
+    }
+
+    #backup-title {
+        text-style: bold;
+        color: #ff0080;
+        text-align: center;
+        margin-bottom: 2;
+    }
+
+    #backup-instruction {
+        color: #00ffff;
+        margin-bottom: 2;
+    }
+
+    #backup-input {
+        height: 3;
+        margin: 1 0;
+        background: #000000;
+        border: solid #ff0080;
+        color: #ff0080;
+    }
+
+    #backup-input:focus {
+        border: heavy #ff0080;
+    }
+
+    .backup-button-row {
+        height: auto;
+        align: center middle;
+        margin-top: 1;
+    }
+
+    Button {
+        margin: 0 1;
+        min-width: 12;
+    }
+    """
+
+    BINDINGS = [
+        Binding("escape", "cancel", "Cancel"),
+    ]
+
+    def compose(self) -> ComposeResult:
+        """Compose backup code input dialog."""
+        from textual.containers import Vertical, Horizontal
+
+        with Vertical(id="backup-dialog"):
+            yield Label("[!] RESET TOTP", id="backup-title")
+            yield Label(
+                "Enter your 6-digit backup code to reset TOTP configuration:",
+                id="backup-instruction",
+            )
+            yield Input(
+                placeholder="Enter 6-digit backup code",
+                id="backup-input",
+                max_length=6,
+            )
+            with Horizontal(classes="backup-button-row"):
+                yield Button("VERIFY", variant="primary", id="btn-verify")
+                yield Button("CANCEL", variant="default", id="btn-cancel")
+
+    def on_mount(self) -> None:
+        """Focus on backup input."""
+        try:
+            self.query_one("#backup-input", Input).focus()
+        except Exception:  # nosec B110
+            pass
+
+    async def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle button presses."""
+        if event.button.id == "btn-verify":
+            await self._verify_backup_code()
+        elif event.button.id == "btn-cancel":
+            self.action_cancel()
+
+    async def _verify_backup_code(self) -> None:
+        """Verify backup code."""
+        try:
+            backup_input = self.query_one("#backup-input", Input)
+            code = backup_input.value.strip()
+
+            if not code:
+                self.app.notify("Please enter backup code", severity="warning")
+                return
+
+            if len(code) != 6 or not code.isdigit():
+                self.app.notify("Backup code must be 6 digits", severity="error")
+                return
+
+            # Return the code for verification by caller
+            self.dismiss(code)
+
+        except Exception as e:
+            self.app.notify(f"Error: {e}", severity="error")
+
+    def action_cancel(self) -> None:
+        """Cancel backup code input."""
+        self.dismiss(None)
+
+    def on_key(self, event: events.Key) -> None:
+        """Handle Enter key."""
+        if event.key == "enter":
+            event.stop()
+            self.run_worker(self._verify_backup_code())
+
+
+class TOTPConfigScreen(ModalScreen[Optional[tuple[str, str]]]):
+    """Modal screen for configuring TOTP/2FA with QR code and backup code."""
+
+    CSS = """
+    /* Cyberpunk TOTP Configuration Screen */
+    TOTPConfigScreen {
+        align: center middle;
+        background: #000000cc;
+    }
+
+    #totp-dialog {
+        width: 90%;
+        max-width: 85;
+        height: 48;
+        border: heavy #00ff00;
+        background: #0a0a0a;
+        padding: 2;
+        overflow-y: auto;  /* Enable internal scrolling when content exceeds available space */
+        scrollbar-gutter: stable;  /* Reserve space for scrollbar to prevent layout shifts */
+        scrollbar-size-vertical: 1;  /* Explicit scrollbar width */
+    }
+
+    #totp-title {
+        width: 100%;
+        text-align: center;
+        text-style: bold;
+        color: #00ff00;
+        margin-bottom: 1;
+        border-bottom: solid #00ff00;
+        padding-bottom: 1;
+    }
+
+    .totp-section {
+        height: auto;
+        margin-bottom: 2;
+        padding: 1;
+        border: solid #00ffff;
+        background: #000000;
+    }
+
+    .totp-section-title {
+        text-style: bold;
+        color: #00ffff;
+        margin-bottom: 1;
+    }
+
+    .totp-secret {
+        width: 100%;
+        color: #ffff00;
+        text-style: bold;
+        text-align: center;
+        margin: 1 0;
+        padding: 1;
+        background: #1a1a1a;
+        border: solid #ffff00;
+    }
+
+    .totp-backup-code {
+        width: 100%;
+        color: #ff0080;
+        text-style: bold;
+        text-align: center;
+        margin: 1 0;
+        padding: 1;
+        background: #1a0a1a;
+        border: heavy #ff0080;
+    }
+
+    .totp-backup-code:hover {
+        background: #ff008030;
+        border: double #ff0080;
+        color: #ffffff;
+    }
+
+    .totp-warning {
+        width: 100%;
+        color: #ff0080;
+        text-style: italic;
+        margin: 1 0;
+    }
+
+    .totp-qr {
+        width: 100%;
+        color: #ffffff;
+        text-align: center;
+        margin: 1 0;
+        padding: 0;
+        background: transparent;
+    }
+
+    .totp-instruction {
+        color: #00ffff;
+        margin: 0 0 1 0;
+    }
+
+    #totp-verify-input {
+        height: 3;
+        margin: 1 0;
+        background: #000000;
+        border: solid #00ff00;
+        color: #00ff00;
+    }
+
+    #totp-verify-input:focus {
+        border: heavy #00ff00;
+    }
+
+    .totp-button-row {
+        height: auto;
+        min-height: 3;
+        align: center middle;
+        margin-top: 1;
+    }
+
+    .totp-button {
+        margin: 0 1;
+        min-width: 16;
+        height: 3;
+    }
+
+    Button {
+        border: solid #00ffff;
+        background: #000000;
+    }
+
+    Button:hover {
+        background: #00ffff20;
+        border: heavy #00ffff;
+    }
+
+    Button.-success {
+        border: solid #00ff00;
+    }
+
+    Button.-success:hover {
+        background: #00ff0020;
+        border: heavy #00ff00;
+    }
+
+    Button.-default {
+        border: solid #ff0080;
+    }
+
+    Button.-default:hover {
+        background: #ff008020;
+        border: heavy #ff0080;
+    }
+    """
+
+    BINDINGS = [
+        Binding("escape", "cancel", "Cancel"),
+    ]
+
+    def __init__(self) -> None:
+        """Initialize TOTP configuration screen."""
+        super().__init__()
+        from stegvault.vault.totp import generate_totp_secret
+        import random
+
+        self.totp_secret = generate_totp_secret()
+        self.backup_code = "".join([str(random.randint(0, 9)) for _ in range(6)])
+        self.verified = False
+
+    def compose(self) -> ComposeResult:
+        """Compose TOTP configuration screen."""
+        from stegvault.vault.totp import (
+            get_totp_provisioning_uri,
+            generate_qr_code_ascii,
+        )
+        from textual.containers import Vertical, Horizontal
+
+        # Generate QR code
+        provisioning_uri = get_totp_provisioning_uri(self.totp_secret, "StegVault-TUI", "StegVault")
+        qr_code = generate_qr_code_ascii(provisioning_uri)
+
+        with Vertical(id="totp-dialog"):
+            yield Label("[TOTP/2FA Configuration]", id="totp-title")
+
+            # Instructions
+            with Vertical(classes="totp-section"):
+                yield Label("[Step 1] Scan QR Code", classes="totp-section-title")
+                yield Label(
+                    "Use your authenticator app (Google Authenticator, Authy, etc.) to scan:",
+                    classes="totp-instruction",
+                )
+                yield Label(qr_code, classes="totp-qr")
+
+            # Secret and Backup Code display
+            with Vertical(classes="totp-section"):
+                yield Label("[Step 2] Save Secrets (IMPORTANT!)", classes="totp-section-title")
+                yield Label(
+                    "TOTP Secret (for manual entry in authenticator app):",
+                    classes="totp-instruction",
+                )
+                yield Label(self.totp_secret, classes="totp-secret")
+                yield Label(
+                    "[!] BACKUP CODE (for emergency access & reset):",
+                    classes="totp-instruction",
+                )
+                yield Static(
+                    f">>> {self.backup_code} <<<\n(Click to copy)",
+                    id="backup-code-box",
+                    classes="totp-backup-code",
+                )
+                yield Label(
+                    "Save this backup code in a secure place! You'll need it to reset TOTP or access if you lose your authenticator.",
+                    classes="totp-warning",
+                )
+
+            # Verification
+            with Vertical(classes="totp-section"):
+                yield Label("[Step 3] Verify Setup", classes="totp-section-title")
+                yield Label(
+                    "Enter 6-digit code from your authenticator app:",
+                    classes="totp-instruction",
+                )
+                yield Input(
+                    placeholder="Enter 6-digit code",
+                    id="totp-verify-input",
+                    max_length=6,
+                )
+
+            # Buttons
+            with Horizontal(classes="totp-button-row"):
+                yield Button(
+                    "VERIFY & SAVE", variant="success", id="btn-verify", classes="totp-button"
+                )
+                yield Button("CANCEL", variant="default", id="btn-cancel", classes="totp-button")
+
+    def on_mount(self) -> None:
+        """Focus on verification input."""
+        try:
+            self.query_one("#totp-verify-input", Input).focus()
+        except Exception:  # nosec B110
+            pass
+
+    async def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle button presses."""
+        if event.button.id == "btn-verify":
+            await self._verify_and_save()
+        elif event.button.id == "btn-cancel":
+            self.action_cancel()
+
+    def on_click(self, event: events.Click) -> None:
+        """Handle click on backup code box to copy."""
+        if getattr(event.widget, "id", None) == "backup-code-box":
+            try:
+                import pyperclip
+
+                pyperclip.copy(self.backup_code)
+                self.app.notify(
+                    "Backup code copied to clipboard!", severity="information", timeout=3
+                )
+            except Exception:
+                self.app.notify("Failed to copy backup code", severity="error")
+
+    async def _verify_and_save(self) -> None:
+        """Verify TOTP code and save."""
+        from stegvault.vault.totp import verify_totp_code
+        from stegvault.config.core import load_config, save_config
+
+        try:
+            verify_input = self.query_one("#totp-verify-input", Input)
+            code = verify_input.value.strip()
+
+            if not code:
+                self.app.notify("Please enter verification code", severity="warning")
+                return
+
+            if len(code) != 6 or not code.isdigit():
+                self.app.notify("Code must be 6 digits", severity="error")
+                return
+
+            if not verify_totp_code(self.totp_secret, code):
+                self.app.notify("Invalid code! Try again", severity="error")
+                verify_input.value = ""
+                verify_input.focus()
+                return
+
+            # Verification successful - return secret and backup code
+            self.app.notify(
+                "TOTP verified! Completing configuration...",
+                severity="information",
+            )
+            self.dismiss((self.totp_secret, self.backup_code))
+
+        except Exception as e:
+            self.app.notify(f"Failed to save TOTP: {e}", severity="error")
+
+    def action_cancel(self) -> None:
+        """Cancel configuration."""
+        self.dismiss(None)
+
+    def on_key(self, event: events.Key) -> None:
+        """Handle Enter key for verification."""
+        if event.key == "enter":
+            event.stop()
+            self.run_worker(self._verify_and_save())
+
+
+class TOTPAuthScreen(ModalScreen[bool]):
+    """Modal screen for TOTP authentication at startup."""
+
+    CSS = """
+    /* Cyberpunk TOTP Authentication Screen */
+    TOTPAuthScreen {
+        align: center middle;
+        background: #000000ee;
+    }
+
+    #totp-auth-dialog {
+        width: 60%;
+        max-width: 60;
+        height: auto;
+        border: heavy #ffff00;
+        background: #0a0a0a;
+        padding: 2;
+    }
+
+    #totp-auth-title {
+        width: 100%;
+        text-align: center;
+        text-style: bold;
+        color: #ffff00;
+        margin-bottom: 2;
+        border-bottom: solid #ffff00;
+        padding-bottom: 1;
+    }
+
+    .totp-auth-instruction {
+        color: #00ffff;
+        text-align: center;
+        margin-bottom: 2;
+    }
+
+    #totp-auth-input {
+        height: 3;
+        margin: 1 0 2 0;
+        background: #000000;
+        border: solid #ffff00;
+        color: #ffff00;
+        text-align: center;
+    }
+
+    #totp-auth-input:focus {
+        border: heavy #ffff00;
+    }
+
+    .totp-auth-button-row {
+        height: auto;
+        min-height: 3;
+        align: center middle;
+    }
+
+    .totp-auth-button {
+        margin: 0 1;
+        min-width: 14;
+        height: 3;
+    }
+
+    Button {
+        border: solid #00ffff;
+        background: #000000;
+    }
+
+    Button:hover {
+        background: #00ffff20;
+        border: heavy #00ffff;
+    }
+
+    Button.-primary {
+        border: solid #ffff00;
+    }
+
+    Button.-primary:hover {
+        background: #ffff0020;
+        border: heavy #ffff00;
+    }
+
+    Button.-error {
+        border: solid #ff0080;
+    }
+
+    Button.-error:hover {
+        background: #ff008020;
+        border: heavy #ff0080;
+    }
+    """
+
+    BINDINGS = [
+        Binding("escape", "cancel", "Exit"),
+    ]
+
+    def __init__(self, totp_secret: str, backup_code: str = "", max_attempts: int = 3) -> None:
+        """Initialize TOTP authentication screen.
+
+        Args:
+            totp_secret: The TOTP secret to verify against
+            backup_code: The 6-digit backup code for emergency access
+            max_attempts: Maximum number of failed attempts before exit
+        """
+        super().__init__()
+        self.totp_secret = totp_secret
+        self.backup_code = backup_code
+        self.max_attempts = max_attempts
+        self.attempts = 0
+
+    def compose(self) -> ComposeResult:
+        """Compose TOTP authentication screen."""
+        from textual.containers import Vertical, Horizontal
+
+        with Vertical(id="totp-auth-dialog"):
+            yield Label("[TOTP/2FA Authentication Required]", id="totp-auth-title")
+
+            if self.backup_code:
+                yield Label(
+                    "Enter the 6-digit code from your authenticator app OR your backup code:",
+                    classes="totp-auth-instruction",
+                )
+            else:
+                yield Label(
+                    "Enter the 6-digit code from your authenticator app:",
+                    classes="totp-auth-instruction",
+                )
+
+            yield Input(
+                placeholder="000000",
+                id="totp-auth-input",
+                max_length=6,
+            )
+
+            with Horizontal(classes="totp-auth-button-row"):
+                yield Button(
+                    "UNLOCK", variant="primary", id="btn-unlock", classes="totp-auth-button"
+                )
+                yield Button("EXIT", variant="error", id="btn-exit", classes="totp-auth-button")
+
+    def on_mount(self) -> None:
+        """Focus on input when mounted."""
+        try:
+            self.query_one("#totp-auth-input", Input).focus()
+        except Exception:  # nosec B110
+            pass
+
+    async def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle button presses."""
+        if event.button.id == "btn-unlock":
+            await self._verify_code()
+        elif event.button.id == "btn-exit":
+            self.action_cancel()
+
+    async def _verify_code(self) -> None:
+        """Verify TOTP code."""
+        from stegvault.vault.totp import verify_totp_code
+
+        try:
+            auth_input = self.query_one("#totp-auth-input", Input)
+            code = auth_input.value.strip()
+
+            if not code:
+                self.app.notify("Please enter code", severity="warning")
+                return
+
+            if len(code) != 6 or not code.isdigit():
+                self.app.notify("Code must be 6 digits", severity="error")
+                return
+
+            # Verify code (TOTP or backup code)
+            is_totp_valid = verify_totp_code(self.totp_secret, code)
+            is_backup_valid = self.backup_code and code == self.backup_code
+
+            if is_totp_valid or is_backup_valid:
+                auth_type = "backup code" if is_backup_valid else "TOTP"
+                self.app.notify(f"Authentication successful ({auth_type})!", severity="information")
+                self.dismiss(True)
+                return
+
+            # Failed verification
+            self.attempts += 1
+            remaining = self.max_attempts - self.attempts
+
+            if remaining > 0:
+                self.app.notify(
+                    f"Invalid code! {remaining} attempt(s) remaining",
+                    severity="error",
+                )
+                auth_input.value = ""
+                auth_input.focus()
+            else:
+                self.app.notify(
+                    "Maximum attempts exceeded. Exiting...",
+                    severity="error",
+                )
+                # Exit after max attempts
+                await self.app.action_quit()
+
+        except Exception as e:
+            self.app.notify(f"Authentication error: {e}", severity="error")
+
+    def action_cancel(self) -> None:
+        """Cancel authentication (exit app)."""
+        self.dismiss(False)
+        self.run_worker(self.app.action_quit())
+
+    def on_key(self, event: events.Key) -> None:
+        """Handle Enter key for verification."""
+        if event.key == "enter":
+            event.stop()
+            self.run_worker(self._verify_code())
