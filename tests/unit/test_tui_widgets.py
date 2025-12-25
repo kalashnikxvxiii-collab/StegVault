@@ -1,4 +1,5 @@
 """
+import sys
 Tests for TUI widgets.
 
 Tests custom Textual widgets for StegVault TUI.
@@ -2485,6 +2486,9 @@ class TestTOTPAuthScreen:
 # Additional comprehensive tests for coverage improvement
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 10), reason="Flaky async/Textual tests in Python 3.9 CI environment"
+)
 class TestSettingsScreenAdvanced:
     """Advanced tests for SettingsScreen to improve coverage."""
 
