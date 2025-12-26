@@ -8,8 +8,8 @@ Common questions about StegVault.
 
 StegVault is a full-featured password manager that uses steganography to hide encrypted credentials within images. It combines modern cryptography (XChaCha20-Poly1305 + Argon2id) with dual steganography (PNG LSB + JPEG DCT) to create portable, secure password vaults.
 
-**Current version**: 0.6.1 (Application Layer)
-**Features**: Full vault mode, TOTP/2FA, Gallery management, Headless mode, Application Layer for multi-interface support
+**Current version**: 0.7.8 (Auto-Update Critical Bug Fixes)
+**Features**: Full vault mode, TOTP/2FA application lock, Gallery management, TUI with favorite folders, Headless mode, Auto-update system with WinError 32 fix
 
 ---
 
@@ -363,10 +363,10 @@ See [Troubleshooting](Troubleshooting.md) for more.
 
 **Yes!** Desktop GUI is planned for future releases:
 
-- **v0.7.0**: Terminal UI (TUI) with Textual
-- **v0.8.0**: Desktop GUI with PySide6
+- **v0.7.0**: Terminal UI (TUI) with Textual ✅ COMPLETED
+- **v0.8.0**: Desktop GUI with PySide6 🔜 PLANNED
 
-**Current (v0.6.1)**: CLI with headless mode for automation
+**Current (v0.7.8)**: CLI, TUI (full-featured terminal interface), and headless mode for automation
 
 ---
 

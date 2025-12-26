@@ -65,10 +65,10 @@ mypy stegvault
 ```
 StegVault/
 ├── stegvault/                      # Main package
-│   ├── __init__.py                 # Package exports (version: 0.6.1)
+│   ├── __init__.py                 # Package exports (version: 0.7.8)
 │   ├── cli.py                      # CLI interface (Click, 1389 lines)
 │   │
-│   ├── app/                        # Application layer (v0.6.1) **NEW**
+│   ├── app/                        # Application layer (v0.6.1)
 │   │   ├── __init__.py
 │   │   └── controllers/            # UI-agnostic business logic
 │   │       ├── __init__.py
@@ -114,11 +114,11 @@ StegVault/
 │       ├── json_output.py          # JSON formatting (67 lines) **v0.6.0**
 │       └── passphrase.py           # Passphrase handling (36 lines) **v0.6.0**
 │
-├── tests/unit/                     # Unit tests (614 tests, 92% coverage)
+├── tests/unit/                     # Unit tests (994 tests, 79% coverage)
 │   ├── test_crypto.py              # Crypto module (26 tests, 100% coverage)
-│   ├── test_crypto_controller.py   # CryptoController (11 tests, 86%) **v0.6.1**
+│   ├── test_crypto_controller.py   # CryptoController (14 tests, 96%) **v0.6.1**
 │   ├── test_vault.py               # Vault core (55 tests, 100% coverage)
-│   ├── test_vault_controller.py    # VaultController (18 tests, 83%) **v0.6.1**
+│   ├── test_vault_controller.py    # VaultController (21 tests, 83%) **v0.6.1**
 │   ├── test_vault_cli.py           # Vault CLI (44 tests)
 │   ├── test_stego.py               # PNG LSB (16 tests, 100% coverage)
 │   ├── test_jpeg_stego.py          # JPEG DCT (48 tests, 98% coverage)
@@ -129,7 +129,11 @@ StegVault/
 │   ├── test_batch.py               # Batch ops (27 tests, 100% coverage)
 │   ├── test_config.py              # Config (33 tests, 100% coverage)
 │   ├── test_payload.py             # Payload (22 tests, 100% coverage)
-│   └── ...                         # Total: 614 tests
+│   ├── test_tui_app.py             # TUI app (18 tests, 88%) **v0.7.0**
+│   ├── test_tui_widgets.py         # TUI widgets (126 tests, 88%) **v0.7.0**
+│   ├── test_tui_screens.py         # TUI screens (27 tests, 66%) **v0.7.0**
+│   ├── test_updater.py             # Auto-update (87 tests, 91%) **v0.7.6-v0.7.8**
+│   └── ...                         # Total: 994 tests
 │
 ├── wiki/                           # GitHub wiki documentation
 │   ├── Home.md

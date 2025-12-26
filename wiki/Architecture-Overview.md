@@ -1,12 +1,12 @@
 # Architecture Overview
 
-This document provides a technical overview of StegVault's architecture (v0.7.6).
+This document provides a technical overview of StegVault's architecture (v0.7.8).
 
 ## System Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                       StegVault System (v0.7.6)                 │
+│                       StegVault System (v0.7.8)                 │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  ┌──────────────────────────────────────────────────────────┐   │
@@ -253,7 +253,7 @@ def calculate_capacity(image) -> int:
 - `image_format.py` - Magic byte detection (PNG/JPEG/GIF/BMP)
 - `json_output.py` - JSON formatting for headless mode
 - `passphrase.py` - Passphrase from file/env/prompt
-- `updater.py` - Auto-update system (v0.7.6) - PyPI integration, version checking
+- `updater.py` - Auto-update system (v0.7.6-v0.7.8) - PyPI integration, WinError 32 fix, detached updates
 - `favorite_folders.py` - Favorite folders manager (v0.7.4) - TUI quick access
 
 ## Data Flow
@@ -348,7 +348,7 @@ Each UI handles errors appropriately:
 
 ## Testing Architecture
 
-### Test Coverage (798 tests, 74%)
+### Test Coverage (994 tests, 79%)
 
 - **Unit Tests**: Test individual functions/classes
 - **Integration Tests**: Test module interactions

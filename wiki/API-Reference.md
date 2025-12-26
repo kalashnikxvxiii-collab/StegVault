@@ -1,6 +1,6 @@
 # API Reference
 
-Complete API documentation for StegVault v0.7.1.
+Complete API documentation for StegVault v0.7.8.
 
 ## Table of Contents
 

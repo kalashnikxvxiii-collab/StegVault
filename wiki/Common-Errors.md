@@ -410,9 +410,9 @@ KeyError: 'ciphertext'
 
 ### ConnectionError
 
-Not applicable to v0.6.1 (no network features yet)
+Not applicable to v0.7.8 (no cloud features yet)
 
-Cloud sync features may be added in future versions.
+The auto-update system (v0.7.6+) checks PyPI for updates but does not sync data. Cloud sync features may be added in future versions.
 
 ---
 

@@ -12,7 +12,7 @@ This guide covers installing StegVault on various platforms.
 
 ### Method 1: Install from Source (Recommended)
 
-**Current Version**: v0.6.1
+**Current Version**: v0.7.8
 
 This is currently the primary installation method.
 
@@ -221,9 +221,9 @@ python -m venv venv
 
 To update to the latest version:
 
-### Method 1: Auto-Update (v0.7.6+)
+### Method 1: Auto-Update (v0.7.8+)
 
-StegVault includes built-in update commands:
+StegVault includes built-in update commands with critical bug fixes:
 
 ```bash
 # Check for updates
@@ -233,7 +233,13 @@ stegvault updates check
 stegvault updates upgrade
 ```
 
-Or enable auto-updates in the TUI:
+Or use the TUI "Update Now" button (NEW in v0.7.8):
+1. Launch TUI: `stegvault tui`
+2. Click `━━━` button (bottom-right) → Settings
+3. If update available, click **Update Now** (replaces "Check Updates")
+4. Close StegVault → detached update runs automatically (fixes WinError 32)
+
+Or enable auto-updates:
 1. Launch TUI: `stegvault tui`
 2. Click `━━━` button (bottom-right)
 3. Toggle **Auto-Check Updates** and **Auto-Upgrade**

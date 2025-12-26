@@ -47,11 +47,11 @@ StegVault is a secure password manager that uses steganography to hide encrypted
 
 ## Project Status
 
-- **Version**: 0.7.6 (Auto-Update System with Settings)
+- **Version**: 0.7.8 (Auto-Update Critical Bug Fixes)
 - **Status**: Stable - Production-ready
 - **License**: MIT
 - **Language**: Python 3.9+
-- **Tests**: 798 passing (74% coverage)
+- **Tests**: 994 passing (79% coverage)
 
 ## Key Features
 
@@ -60,14 +60,17 @@ StegVault is a secure password manager that uses steganography to hide encrypted
 - ✅ Dual steganography (PNG LSB + JPEG DCT)
 - ✅ Full vault mode with CRUD operations
 - ✅ Password history tracking (v0.7.1)
-- ✅ Auto-update system with Settings screen (v0.7.6) ✨ NEW
+- ✅ TOTP/2FA application lock (v0.7.7)
+- ✅ Auto-update system with critical bug fixes (v0.7.8) ✨ NEW
+- ✅ Detached update mechanism (fixes WinError 32)
+- ✅ Dynamic "Update Now" button in Settings
 - ✅ TOTP/2FA authenticator
 - ✅ Gallery multi-vault management
 - ✅ Terminal UI (TUI) with full keyboard navigation
 - ✅ Headless mode (JSON output, automation)
 - ✅ Application layer (UI-agnostic controllers)
 - ✅ CLI interface
-- ✅ 798 unit tests with 74% coverage
+- ✅ 994 unit tests with 79% coverage
 - ✅ Zero-knowledge architecture
 
 ## Coming Soon

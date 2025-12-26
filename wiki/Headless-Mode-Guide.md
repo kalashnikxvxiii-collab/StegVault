@@ -954,5 +954,5 @@ jq: error: Invalid JSON
 
 ---
 
-**Version**: 0.7.6
-**Last Updated**: 2025-12-18
+**Version**: 0.7.8
+**Last Updated**: 2025-12-26

@@ -146,13 +146,13 @@ Known limitations and constraints of StegVault.
 
 ---
 
-### No Desktop GUI Yet (v0.7.3)
+### No Desktop GUI Yet (v0.7.8)
 
 **Limitation**: No graphical desktop application yet
 
 **Impact**: May be less accessible to some non-technical users
 
-**Current Interfaces** (v0.7.3):
+**Current Interfaces** (v0.7.8):
 - ✅ **CLI**: Full-featured command-line interface
 - ✅ **TUI**: Terminal UI with full keyboard navigation (v0.7.0+)
   - Live TOTP codes with auto-refresh
@@ -165,7 +165,7 @@ Known limitations and constraints of StegVault.
 
 **Workaround**: TUI provides full interactive experience in terminal
 
-**Status**: TUI is stable and production-ready (v0.7.3 bug fixes)
+**Status**: TUI is stable and production-ready (v0.7.8 with auto-update fixes)
 
 **Future**: Desktop GUI (PySide6) planned for v0.8.0
 
@@ -338,7 +338,7 @@ Known limitations and constraints of StegVault.
 
 ### No Formal Security Audit
 
-**Status**: v0.6.1 has not undergone external security audit
+**Status**: v0.7.8 has not undergone external security audit
 
 **Impact**: Undiscovered vulnerabilities may exist
 
