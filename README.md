@@ -3,14 +3,14 @@
 > Secure password manager using steganography to embed encrypted credentials within images
 
 [![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![Version](https://img.shields.io/badge/version-0.7.6-blue.svg)](https://github.com/kalashnikxvxiii-collab/StegVault)
+[![Version](https://img.shields.io/badge/version-0.7.8-blue.svg)](https://github.com/kalashnikxvxiii-collab/StegVault)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-798_passing-brightgreen.svg)](tests/)
-[![Coverage](https://img.shields.io/badge/coverage-74%25-yellow.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-994_passing-brightgreen.svg)](tests/)
+[![Coverage](https://img.shields.io/badge/coverage-79%25-yellow.svg)](tests/)
 
 **StegVault** combines modern cryptography with steganography to create portable, zero-knowledge password backups. Store a single password or entire vault of credentials, all encrypted with XChaCha20-Poly1305 + Argon2id and hidden within ordinary PNG or JPEG images.
 
-**Latest Release (v0.7.6):** Auto-update system with Settings screen - Check and install updates automatically with toggles for auto-check and auto-upgrade!
+**Latest Release (v0.7.8):** Auto-update system critical bug fixes - WinError 32 fix, detached update mechanism, cache version sync, and dynamic "Update Now" button!
 
 ---
 
@@ -24,7 +24,7 @@
 - 🎯 **Auto-Detection**: Automatically detects image format (PNG/JPEG)
 - 🔒 **Zero-Knowledge**: All operations performed locally, no cloud dependencies
 - ✅ **Authenticated**: AEAD tag ensures data integrity
-- 🧪 **Well-Tested**: 798 unit tests with 74% coverage (all passing)
+- 🧪 **Well-Tested**: 994 unit tests with 79% coverage (all passing)
 
 ### Vault Mode
 - 🗄️ **Multiple Passwords**: Store entire password vault in one image
@@ -45,11 +45,14 @@
 - 🤖 **Command Line (CLI)**: Scriptable commands for automation
 - 📊 **Headless Mode**: JSON output for CI/CD pipelines (v0.6.0)
 
-### Auto-Update System (v0.7.6)
+### Auto-Update System (v0.7.8)
 - 🔄 **Update Checking**: Check for new versions from PyPI
-- ⚡ **Auto-Upgrade**: Optionally install updates automatically
+- ⚡ **Auto-Upgrade**: Optionally install updates automatically (fixed WinError 32)
+- 🔧 **Detached Update**: Updates run after app closure to prevent file conflicts
+- 🎯 **Dynamic UI**: "Update Now" button appears when updates are available
 - ⚙️ **Settings Screen**: Configure auto-check and auto-upgrade toggles
 - 📝 **Changelog Preview**: View changes before upgrading
+- 🔁 **Cache Sync**: Automatic version cache synchronization
 
 ---
 
@@ -73,12 +76,15 @@ pip install -e .
 # Standard update
 pip install --upgrade stegvault
 
-# Built-in auto-update (v0.7.6)
+# Built-in auto-update (v0.7.8)
 stegvault updates check     # Check for updates
 stegvault updates upgrade   # Install latest version
 
+# TUI "Update Now" button (NEW in v0.7.8)
+stegvault tui               # Launch TUI → Settings → "Update Now"
+# Detached update runs after you close StegVault (fixes WinError 32)
+
 # Enable auto-updates in TUI Settings
-stegvault tui               # Launch TUI
 # Click ━━━ button (bottom-right) → Toggle "Auto-Check Updates"
 ```
 
