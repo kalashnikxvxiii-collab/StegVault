@@ -499,13 +499,13 @@ def launch_detached_update(method: Optional[str] = None) -> Tuple[bool, str]:
     try:
         # Launch script in detached mode (new window, no wait)
         if sys.platform == "win32":
-            subprocess.Popen(  # nosec B603
+            subprocess.Popen(  # nosec B603, B607
                 ["cmd", "/c", "start", "", str(script_path)],
                 creationflags=subprocess.CREATE_NEW_CONSOLE | subprocess.DETACHED_PROCESS,
             )
         else:
             # Linux/Mac: run in background
-            subprocess.Popen(  # nosec B603
+            subprocess.Popen(  # nosec B603, B607
                 ["sh", str(script_path)],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,

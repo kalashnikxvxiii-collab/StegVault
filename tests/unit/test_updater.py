@@ -809,7 +809,12 @@ class TestDetachedUpdate:
         """Test launching detached update on Windows."""
         mock_create_script.return_value = Path("C:\\Users\\test\\.stegvault\\perform_update.bat")
 
-        with patch("sys.platform", "win32"):
+        # Patch Windows-only subprocess constants for cross-platform testing
+        with (
+            patch("sys.platform", "win32"),
+            patch("subprocess.CREATE_NEW_CONSOLE", 0x00000010, create=True),
+            patch("subprocess.DETACHED_PROCESS", 0x00000008, create=True),
+        ):
             success, message = launch_detached_update()
 
         assert success is True
