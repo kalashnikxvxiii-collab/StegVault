@@ -7,6 +7,177 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.9] - 2025-12-27
+
+### Added - Advanced Settings for Cryptography ⚙️
+
+**Comprehensive Argon2id Parameter Validation System**:
+- `stegvault/tui/widgets.py`: Added Advanced Settings section in SettingsScreen
+  - Collapsible "Advanced Settings" panel for expert users
+  - Three configurable Argon2id KDF parameters:
+    - **Time Cost** (iterations): Controls computational cost (default: 3)
+    - **Memory Cost** (KB): Controls memory usage (default: 65536 = 64MB)
+    - **Parallelism** (threads): Controls thread count (default: 4)
+  - Input validation with real-time feedback
+  - Security-aware threshold warnings
+  - Cross-parameter compatibility checks
+
+**Individual Parameter Validators**:
+- `_validate_time_cost()`: Validates time cost parameter
+  - Minimum: 1 (CRITICAL security warning)
+  - Weak security warning: < 3
+  - Performance warning: > 20 (with estimated delay)
+  - Recommended range: 3-10 iterations
+  - Returns clear, actionable warning messages
+- `_validate_memory_cost()`: Validates memory cost parameter
+  - Minimum: 8192 KB = 8 MB (CRITICAL security warning)
+  - Weak security warning: < 65536 KB (64 MB)
+  - High memory warning: > 1048576 KB (1 GB)
+  - Recommended: 65536-524288 KB (64-512 MB)
+  - Memory impact warnings with MB conversions
+- `_validate_parallelism()`: Validates parallelism parameter
+  - Minimum: 1 thread
+  - Warning: > 8 threads (diminishing returns)
+  - Warning: > 16 threads (may reduce performance)
+  - Recommended: 1-8 threads based on CPU cores
+
+**Cross-Parameter Compatibility Validation**:
+- `_validate_crypto_compatibility()`: Validates parameter combinations
+  - Low memory + high parallelism: thread contention warning
+  - High time cost + high parallelism: extended delays warning
+  - Low time cost + low memory: critical security risk warning
+  - Good balance detection: time ≥ 3, memory ≥ 64MB, parallelism ≤ 8
+  - Displays yellow warning banner for compatibility issues
+
+**Dynamic UI Feedback System**:
+- Inline warning labels below each parameter input
+  - Red warnings for critical errors (blocking save)
+  - Pink warnings for security risks
+  - Informational messages for performance tips
+- Dynamic spacing using `\n` prefix pattern
+  - Warnings create vertical space only when shown
+  - Zero spacing when no warning present
+  - Clean, uncluttered interface when all valid
+- General warning label above reset button
+  - Yellow text with bold italic styling
+  - Explains impact of changing parameters
+
+**Reset to Defaults Functionality**:
+- `_reset_crypto_params()`: Resets all parameters to secure defaults
+  - Time Cost: 3
+  - Memory Cost: 65536 (64 MB)
+  - Parallelism: 4
+  - Clears all warning messages
+  - Shows confirmation notification
+- Centered "Reset to Defaults" button with warning variant
+- One-click restoration of recommended values
+
+**Real-Time Validation**:
+- `on_input_changed()`: Triggers validation on every keystroke
+  - Immediate feedback for user input
+  - Prevents invalid configurations before save
+  - Cross-parameter validation on any change
+- Save button respects validation state
+  - Settings screen stays open on validation errors
+  - Shows error notification for invalid configs
+  - Allows user to correct values immediately
+
+**UI/UX Improvements**:
+- Reduced spacing between parameter options
+- Vertical centering of labels with input fields
+- Color-coded warnings (red for errors, yellow for compatibility)
+- Responsive layout that adapts to warning presence
+
+### Fixed
+- Settings screen now stays open when validation fails (no longer returns to home)
+- User can immediately correct invalid parameter values
+
+### Testing
+
+**New Tests** (+42 tests, 1036 total):
+- `tests/unit/test_tui_widgets.py`: Added `TestSettingsScreenAdvanced` class (42 tests)
+  - **Reset Functionality** (2 tests):
+    - `test_reset_crypto_params`
+    - `test_reset_crypto_params_exception`
+  - **Warning Management** (2 tests):
+    - `test_clear_all_warnings`
+    - `test_clear_all_warnings_exception`
+  - **Time Cost Validation** (6 tests):
+    - Valid ranges, weak security, performance warnings, critical errors
+  - **Memory Cost Validation** (6 tests):
+    - Valid ranges, weak security, high memory warnings, critical errors
+  - **Parallelism Validation** (5 tests):
+    - Valid ranges, high thread count warnings, diminishing returns
+  - **Compatibility Validation** (5 tests):
+    - Low memory + high parallelism, high time + high parallelism
+    - Low time + low memory (critical), good balance detection
+  - **Combined Validation** (1 test):
+    - `test_validate_all_crypto_params`
+  - **Real-Time Validation** (2 tests):
+    - `test_on_input_changed_time_cost/memory_cost`
+  - **Enhanced Save Logic** (4 tests):
+    - Save with invalid time cost, invalid memory cost
+    - Save with invalid parallelism, save with valid params
+- **Test Coverage**:
+  - `stegvault/tui/widgets.py`: Validation logic 100% covered
+  - All tests passing: **1036/1036** ✅
+  - Pass rate: 100%
+
+### Technical Details
+
+**Validation Architecture**:
+- Layered validation approach:
+  1. Individual parameter validation (range, security, performance)
+  2. Cross-parameter compatibility validation
+  3. Combined validation before save
+- Return pattern: `True` for valid/warning, `False` for blocking error
+- Non-blocking warnings allow save with user awareness
+- Blocking errors prevent save until corrected
+
+**Dynamic Spacing Pattern**:
+```python
+# Warning shown: adds \n prefix for spacing
+warning_label.update("\n⚠ Warning message")
+
+# Valid state: empty string, no spacing
+warning_label.update("")
+```
+
+**CSS Implementation**:
+```css
+.warning-label {
+    margin-top: 0;
+    margin-bottom: 0;  /* Zero margin - dynamic spacing via \n */
+}
+
+.setting-row {
+    align: left middle;  /* Vertical center alignment */
+}
+```
+
+**Security Recommendations**:
+- Default values chosen for optimal security/performance balance
+- Warnings guide users toward secure configurations
+- Critical errors prevent dangerously weak settings
+- Compatibility checks prevent misconfigurations
+
+### Configuration
+
+**TOML Updates**:
+```toml
+[crypto]
+time_cost = 3          # Argon2id iterations
+memory_cost = 65536    # Argon2id memory (KB)
+parallelism = 4        # Argon2id threads
+```
+
+### User Impact
+- Expert users can now fine-tune security vs performance
+- Clear warnings prevent dangerous misconfigurations
+- Default values remain optimal for most use cases
+- Real-time feedback improves user experience
+- Settings screen behavior improved for better UX
+
 ## [0.7.8] - 2025-12-25
 
 ### Fixed - Auto-Update System Critical Bugs 🔧

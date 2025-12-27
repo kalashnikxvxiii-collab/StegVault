@@ -3,14 +3,14 @@
 > Secure password manager using steganography to embed encrypted credentials within images
 
 [![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![Version](https://img.shields.io/badge/version-0.7.8-blue.svg)](https://github.com/kalashnikxvxiii/StegVault)
+[![Version](https://img.shields.io/badge/version-0.7.9-blue.svg)](https://github.com/kalashnikxvxiii/StegVault)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-994_passing-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-1036_passing-brightgreen.svg)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-79%25-yellow.svg)](tests/)
 
 **StegVault** combines modern cryptography with steganography to create portable, zero-knowledge password backups. Store a single password or entire vault of credentials, all encrypted with XChaCha20-Poly1305 + Argon2id and hidden within ordinary PNG or JPEG images.
 
-**Latest Release (v0.7.8):** Auto-update system critical bug fixes - WinError 32 fix, detached update mechanism, cache version sync, and dynamic "Update Now" button!
+**Latest Release (v0.7.9):** Advanced Settings for Argon2id cryptographic parameters with comprehensive validation system, real-time feedback, smart warnings, and expert control for fine-tuning security vs performance trade-offs!
 
 ---
 
@@ -53,6 +53,14 @@
 - ⚙️ **Settings Screen**: Configure auto-check and auto-upgrade toggles
 - 📝 **Changelog Preview**: View changes before upgrading
 - 🔁 **Cache Sync**: Automatic version cache synchronization
+
+### Advanced Settings (v0.7.9)
+- ⚙️ **Argon2id Tuning**: Configure cryptographic parameters (time cost, memory cost, parallelism)
+- ✅ **Real-Time Validation**: Instant feedback with security and performance warnings
+- 🎯 **Smart Warnings**: Color-coded alerts (red=critical, pink=security risk, yellow=compatibility)
+- 🔄 **Reset to Defaults**: One-click restoration of recommended secure values
+- 🛡️ **Safety Features**: Invalid configurations blocked, settings screen stays open for corrections
+- 📊 **Expert Control**: Fine-tune security vs performance trade-offs
 
 ---
 

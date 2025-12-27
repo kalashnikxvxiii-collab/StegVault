@@ -21,7 +21,8 @@ This document outlines the planned development roadmap for StegVault.
 - **v0.7.1-v0.7.4** - TUI Improvements & Bug Fixes (2025-12-12 to 2025-12-14)
 - **v0.7.5-v0.7.6** - Auto-Update System (2025-12-14 to 2025-12-24)
 - **v0.7.7** - TOTP/2FA Protection & UI Enhancements (2025-12-25)
-- **v0.7.8** - Auto-Update System Critical Bug Fixes (2025-12-25) ✅ **CURRENT**
+- **v0.7.8** - Auto-Update System Critical Bug Fixes (2025-12-25)
+- **v0.7.9** - Advanced Settings for Cryptography (2025-12-27) ✅ **CURRENT**
 
 ## Completed Milestones
 

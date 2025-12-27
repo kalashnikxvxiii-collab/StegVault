@@ -209,6 +209,70 @@ If an entry has a TOTP secret:
 - Or `%APPDATA%\StegVault\config.toml` (Windows)
 - Changes take effect immediately
 
+**Advanced Settings (v0.7.9)** ⚙️:
+
+*Expert users can fine-tune cryptographic parameters for the Argon2id key derivation function.*
+
+**Access Advanced Settings**:
+1. Open Settings (`━━━` button)
+2. Expand the "◈ Advanced Settings" collapsible section
+3. Three configurable parameters are available:
+   - **Time Cost** (iterations): Computational cost (default: 3)
+   - **Memory Cost** (KB): Memory usage (default: 65536 = 64 MB)
+   - **Parallelism** (threads): Thread count (default: 4)
+
+**Real-Time Validation**:
+- Parameters are validated as you type
+- **Red warnings**: Critical errors that block saving
+- **Pink warnings**: Security risks (save allowed with caution)
+- **Yellow banner**: Compatibility issues between parameters
+- **Info messages**: Performance tips and recommendations
+
+**Parameter Guidelines**:
+
+*Time Cost (Iterations)*:
+- **Minimum**: 1 (CRITICAL security warning)
+- **Weak Security**: < 3 (warning shown)
+- **Recommended**: 3-10 iterations
+- **High Performance Impact**: > 20 (shows estimated delay)
+- Higher values = stronger security but slower vault operations
+
+*Memory Cost (KB)*:
+- **Minimum**: 8192 KB = 8 MB (CRITICAL security warning)
+- **Weak Security**: < 65536 KB = 64 MB (warning shown)
+- **Recommended**: 65536-524288 KB (64-512 MB)
+- **High Memory**: > 1048576 KB = 1 GB (performance warning)
+- Higher values = stronger security but more RAM usage
+
+*Parallelism (Threads)*:
+- **Minimum**: 1 thread
+- **Recommended**: 1-8 threads (based on CPU cores)
+- **Diminishing Returns**: > 8 threads (warning shown)
+- **Performance Impact**: > 16 threads (may reduce performance)
+- More threads = faster processing but potential contention
+
+**Compatibility Warnings**:
+- **Low memory + High parallelism**: Thread contention warning
+- **High time cost + High parallelism**: Extended delay warning
+- **Low time cost + Low memory**: Critical security risk warning
+- **Good balance**: Time ≥ 3, Memory ≥ 64MB, Parallelism ≤ 8
+
+**Reset to Defaults**:
+- Click "Reset to Defaults" button to restore recommended values
+- All warnings are cleared
+- Confirmation notification shown
+
+**When to Adjust Parameters**:
+- **Increase Security**: Higher time cost + memory cost for sensitive vaults
+- **Improve Performance**: Lower values on low-end hardware (with security trade-off)
+- **Balance**: Default values are optimal for most users
+
+**Safety Features**:
+- Invalid configurations cannot be saved
+- Settings screen stays open for immediate correction
+- Real-time feedback prevents misconfigurations
+- Recommendations guide toward secure settings
+
 ---
 
 ## Common Tasks
