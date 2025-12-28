@@ -820,3 +820,278 @@ class TestVaultScreen:
             await screen._async_delete_entry()
 
         screen.notify.assert_called_with("Failed to delete entry: Delete failed", severity="error")
+
+    def test_toggle_sort_type_alpha_to_chrono(self):
+        """Should toggle sort type from alpha to chrono."""
+        vault = Vault(entries=[])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+        screen.sort_type = "alpha"
+
+        # Mock the sort button and refresh
+        mock_btn = Mock()
+        screen.query_one = Mock(return_value=mock_btn)
+        screen._refresh_entry_list = Mock()
+
+        screen._toggle_sort_type()
+
+        assert screen.sort_type == "chrono"
+        mock_btn.update.assert_called_with("⏰")
+        screen._refresh_entry_list.assert_called_once()
+
+    def test_toggle_sort_type_chrono_to_edited(self):
+        """Should toggle sort type from chrono to edited."""
+        vault = Vault(entries=[])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+        screen.sort_type = "chrono"
+
+        # Mock the sort button and refresh
+        mock_btn = Mock()
+        screen.query_one = Mock(return_value=mock_btn)
+        screen._refresh_entry_list = Mock()
+
+        screen._toggle_sort_type()
+
+        assert screen.sort_type == "edited"
+        mock_btn.update.assert_called_with("E")
+        screen._refresh_entry_list.assert_called_once()
+
+    def test_toggle_sort_type_edited_to_alpha(self):
+        """Should toggle sort type from edited to alpha."""
+        vault = Vault(entries=[])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+        screen.sort_type = "edited"
+
+        # Mock the sort button and refresh
+        mock_btn = Mock()
+        screen.query_one = Mock(return_value=mock_btn)
+        screen._refresh_entry_list = Mock()
+
+        screen._toggle_sort_type()
+
+        assert screen.sort_type == "alpha"
+        mock_btn.update.assert_called_with("A")
+        screen._refresh_entry_list.assert_called_once()
+
+    def test_toggle_sort_direction_asc_to_desc(self):
+        """Should toggle sort direction from asc to desc."""
+        vault = Vault(entries=[])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+        screen.sort_direction = "asc"
+
+        # Mock the direction button and refresh
+        mock_btn = Mock()
+        screen.query_one = Mock(return_value=mock_btn)
+        screen._refresh_entry_list = Mock()
+
+        screen._toggle_sort_direction()
+
+        assert screen.sort_direction == "desc"
+        mock_btn.update.assert_called_with("▼")
+        screen._refresh_entry_list.assert_called_once()
+
+    def test_toggle_sort_direction_desc_to_asc(self):
+        """Should toggle sort direction from desc to asc."""
+        vault = Vault(entries=[])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+        screen.sort_direction = "desc"
+
+        # Mock the direction button and refresh
+        mock_btn = Mock()
+        screen.query_one = Mock(return_value=mock_btn)
+        screen._refresh_entry_list = Mock()
+
+        screen._toggle_sort_direction()
+
+        assert screen.sort_direction == "asc"
+        mock_btn.update.assert_called_with("▲")
+        screen._refresh_entry_list.assert_called_once()
+
+    def test_get_filtered_entries_sort_chrono(self):
+        """Should sort entries chronologically."""
+        from datetime import datetime
+
+        entry1 = VaultEntry(key="first", password="pass1", created=datetime(2024, 1, 1))
+        entry2 = VaultEntry(key="second", password="pass2", created=datetime(2024, 3, 1))
+        entry3 = VaultEntry(key="third", password="pass3", created=datetime(2024, 2, 1))
+
+        vault = Vault(entries=[entry1, entry2, entry3])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+        screen.sort_type = "chrono"
+        screen.sort_direction = "asc"
+        screen.search_query = ""
+
+        filtered = screen._get_filtered_entries()
+
+        assert filtered[0].key == "first"
+        assert filtered[1].key == "third"
+        assert filtered[2].key == "second"
+
+    def test_get_filtered_entries_sort_edited(self):
+        """Should sort entries by modified timestamp."""
+        from datetime import datetime
+
+        entry1 = VaultEntry(key="first", password="pass1", modified=datetime(2024, 3, 1))
+        entry2 = VaultEntry(key="second", password="pass2", modified=datetime(2024, 1, 1))
+        entry3 = VaultEntry(key="third", password="pass3", modified=datetime(2024, 2, 1))
+
+        vault = Vault(entries=[entry1, entry2, entry3])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+        screen.sort_type = "edited"
+        screen.sort_direction = "asc"
+        screen.search_query = ""
+
+        filtered = screen._get_filtered_entries()
+
+        assert filtered[0].key == "second"
+        assert filtered[1].key == "third"
+        assert filtered[2].key == "first"
+
+    def test_refresh_entry_list_not_mounted(self):
+        """Should skip refresh when screen is not mounted."""
+        vault = Vault(entries=[])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+
+        # Mock query_one to ensure it's not called
+        screen.query_one = Mock()
+
+        # Mock is_mounted property to return False
+        with patch.object(type(screen), "is_mounted", property(lambda self: False)):
+            # Should return early without calling query_one
+            screen._refresh_entry_list()
+
+        screen.query_one.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_async_back_with_unsaved_changes_save(self):
+        """Should save vault when user chooses save on back."""
+        vault = Vault(entries=[])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+        screen.has_unsaved_changes = True
+
+        # Mock app
+        mock_app = Mock()
+        mock_app.push_screen_wait = AsyncMock(return_value="save")
+        mock_app.pop_screen = Mock()
+
+        # Mock _async_save_vault
+        screen._async_save_vault = AsyncMock()
+
+        with patch.object(type(screen), "app", property(lambda self: mock_app)):
+            await screen._async_back()
+
+        screen._async_save_vault.assert_called_once()
+        mock_app.pop_screen.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_async_back_with_unsaved_changes_dont_save(self):
+        """Should exit without saving when user chooses don't save on back."""
+        vault = Vault(entries=[])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+        screen.has_unsaved_changes = True
+
+        # Mock app
+        mock_app = Mock()
+        mock_app.push_screen_wait = AsyncMock(return_value="dont_save")
+        mock_app.pop_screen = Mock()
+
+        # Mock _async_save_vault to ensure it's not called
+        screen._async_save_vault = AsyncMock()
+
+        with patch.object(type(screen), "app", property(lambda self: mock_app)):
+            await screen._async_back()
+
+        screen._async_save_vault.assert_not_called()
+        mock_app.pop_screen.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_async_back_with_unsaved_changes_cancel(self):
+        """Should not exit when user cancels unsaved changes dialog on back."""
+        vault = Vault(entries=[])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+        screen.has_unsaved_changes = True
+
+        # Mock app
+        mock_app = Mock()
+        mock_app.push_screen_wait = AsyncMock(return_value="cancel")
+        mock_app.pop_screen = Mock()
+
+        with patch.object(type(screen), "app", property(lambda self: mock_app)):
+            await screen._async_back()
+
+        mock_app.pop_screen.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_async_quit_with_unsaved_changes_save(self):
+        """Should save vault when user chooses save on quit."""
+        vault = Vault(entries=[])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+        screen.has_unsaved_changes = True
+
+        # Mock app
+        mock_app = Mock()
+        mock_app.push_screen_wait = AsyncMock(side_effect=["save", True])
+        mock_app.exit = Mock()
+
+        # Mock _async_save_vault
+        screen._async_save_vault = AsyncMock()
+
+        with patch.object(type(screen), "app", property(lambda self: mock_app)):
+            await screen._async_quit()
+
+        screen._async_save_vault.assert_called_once()
+        mock_app.exit.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_async_quit_with_unsaved_changes_cancel(self):
+        """Should not quit when user cancels unsaved changes dialog."""
+        vault = Vault(entries=[])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+        screen.has_unsaved_changes = True
+
+        # Mock app
+        mock_app = Mock()
+        mock_app.push_screen_wait = AsyncMock(return_value="cancel")
+        mock_app.exit = Mock()
+
+        with patch.object(type(screen), "app", property(lambda self: mock_app)):
+            await screen._async_quit()
+
+        # Should not reach quit confirmation
+        assert mock_app.push_screen_wait.call_count == 1
+        mock_app.exit.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_async_quit_with_unsaved_changes_dont_save(self):
+        """Should proceed to quit confirmation when user chooses don't save."""
+        vault = Vault(entries=[])
+        controller = VaultController()
+        screen = VaultScreen(vault, "test.png", "passphrase", controller)
+        screen.has_unsaved_changes = True
+
+        # Mock app
+        mock_app = Mock()
+        mock_app.push_screen_wait = AsyncMock(side_effect=["dont_save", True])
+        mock_app.exit = Mock()
+
+        # Mock _async_save_vault to ensure it's not called
+        screen._async_save_vault = AsyncMock()
+
+        with patch.object(type(screen), "app", property(lambda self: mock_app)):
+            await screen._async_quit()
+
+        screen._async_save_vault.assert_not_called()
+        assert mock_app.push_screen_wait.call_count == 2
+        mock_app.exit.assert_called_once()
