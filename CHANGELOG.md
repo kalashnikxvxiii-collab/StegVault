@@ -25,6 +25,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Async back with unsaved changes: save/don't save/cancel (3 tests)
   - Async quit with unsaved changes: save/cancel/don't save (3 tests)
 
+**Controller Test Coverage Improvements** (+4 tests, 1070 total):
+- `tests/unit/test_crypto_controller.py`: crypto_controller.py (96% → 100%)
+  - Serialization failure handling test
+  - Module now at 100% coverage (COMPLETE)
+- `tests/unit/test_vault_controller.py`: vault_controller.py (83% → 86%)
+  - File not found error handling test
+  - Encryption failure handling test
+  - General exception handling test
+
+**Coverage Summary**:
+- Overall coverage: **81%** (target: 82-83%)
+- Individual module targets: **ALL EXCEEDED**
+  - app.py: 80% (target: 75%) ✓
+  - screens.py: 81% (target: 78%) ✓
+  - crypto_controller.py: 100% (target: 85%) ✓
+- Remaining 1% gap: Primarily UI framework code (compose methods, event handlers)
+  difficult to unit test without full Textual app initialization
+
 ## [0.7.9] - 2025-12-27
 
 ### Added - Advanced Settings for Cryptography ⚙️
