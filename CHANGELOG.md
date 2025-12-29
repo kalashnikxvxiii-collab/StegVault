@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Testing
+**TUI Test Coverage Improvements** (+31 tests, 1066 total):
+- Improved overall coverage: 80% → 81%
+- `tests/unit/test_tui_app.py`: Enhanced app.py coverage (63% → 80%)
+  - TOTP authentication flows: disabled, success, failure (6 tests)
+  - Update check async flows: cached results, no cache, exceptions (6 tests)
+  - Async quit with screen stack cleanup (1 test)
+  - Async open vault null handling (1 test)
+  - Toast notification tests (2 tests, skipped - Textual framework requirements)
+  - Path truncation test (1 test, skipped - complex async loop)
+- `tests/unit/test_tui_screens.py`: Enhanced screens.py coverage (69% → 81%)
+  - Sort type cycling: alpha → chrono → edited → alpha (3 tests)
+  - Sort direction toggle: asc ↔ desc (2 tests)
+  - Filtering with chrono/edited sorting (2 tests)
+  - Early return when screen not mounted (1 test)
+  - Async back with unsaved changes: save/don't save/cancel (3 tests)
+  - Async quit with unsaved changes: save/cancel/don't save (3 tests)
+
 ## [0.7.9] - 2025-12-27
 
 ### Added - Advanced Settings for Cryptography ⚙️

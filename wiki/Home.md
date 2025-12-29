@@ -51,7 +51,7 @@ StegVault is a secure password manager that uses steganography to hide encrypted
 - **Status**: Stable - Production-ready
 - **License**: MIT
 - **Language**: Python 3.9+
-- **Tests**: 1035 passing (80% coverage)
+- **Tests**: 1066 passing (81% coverage)
 
 ## Key Features
 
@@ -73,7 +73,7 @@ StegVault is a secure password manager that uses steganography to hide encrypted
 - ✅ Headless mode (JSON output, automation)
 - ✅ Application layer (UI-agnostic controllers)
 - ✅ CLI interface
-- ✅ 1035 unit tests with 80% coverage
+- ✅ 1066 unit tests with 81% coverage
 - ✅ Zero-knowledge architecture
 
 ## Coming Soon

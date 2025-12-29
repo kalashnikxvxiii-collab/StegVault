@@ -2,8 +2,8 @@
 
 Comprehensive guide to testing in StegVault.
 
-**Version**: 0.6.1 (Application Layer)
-**Test Suite**: 614 tests, 92% coverage
+**Version**: 0.7.9 (Advanced Settings for Cryptography)
+**Test Suite**: 1066 tests, 81% coverage
 
 ## Table of Contents
 
@@ -16,14 +16,14 @@ Comprehensive guide to testing in StegVault.
 
 ## Overview
 
-### Test Statistics (v0.6.1)
+### Test Statistics (v0.7.9)
 
 ```
-Total Tests:     614
-Pass Rate:       100%
-Overall Coverage: 92%
-Modules at 100%:  25/26 (96%)
-Test Duration:    ~30 seconds
+Total Tests:     1066
+Pass Rate:       100% (1063 passing, 3 skipped)
+Overall Coverage: 81%
+Modules at 100%:  20/37 (54%)
+Test Duration:    ~2 minutes
 ```
 
 ### Test Framework
@@ -36,7 +36,7 @@ Test Duration:    ~30 seconds
 
 ### Coverage Goals
 
-- **Overall Target**: 80%+ ✅ (achieved: 92%)
+- **Overall Target**: 80%+ ✅ (achieved: 81%)
 - **Critical Modules**: 100%
 - **Controllers**: 85%+
 - **CLI**: 80%+
@@ -173,7 +173,7 @@ app/controllers/crypto_controller.py  86%
 app/controllers/vault_controller.py   83%
 cli.py                               84%
 ----------------------------------------
-Overall                              92% ✅
+Overall                              81% ✅
 ```
 
 ## CI/CD Integration
