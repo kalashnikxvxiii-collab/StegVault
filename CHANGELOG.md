@@ -43,6 +43,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remaining 1% gap: Primarily UI framework code (compose methods, event handlers)
   difficult to unit test without full Textual app initialization
 
+### Performance
+**Test Suite Memory Optimization**:
+- **Problem**: Full test suite (1066 tests) consumed 10-14GB RAM
+- **Root Cause**: TUI tests create Textual Screen/App instances without cleanup
+- **Solution Implemented**:
+  - Created `tests/conftest.py` with automatic garbage collection fixtures
+  - Added event loop cleanup for async tests (cancel pending tasks, close loops)
+  - Session-level cleanup hooks (gc at start and end)
+- **Results**:
+  - `test_tui_widgets.py` (205 tests): **14GB → <1GB** (93% reduction), 9s execution
+  - `test_tui_screens.py` (56 tests): **<1GB**, 2s execution
+  - `test_tui_app.py` (41 tests): Still high memory (9-11GB) due to full App instances
+- **Documentation**: Created `TEST_PERFORMANCE.md` guide with:
+  - Memory usage analysis per test module
+  - Recommended test execution strategies for different RAM configurations
+  - Best practices for development vs. CI testing
+  - Warning: `test_tui_app.py` requires 16GB+ RAM system
+- **Impact**: Developers can now run most tests (261/302 TUI tests) with <2GB RAM
+- **Note**: Full test suite still requires 16GB+ RAM due to `test_tui_app.py`
+
 ## [0.7.9] - 2025-12-27
 
 ### Added - Advanced Settings for Cryptography ⚙️
