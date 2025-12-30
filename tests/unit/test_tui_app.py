@@ -643,7 +643,13 @@ class TestStegVaultTUI:
 
         # Mock screen stack with multiple screens
         mock_screens = [Mock(), Mock(), Mock()]  # 3 screens
-        app.pop_screen = Mock()
+
+        # Mock pop_screen to actually remove from the list
+        def pop_screen_side_effect():
+            if len(mock_screens) > 0:
+                mock_screens.pop()
+
+        app.pop_screen = Mock(side_effect=pop_screen_side_effect)
         app.call_later = Mock()
 
         # Mock confirmation dialog
