@@ -38,6 +38,7 @@ ENV/
 htmlcov/
 .tox/
 coverage.xml
+coverage.json
 bandit-report.json
 safety-report.json
 

@@ -28,11 +28,11 @@ cat > .git/hooks/pre-commit << 'EOF'
 if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "win32" ]]; then
     # Windows (Git Bash)
     echo "Running pre-commit validation on Windows..."
-    powershell.exe -ExecutionPolicy Bypass -File ./pre-commit.ps1
+    powershell.exe -ExecutionPolicy Bypass -File ./scripts/pre-commit.ps1
 else
     # Linux/Mac
     echo "Running pre-commit validation on Unix..."
-    bash ./pre-commit.sh
+    bash ./scripts/pre-commit.sh
 fi
 
 # Capture exit code
@@ -66,8 +66,8 @@ echo "The hook will automatically run before each commit."
 echo "It will block commits that would fail CI."
 echo ""
 echo "To manually run validation:"
-echo "  ./pre-commit.sh     (Linux/Mac)"
-echo "  ./pre-commit.ps1    (Windows)"
+echo "  ./scripts/pre-commit.sh     (Linux/Mac)"
+echo "  ./scripts/pre-commit.ps1    (Windows)"
 echo ""
 echo "To skip validation (NOT RECOMMENDED):"
 echo "  git commit --no-verify"

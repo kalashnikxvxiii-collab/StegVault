@@ -26,11 +26,11 @@ $hookContent = @'
 if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "win32" ]]; then
     # Windows (Git Bash)
     echo "Running pre-commit validation on Windows..."
-    powershell.exe -ExecutionPolicy Bypass -File ./pre-commit.ps1
+    powershell.exe -ExecutionPolicy Bypass -File ./scripts/pre-commit.ps1
 else
     # Linux/Mac
     echo "Running pre-commit validation on Unix..."
-    bash ./pre-commit.sh
+    bash ./scripts/pre-commit.sh
 fi
 
 # Capture exit code
@@ -65,8 +65,8 @@ Write-Host "The hook will automatically run before each commit." -ForegroundColo
 Write-Host "It will block commits that would fail CI." -ForegroundColor White
 Write-Host ""
 Write-Host "To manually run validation:" -ForegroundColor White
-Write-Host "  .\pre-commit.ps1    (Windows)" -ForegroundColor Gray
-Write-Host "  ./pre-commit.sh     (Linux/Mac in Git Bash)" -ForegroundColor Gray
+Write-Host "  .\scripts\pre-commit.ps1    (Windows)" -ForegroundColor Gray
+Write-Host "  ./scripts/pre-commit.sh     (Linux/Mac in Git Bash)" -ForegroundColor Gray
 Write-Host ""
 Write-Host "To skip validation (NOT RECOMMENDED):" -ForegroundColor White
 Write-Host "  git commit --no-verify" -ForegroundColor Gray

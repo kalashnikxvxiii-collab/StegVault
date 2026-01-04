@@ -101,7 +101,7 @@ echo   Setup Complete!
 echo ================================================================================
 echo.
 echo Next steps:
-echo   1. Double-click "launch_tui.bat" to start StegVault TUI
+echo   1. Double-click "scripts\launch_tui.bat" to start StegVault TUI
 echo   2. Press 'h' in TUI for keyboard shortcuts
 echo   3. Read README.md for full documentation
 echo.
