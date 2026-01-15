@@ -2517,7 +2517,7 @@ def filter(
 
         if tag and url:
             # Both filters: intersection
-            tag_results = filter_by_tags(vault_obj, list(tag), match_all=match_all)
+            tag_results = filter_by_tags(vault_obj, [*tag], match_all=match_all)
             url_results = filter_by_url(vault_obj, url, exact=exact_url)
             # Find intersection by key
             tag_keys = {e.key for e in tag_results}
@@ -2526,7 +2526,7 @@ def filter(
             results_list = [e for e in tag_results if e.key in intersection_keys]
         elif tag:
             # Only tag filter
-            results_list = filter_by_tags(vault_obj, list(tag), match_all=match_all)
+            results_list = filter_by_tags(vault_obj, [*tag], match_all=match_all)
         elif url:
             # Only URL filter
             results_list = filter_by_url(vault_obj, url, exact=exact_url)
@@ -2860,7 +2860,7 @@ def add(
 
         with Gallery(db_path) as g:
             click.echo(f"Adding vault '{name}'...")
-            vault = g.add_vault(name, vault_image, description, list(tag) if tag else None)
+            vault = g.add_vault(name, vault_image, description, [*tag] if tag else None)
 
             # Cache entries
             click.echo("Caching entries...")

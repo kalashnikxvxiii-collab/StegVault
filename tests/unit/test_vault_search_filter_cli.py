@@ -311,92 +311,83 @@ class TestVaultFilterCLI:
             cleanup_file(cover_path)
             cleanup_file(vault_path)
 
-    # BUG: vault filter --tag doesn't work with CliRunner
-    # The --tag option causes "Got unexpected extra argument" error
-    # This is a Click/CliRunner issue with the vault filter command
-    # Tests are disabled until the bug is fixed
-    #
-    # def test_filter_by_tag_only(self, test_vault_image):
-    #     """Test filtering by tag only."""
-    #     vault_image, passphrase = test_vault_image
-    #
-    #     runner = CliRunner()
-    #     result = runner.invoke(
-    #         vault_cli,
-    #         ["filter", vault_image, "--passphrase", passphrase, "--tag", "work"],
-    #     )
-    #
-    #     assert result.exit_code == 0
-    #     assert "github" in result.output.lower()
+    def test_filter_by_tag_only(self, test_vault_image, runner):
+        """Test filtering by tag only."""
+        vault_image, passphrase = test_vault_image
 
-    # Temporarily disabled - same bug as above
-    # def test_filter_by_multiple_tags(self, test_vault_image, runner):
-    #     """Test filtering by multiple tags."""
-    #     vault_image, passphrase = test_vault_image
-    #
-    #     result = runner.invoke(
-    #         vault_cli,
-    #         ["filter", vault_image, "--passphrase", passphrase, "--tag", "email", "--tag", "work"],
-    #     )
-    #
-    #     assert result.exit_code == 0
-    #     # Should find both entries (email OR work)
+        result = runner.invoke(
+            vault_cli,
+            ["filter", vault_image, "--tag", "work"],
+            input=f"{passphrase}\n",
+        )
 
-    # Temporarily disabled - needs fixing
-    # def test_filter_by_tag_and_url(self, test_vault_image, runner):
-    #     """Test filtering by both tag and URL (intersection)."""
-    #     vault_image, passphrase = test_vault_image
-    #
-    #     result = runner.invoke(
-    #         vault_cli,
-    #         [
-    #             "filter",
-    #             vault_image,
-    #             "--passphrase",
-    #             passphrase,
-    #             "--tag",
-    #             "work",
-    #             "--url",
-    #             "github",
-    #         ],
-    #     )
-    #
-    #     assert result.exit_code == 0
-    #     assert "github" in result.output.lower()
-    #     assert "Found 1 matching entries" in result.output
+        assert result.exit_code == 0
+        assert "github" in result.output.lower()
 
-    # BUG: Same --tag bug as above
-    # def test_filter_match_all_tags(self, test_vault_image, runner):
-    #     """Test filtering requiring all tags."""
-    #     vault_image, passphrase = test_vault_image
-    #
-    #     result = runner.invoke(
-    #         vault_cli,
-    #         [
-    #             "filter",
-    #             vault_image,
-    #             "--passphrase",
-    #             passphrase,
-    #             "--tag",
-    #             "work",
-    #             "--tag",
-    #             "code",
-    #             "--match-all",
-    #         ],
-    #     )
-    #
-    #     assert result.exit_code == 0
-    #     assert "github" in result.output.lower()
+    def test_filter_by_multiple_tags(self, test_vault_image, runner):
+        """Test filtering by multiple tags."""
+        vault_image, passphrase = test_vault_image
 
-    # BUG: Same --tag bug as above
-    # def test_filter_no_matching_entries(self, test_vault_image, runner):
-    #     """Test filter with no matching entries."""
-    #     vault_image, passphrase = test_vault_image
-    #
-    #     result = runner.invoke(
-    #         vault_cli,
-    #         ["filter", vault_image, "--passphrase", passphrase, "--tag", "nonexistent"],
-    #     )
-    #
-    #     assert result.exit_code == 0
-    #     assert "No entries found" in result.output or "0 matching entries" in result.output
+        result = runner.invoke(
+            vault_cli,
+            ["filter", vault_image, "--tag", "email", "--tag", "work"],
+            input=f"{passphrase}\n",
+        )
+
+        assert result.exit_code == 0
+        # Should find both entries (email OR work)
+
+    def test_filter_by_tag_and_url(self, test_vault_image, runner):
+        """Test filtering by both tag and URL (intersection)."""
+        vault_image, passphrase = test_vault_image
+
+        result = runner.invoke(
+            vault_cli,
+            [
+                "filter",
+                vault_image,
+                "--tag",
+                "work",
+                "--url",
+                "github",
+            ],
+            input=f"{passphrase}\n",
+        )
+
+        assert result.exit_code == 0
+        assert "github" in result.output.lower()
+        assert "Found 1 matching entries" in result.output
+
+    def test_filter_match_all_tags(self, test_vault_image, runner):
+        """Test filtering requiring all tags."""
+        vault_image, passphrase = test_vault_image
+
+        result = runner.invoke(
+            vault_cli,
+            [
+                "filter",
+                vault_image,
+                "--tag",
+                "work",
+                "--tag",
+                "code",
+                "--match-all",
+            ],
+            input=f"{passphrase}\n",
+        )
+
+        assert result.exit_code == 0
+        assert "github" in result.output.lower()
+
+    def test_filter_no_matching_entries(self, test_vault_image, runner):
+        """Test filter with no matching entries."""
+        vault_image, passphrase = test_vault_image
+
+        result = runner.invoke(
+            vault_cli,
+            ["filter", vault_image, "--tag", "nonexistent"],
+            input=f"{passphrase}\n",
+        )
+
+        assert result.exit_code == 0
+        assert "No entries found" in result.output or "0 matching entries" in result.output
