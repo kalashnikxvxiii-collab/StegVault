@@ -519,7 +519,7 @@ stegvault backup -i cover.png -o backup.png
 | Memory error | Insufficient RAM | Close apps, use smaller image |
 
 ---
-
+```
 ## Next Steps
 
 - Full solutions: [Troubleshooting Guide](Troubleshooting.md)

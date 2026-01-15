@@ -12,9 +12,7 @@ This guide covers installing StegVault on various platforms.
 
 ### Method 1: Install from Source (Recommended)
 
-**Current Version**: v0.7.8
-
-This is currently the primary installation method.
+This is the primary installation method for development and custom builds.
 
 #### Windows
 
@@ -95,10 +93,18 @@ pip install -e .
 stegvault --version
 ```
 
-### Method 2: Install from PyPI (Coming Soon)
+### Method 2: Install from PyPI (Recommended for Users)
+
+The easiest way to install StegVault for regular use:
 
 ```bash
 pip install stegvault
+```
+
+To upgrade to the latest version:
+
+```bash
+pip install --upgrade stegvault
 ```
 
 ## Dependency Information
@@ -281,4 +287,4 @@ After installation:
 If you encounter issues:
 - Check [Troubleshooting Guide](Troubleshooting.md)
 - Review [Common Errors](Common-Errors.md)
-- Open an [issue](https://github.com/yourusername/stegvault/issues)
+- Open an [issue](https://github.com/kalashnikxvxiii/StegVault/issues)

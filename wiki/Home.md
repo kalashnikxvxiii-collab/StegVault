@@ -15,7 +15,7 @@ StegVault is a secure password manager that uses steganography to hide encrypted
 
 ### User Guides
 - [CLI Commands Reference](CLI-Commands-Reference.md) - Complete command reference ✨ NEW
-- [TUI User Guide](../TUI_USER_GUIDE.md) - Terminal UI keyboard shortcuts
+- [TUI User Guide](TUI_USER_GUIDE.md) - Terminal UI keyboard shortcuts
 - [Headless Mode Guide](Headless-Mode-Guide.md) - Automation & CI/CD ✨ NEW
 - [Creating Backups](Creating-Backups.md)
 - [Restoring Passwords](Restoring-Passwords.md)

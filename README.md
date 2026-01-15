@@ -3,7 +3,7 @@
 > Secure password manager using steganography to embed encrypted credentials within images
 
 [![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![Version](https://img.shields.io/badge/version-0.7.9-blue.svg)](https://github.com/kalashnikxvxiii/StegVault)
+[![Version](https://img.shields.io/badge/version-0.7.9-blue.svg)](https://github.com/kalashnikxvxiii/StegVault/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-1066_passing-brightgreen.svg)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-81%25-green.svg)](tests/)
@@ -375,8 +375,8 @@ StegVault is provided "as-is" for educational and personal use. The authors are 
 
 ---
 
-**Version**: 0.7.6
-**Last Updated**: 2025-12-18
+**Version**: 0.7.9
+**Last Updated**: 2025-12-27
 
 ---
 
