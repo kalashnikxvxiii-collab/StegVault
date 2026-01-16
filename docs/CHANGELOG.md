@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.10] - 2026-01-16
+
 ### Fixed - Critical Bug Fixes 🐛
 
 **Name Collision with Built-in `list()` Function**:
@@ -30,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `tests/unit/test_vault_search_filter_cli.py`: 5 tests re-enabled
 - **Testing**: All 10 tests in `TestVaultFilterCLI` now passing (100% success rate)
 - **Commit**: `fdfb337`
+
+## [Unreleased]
 
 ### Testing
 **TUI Test Coverage Improvements** (+31 tests, 1066 total):
